@@ -37,14 +37,28 @@ func (s *Storm) Save(data interface{}) error {
 			return err
 		}
 
-		if t.Unique != nil {
-			for _, field := range t.Unique {
+		if t.Uniques != nil {
+			for _, field := range t.Uniques {
 				key, err := toBytes(field.Value())
 				if err != nil {
 					return err
 				}
 
 				err = s.addToUniqueIndex([]byte(field.Name()), id, key, bucket)
+				if err != nil {
+					return err
+				}
+			}
+		}
+
+		if t.Indexes != nil {
+			for _, field := range t.Indexes {
+				key, err := toBytes(field.Value())
+				if err != nil {
+					return err
+				}
+
+				err = s.addToListIndex([]byte(field.Name()), id, key, bucket)
 				if err != nil {
 					return err
 				}

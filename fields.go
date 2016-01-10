@@ -12,7 +12,8 @@ type tags struct {
 	Name    string
 	ID      interface{}
 	IDField interface{}
-	Unique  []*structs.Field
+	Uniques []*structs.Field
+	Indexes []*structs.Field
 }
 
 func extractTags(data interface{}) (*tags, error) {
@@ -36,7 +37,9 @@ func extractTags(data interface{}) (*tags, error) {
 				}
 				t.ID = f.Value()
 			case "unique":
-				t.Unique = append(t.Unique, f)
+				t.Uniques = append(t.Uniques, f)
+			case "index":
+				t.Indexes = append(t.Indexes, f)
 			default:
 				return nil, fmt.Errorf("unknown tag %s", tag)
 			}

@@ -11,22 +11,17 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type User struct {
-	ID   int    `storm:"id"`
-	Name string `storm:"unique"`
+type SimpleUser struct {
+	ID   int `storm:"id"`
+	Name string
 	age  int
 }
 
-type BadFriend struct {
+type UserWithNoID struct {
 	Name string
 }
 
-type GoodFriend struct {
-	ID   int
-	Name string `storm:"id"`
-}
-
-type GoodOtherFriend struct {
+type UserWithIDField struct {
 	ID   int
 	Name string
 }
@@ -36,29 +31,27 @@ func TestSave(t *testing.T) {
 	defer os.RemoveAll(dir)
 	db, _ := New(filepath.Join(dir, "storm.db"))
 
-	u1 := User{ID: 10, Name: "John"}
-	err := db.Save(&u1)
+	err := db.Save(&SimpleUser{ID: 10, Name: "John"})
 
-	u2 := User{Name: "John"}
-	err = db.Save(&u2)
+	err = db.Save(&SimpleUser{Name: "John"})
 	assert.Error(t, err)
 	assert.EqualError(t, err, "id field must not be a zero value")
 
-	u3 := BadFriend{Name: "John"}
-	err = db.Save(&u3)
+	err = db.Save(&UserWithNoID{Name: "John"})
 	assert.Error(t, err)
 	assert.EqualError(t, err, "missing struct tag id")
 
-	u4 := GoodFriend{ID: 10, Name: "John"}
-	err = db.Save(&u4)
+	err = db.Save(&UserWithIDField{ID: 10, Name: "John"})
 	assert.NoError(t, err)
 
-	u5 := GoodOtherFriend{ID: 10, Name: "John"}
-	err = db.Save(&u5)
+	u := UserWithIDField{ID: 10, Name: "John"}
+
+	err = db.Save(&u)
+
 	assert.NoError(t, err)
 
 	db.Bolt.View(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket([]byte("user"))
+		bucket := tx.Bucket([]byte("userwithidfield"))
 		assert.NotNil(t, bucket)
 
 		i, err := toBytes(10)
@@ -67,11 +60,17 @@ func TestSave(t *testing.T) {
 		val := bucket.Get(i)
 		assert.NotNil(t, val)
 
-		content, err := json.Marshal(&u5)
+		content, err := json.Marshal(&u)
 		assert.NoError(t, err)
 		assert.Equal(t, content, val)
 		return nil
 	})
+}
+
+type UniqueNameUser struct {
+	ID   int    `storm:"id"`
+	Name string `storm:"unique"`
+	age  int
 }
 
 func TestSaveUnique(t *testing.T) {
@@ -79,17 +78,17 @@ func TestSaveUnique(t *testing.T) {
 	defer os.RemoveAll(dir)
 	db, _ := New(filepath.Join(dir, "storm.db"))
 
-	u1 := User{ID: 10, Name: "John", age: 10}
+	u1 := UniqueNameUser{ID: 10, Name: "John", age: 10}
 	err := db.Save(&u1)
 	assert.NoError(t, err)
 
-	u2 := User{ID: 11, Name: "John", age: 100}
+	u2 := UniqueNameUser{ID: 11, Name: "John", age: 100}
 	err = db.Save(&u2)
 	assert.Error(t, err)
 	assert.EqualError(t, err, "already exists")
 
 	db.Bolt.View(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket([]byte("user"))
+		bucket := tx.Bucket([]byte("uniquenameuser"))
 
 		uniqueBucket := bucket.Bucket([]byte("Name"))
 		assert.NotNil(t, uniqueBucket)
@@ -98,6 +97,52 @@ func TestSaveUnique(t *testing.T) {
 		i, err := toBytes(10)
 		assert.NoError(t, err)
 		assert.Equal(t, i, id)
+
+		return nil
+	})
+}
+
+type IndexedNameUser struct {
+	ID   int    `storm:"id"`
+	Name string `storm:"index"`
+	age  int
+}
+
+func TestSaveIndex(t *testing.T) {
+	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
+	defer os.RemoveAll(dir)
+	db, _ := New(filepath.Join(dir, "storm.db"))
+
+	u1 := IndexedNameUser{ID: 10, Name: "John", age: 10}
+	err := db.Save(&u1)
+	assert.NoError(t, err)
+
+	u2 := IndexedNameUser{ID: 11, Name: "John", age: 100}
+	err = db.Save(&u2)
+	assert.NoError(t, err)
+
+	db.Bolt.View(func(tx *bolt.Tx) error {
+		bucket := tx.Bucket([]byte("indexednameuser"))
+
+		listBucket := bucket.Bucket([]byte("Name"))
+		assert.NotNil(t, listBucket)
+
+		raw := listBucket.Get([]byte("John"))
+		assert.NotNil(t, raw)
+
+		var list [][]byte
+
+		err = json.Unmarshal(raw, &list)
+		assert.NoError(t, err)
+		assert.Len(t, list, 2)
+
+		id1, err := toBytes(u1.ID)
+		assert.NoError(t, err)
+		id2, err := toBytes(u2.ID)
+		assert.NoError(t, err)
+
+		assert.Equal(t, id1, list[0])
+		assert.Equal(t, id2, list[1])
 
 		return nil
 	})
