@@ -16,13 +16,17 @@ type User struct {
 }
 
 type BadFriend struct {
-	ID   int
 	Name string
 }
 
 type GoodFriend struct {
 	ID   int
 	Name string `storm:"id"`
+}
+
+type GoodOtherFriend struct {
+	ID   int
+	Name string
 }
 
 func TestStorm(t *testing.T) {
@@ -50,12 +54,16 @@ func TestStorm(t *testing.T) {
 	assert.Error(t, err)
 	assert.EqualError(t, err, "id field must not be a zero value")
 
-	u3 := BadFriend{ID: 10, Name: "John"}
+	u3 := BadFriend{Name: "John"}
 	err = db.Save(&u3)
 	assert.Error(t, err)
 	assert.EqualError(t, err, "missing struct tag id")
 
 	u4 := GoodFriend{ID: 10, Name: "John"}
 	err = db.Save(&u4)
+	assert.NoError(t, err)
+
+	u5 := GoodOtherFriend{ID: 10, Name: "John"}
+	err = db.Save(&u5)
 	assert.NoError(t, err)
 }

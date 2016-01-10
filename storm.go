@@ -3,7 +3,6 @@ package storm
 import (
 	"encoding/json"
 	"errors"
-	"strings"
 	"time"
 
 	"github.com/boltdb/bolt"
@@ -36,37 +35,25 @@ func (s *Storm) Save(data interface{}) error {
 		return errors.New("provided data must be a struct or a pointer to struct")
 	}
 
-	d := structs.New(data)
-	fields := d.Fields()
-
-	var id []byte
-	var err error
-
-	for _, f := range fields {
-		if !f.IsExported() {
-			continue
-		}
-
-		tag := f.Tag("storm")
-		if tag == "id" {
-			if f.IsZero() {
-				return errors.New("id field must not be a zero value")
-			}
-			id, err = toBytes(f.Value())
-			if err != nil {
-				return err
-			}
-		}
+	t, err := extractTags(data)
+	if err != nil {
+		return err
 	}
 
-	if id == nil {
-		return errors.New("missing struct tag id")
+	if t.ID == nil {
+		if t.IDField == nil {
+			return errors.New("missing struct tag id")
+		}
+		t.ID = t.IDField
 	}
 
-	bucketName := strings.ToLower(d.Name())
+	id, err := toBytes(t.ID)
+	if err != nil {
+		return err
+	}
 
 	err = s.Bolt.Update(func(tx *bolt.Tx) error {
-		bucket, err := tx.CreateBucketIfNotExists([]byte(bucketName))
+		bucket, err := tx.CreateBucketIfNotExists([]byte(t.Name))
 		if err != nil {
 			return err
 		}
