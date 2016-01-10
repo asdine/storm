@@ -51,7 +51,7 @@ func TestSave(t *testing.T) {
 	assert.NoError(t, err)
 
 	db.Bolt.View(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket([]byte("userwithidfield"))
+		bucket := tx.Bucket([]byte("UserWithIDField"))
 		assert.NotNil(t, bucket)
 
 		i, err := toBytes(10)
@@ -88,7 +88,7 @@ func TestSaveUnique(t *testing.T) {
 	assert.EqualError(t, err, "already exists")
 
 	db.Bolt.View(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket([]byte("uniquenameuser"))
+		bucket := tx.Bucket([]byte("UniqueNameUser"))
 
 		uniqueBucket := bucket.Bucket([]byte("Name"))
 		assert.NotNil(t, uniqueBucket)
@@ -122,7 +122,7 @@ func TestSaveIndex(t *testing.T) {
 	assert.NoError(t, err)
 
 	db.Bolt.View(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket([]byte("indexednameuser"))
+		bucket := tx.Bucket([]byte("IndexedNameUser"))
 
 		listBucket := bucket.Bucket([]byte("Name"))
 		assert.NotNil(t, listBucket)

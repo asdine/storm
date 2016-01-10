@@ -3,7 +3,6 @@ package storm
 import (
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/fatih/structs"
 )
@@ -21,7 +20,7 @@ func extractTags(data interface{}) (*tags, error) {
 	fields := s.Fields()
 
 	var t tags
-	t.Name = strings.ToLower(s.Name())
+	t.Name = s.Name()
 
 	for _, f := range fields {
 		if !f.IsExported() {
