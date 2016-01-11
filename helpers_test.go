@@ -34,4 +34,8 @@ func TestToBytes(t *testing.T) {
 	b, err = toBytes(5)
 	assert.NoError(t, err)
 	assert.NotNil(t, b)
+
+	b, err = toBytes([]byte("Hey"))
+	assert.NoError(t, err)
+	assert.Equal(t, []byte("Hey"), b)
 }

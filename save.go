@@ -8,6 +8,34 @@ import (
 	"github.com/fatih/structs"
 )
 
+// Set a key/value pair into a bucket
+func (s *Storm) Set(bucketName string, key interface{}, value interface{}) error {
+	if key == nil {
+		return errors.New("key must not be nil")
+	}
+
+	id, err := toBytes(key)
+	if err != nil {
+		return err
+	}
+
+	var data []byte
+	if value != nil {
+		data, err = json.Marshal(value)
+		if err != nil {
+			return err
+		}
+	}
+
+	return s.Bolt.Update(func(tx *bolt.Tx) error {
+		bucket, err := tx.CreateBucketIfNotExists([]byte(bucketName))
+		if err != nil {
+			return err
+		}
+		return bucket.Put(id, data)
+	})
+}
+
 // Save a structure
 func (s *Storm) Save(data interface{}) error {
 	if !structs.IsStruct(data) {
