@@ -11,7 +11,7 @@ import (
 )
 
 // Get a value from a bucket
-func (s *Storm) Get(bucketName string, key interface{}, to interface{}) error {
+func (s *DB) Get(bucketName string, key interface{}, to interface{}) error {
 	ref := reflect.ValueOf(to)
 
 	if !ref.IsValid() || ref.Kind() != reflect.Ptr {
@@ -39,7 +39,7 @@ func (s *Storm) Get(bucketName string, key interface{}, to interface{}) error {
 }
 
 // OneByIndex returns one record by the specified index
-func (s *Storm) OneByIndex(index string, value interface{}, to interface{}) error {
+func (s *DB) OneByIndex(index string, value interface{}, to interface{}) error {
 	ref := reflect.ValueOf(to)
 
 	if ref.Kind() != reflect.Ptr && structs.IsStruct(to) {

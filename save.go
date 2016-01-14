@@ -9,7 +9,7 @@ import (
 )
 
 // Set a key/value pair into a bucket
-func (s *Storm) Set(bucketName string, key interface{}, value interface{}) error {
+func (s *DB) Set(bucketName string, key interface{}, value interface{}) error {
 	if key == nil {
 		return errors.New("key must not be nil")
 	}
@@ -37,7 +37,7 @@ func (s *Storm) Set(bucketName string, key interface{}, value interface{}) error
 }
 
 // Save a structure
-func (s *Storm) Save(data interface{}) error {
+func (s *DB) Save(data interface{}) error {
 	if !structs.IsStruct(data) {
 		return errors.New("provided data must be a struct or a pointer to struct")
 	}

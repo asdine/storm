@@ -30,7 +30,7 @@ type UserWithIDField struct {
 func TestSave(t *testing.T) {
 	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
 	defer os.RemoveAll(dir)
-	db, _ := New(filepath.Join(dir, "storm.db"))
+	db, _ := Open(filepath.Join(dir, "storm.db"))
 
 	err := db.Save(&SimpleUser{ID: 10, Name: "John"})
 
@@ -77,7 +77,7 @@ type UniqueNameUser struct {
 func TestSaveUnique(t *testing.T) {
 	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
 	defer os.RemoveAll(dir)
-	db, _ := New(filepath.Join(dir, "storm.db"))
+	db, _ := Open(filepath.Join(dir, "storm.db"))
 
 	u1 := UniqueNameUser{ID: 10, Name: "John", age: 10}
 	err := db.Save(&u1)
@@ -112,7 +112,7 @@ type IndexedNameUser struct {
 func TestSaveIndex(t *testing.T) {
 	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
 	defer os.RemoveAll(dir)
-	db, _ := New(filepath.Join(dir, "storm.db"))
+	db, _ := Open(filepath.Join(dir, "storm.db"))
 
 	u1 := IndexedNameUser{ID: 10, Name: "John", age: 10}
 	err := db.Save(&u1)
@@ -152,7 +152,7 @@ func TestSaveIndex(t *testing.T) {
 func TestSet(t *testing.T) {
 	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
 	defer os.RemoveAll(dir)
-	db, _ := New(filepath.Join(dir, "storm.db"))
+	db, _ := Open(filepath.Join(dir, "storm.db"))
 
 	err := db.Set("b1", 10, 10)
 	assert.NoError(t, err)

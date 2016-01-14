@@ -13,7 +13,7 @@ import (
 func TestGet(t *testing.T) {
 	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
 	defer os.RemoveAll(dir)
-	db, _ := New(filepath.Join(dir, "storm.db"))
+	db, _ := Open(filepath.Join(dir, "storm.db"))
 
 	err := db.Set("trash", 10, 100)
 	assert.NoError(t, err)
@@ -49,7 +49,7 @@ func TestGet(t *testing.T) {
 func TestOneByIndex(t *testing.T) {
 	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
 	defer os.RemoveAll(dir)
-	db, _ := New(filepath.Join(dir, "storm.db"))
+	db, _ := Open(filepath.Join(dir, "storm.db"))
 
 	u := UniqueNameUser{Name: "John", ID: 10}
 	err := db.Save(&u)

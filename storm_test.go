@@ -10,7 +10,7 @@ import (
 )
 
 func TestNewStorm(t *testing.T) {
-	db, err := New("")
+	db, err := Open("")
 
 	assert.Error(t, err)
 	assert.Nil(t, db)
@@ -20,7 +20,7 @@ func TestNewStorm(t *testing.T) {
 	defer os.RemoveAll(dir)
 
 	file := filepath.Join(dir, "storm.db")
-	db, err = New(file)
+	db, err = Open(file)
 
 	assert.NoError(t, err)
 	assert.Equal(t, file, db.Path)

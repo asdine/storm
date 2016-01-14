@@ -7,7 +7,7 @@ import (
 	"github.com/boltdb/bolt"
 )
 
-func (s *Storm) addToUniqueIndex(index []byte, id []byte, key []byte, parent *bolt.Bucket) error {
+func (s *DB) addToUniqueIndex(index []byte, id []byte, key []byte, parent *bolt.Bucket) error {
 	bucket, err := parent.CreateBucketIfNotExists(index)
 	if err != nil {
 		return err
@@ -21,7 +21,7 @@ func (s *Storm) addToUniqueIndex(index []byte, id []byte, key []byte, parent *bo
 	return bucket.Put(key, id)
 }
 
-func (s *Storm) addToListIndex(index []byte, id []byte, key []byte, parent *bolt.Bucket) error {
+func (s *DB) addToListIndex(index []byte, id []byte, key []byte, parent *bolt.Bucket) error {
 	bucket, err := parent.CreateBucketIfNotExists(index)
 	if err != nil {
 		return err
