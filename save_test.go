@@ -27,6 +27,11 @@ type UserWithIDField struct {
 	Name string
 }
 
+type UserWithEmbeddedIDField struct {
+	UserWithIDField `storm:"inline"`
+	Age             int
+}
+
 func TestSave(t *testing.T) {
 	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
 	defer os.RemoveAll(dir)
@@ -45,9 +50,15 @@ func TestSave(t *testing.T) {
 	err = db.Save(&UserWithIDField{ID: 10, Name: "John"})
 	assert.NoError(t, err)
 
-	u := UserWithIDField{ID: 10, Name: "John"}
-
+	u := UserWithEmbeddedIDField{}
+	u.ID = 150
+	u.Name = "Pete"
+	u.Age = 10
 	err = db.Save(&u)
+	assert.NoError(t, err)
+
+	v := UserWithIDField{ID: 10, Name: "John"}
+	err = db.Save(&v)
 
 	assert.NoError(t, err)
 
@@ -61,7 +72,7 @@ func TestSave(t *testing.T) {
 		val := bucket.Get(i)
 		assert.NotNil(t, val)
 
-		content, err := json.Marshal(&u)
+		content, err := json.Marshal(&v)
 		assert.NoError(t, err)
 		assert.Equal(t, content, val)
 		return nil
