@@ -46,7 +46,7 @@ func TestGet(t *testing.T) {
 	assert.EqualError(t, err, "provided target must be a pointer to a valid variable")
 }
 
-func TestOneByIndex(t *testing.T) {
+func TestGetByIndex(t *testing.T) {
 	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
 	defer os.RemoveAll(dir)
 	db, _ := Open(filepath.Join(dir, "storm.db"))
@@ -56,7 +56,7 @@ func TestOneByIndex(t *testing.T) {
 	assert.NoError(t, err)
 
 	v := UniqueNameUser{}
-	err = db.OneByIndex("Name", "John", &v)
+	err = db.GetByIndex("Name", "John", &v)
 	assert.NoError(t, err)
 	assert.Equal(t, u, v)
 
@@ -67,11 +67,11 @@ func TestOneByIndex(t *testing.T) {
 	}
 
 	x := IndexedNameUser{}
-	err = db.OneByIndex("Name", "John", &x)
+	err = db.GetByIndex("Name", "John", &x)
 	assert.NoError(t, err)
 	assert.Equal(t, IndexedNameUser{Name: "John", ID: 1}, x)
 
-	err = db.OneByIndex("Name", "Mike", &x)
+	err = db.GetByIndex("Name", "Mike", &x)
 	assert.Error(t, err)
 	assert.EqualError(t, err, "not found")
 }

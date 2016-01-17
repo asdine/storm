@@ -88,17 +88,24 @@ func TestSaveUnique(t *testing.T) {
 	assert.Error(t, err)
 	assert.EqualError(t, err, "already exists")
 
+	// same id
+	u3 := UniqueNameUser{ID: 10, Name: "Jake", age: 100}
+	err = db.Save(&u3)
+	assert.NoError(t, err)
+
 	db.Bolt.View(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket([]byte("UniqueNameUser"))
 
 		uniqueBucket := bucket.Bucket([]byte("Name"))
 		assert.NotNil(t, uniqueBucket)
 
-		id := uniqueBucket.Get([]byte("John"))
+		id := uniqueBucket.Get([]byte("Jake"))
 		i, err := toBytes(10)
 		assert.NoError(t, err)
 		assert.Equal(t, i, id)
 
+		id = uniqueBucket.Get([]byte("John"))
+		assert.Nil(t, id)
 		return nil
 	})
 }
@@ -116,6 +123,10 @@ func TestSaveIndex(t *testing.T) {
 
 	u1 := IndexedNameUser{ID: 10, Name: "John", age: 10}
 	err := db.Save(&u1)
+	assert.NoError(t, err)
+
+	u1 = IndexedNameUser{ID: 10, Name: "John", age: 10}
+	err = db.Save(&u1)
 	assert.NoError(t, err)
 
 	u2 := IndexedNameUser{ID: 11, Name: "John", age: 100}

@@ -38,8 +38,8 @@ func (s *DB) Get(bucketName string, key interface{}, to interface{}) error {
 	})
 }
 
-// OneByIndex returns one record by the specified index
-func (s *DB) OneByIndex(index string, value interface{}, to interface{}) error {
+// GetByIndex returns one record by the specified index
+func (s *DB) GetByIndex(index string, value interface{}, to interface{}) error {
 	ref := reflect.ValueOf(to)
 
 	if ref.Kind() != reflect.Ptr && structs.IsStruct(to) {

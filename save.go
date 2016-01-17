@@ -65,6 +65,20 @@ func (s *DB) Save(data interface{}) error {
 			return err
 		}
 
+		if len(t.Uniques) > 0 {
+			err = s.deleteOldIndexes(bucket, id, t.Uniques, true)
+			if err != nil {
+				return err
+			}
+		}
+
+		if len(t.Indexes) > 0 {
+			err = s.deleteOldIndexes(bucket, id, t.Indexes, false)
+			if err != nil {
+				return err
+			}
+		}
+
 		if t.Uniques != nil {
 			for _, field := range t.Uniques {
 				key, err := toBytes(field.Value())
