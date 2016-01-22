@@ -10,8 +10,8 @@ import (
 	"github.com/fatih/structs"
 )
 
-// GetByIndex returns one record by the specified index
-func (s *DB) GetByIndex(index string, value interface{}, to interface{}) error {
+// One returns one record by the specified index
+func (s *DB) One(index string, value interface{}, to interface{}) error {
 	ref := reflect.ValueOf(to)
 
 	if ref.Kind() != reflect.Ptr && structs.IsStruct(to) {

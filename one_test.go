@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGetByIndex(t *testing.T) {
+func TestOne(t *testing.T) {
 	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
 	defer os.RemoveAll(dir)
 	db, _ := Open(filepath.Join(dir, "storm.db"))
@@ -19,7 +19,7 @@ func TestGetByIndex(t *testing.T) {
 	assert.NoError(t, err)
 
 	v := UniqueNameUser{}
-	err = db.GetByIndex("Name", "John", &v)
+	err = db.One("Name", "John", &v)
 	assert.NoError(t, err)
 	assert.Equal(t, u, v)
 
@@ -30,11 +30,11 @@ func TestGetByIndex(t *testing.T) {
 	}
 
 	x := IndexedNameUser{}
-	err = db.GetByIndex("Name", "John", &x)
+	err = db.One("Name", "John", &x)
 	assert.NoError(t, err)
 	assert.Equal(t, IndexedNameUser{Name: "John", ID: 1}, x)
 
-	err = db.GetByIndex("Name", "Mike", &x)
+	err = db.One("Name", "Mike", &x)
 	assert.Error(t, err)
 	assert.EqualError(t, err, "not found")
 }
