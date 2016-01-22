@@ -26,7 +26,9 @@ func extractTags(data interface{}, tg ...*tags) (*tags, error) {
 		t = &tags{}
 	}
 
-	t.Name = s.Name()
+	if t.Name == "" {
+		t.Name = s.Name()
+	}
 
 	for _, f := range fields {
 		if !f.IsExported() {
