@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/boltdb/bolt"
 	"github.com/stretchr/testify/assert"
@@ -121,9 +122,11 @@ func TestSaveUnique(t *testing.T) {
 }
 
 type IndexedNameUser struct {
-	ID   int    `storm:"id"`
-	Name string `storm:"index"`
-	age  int
+	ID          int    `storm:"id"`
+	Name        string `storm:"index"`
+	age         int
+	DateOfBirth time.Time `storm:"index"`
+	Group       string
 }
 
 func TestSaveIndex(t *testing.T) {

@@ -32,7 +32,10 @@ func TestOne(t *testing.T) {
 	x := IndexedNameUser{}
 	err = db.One("Name", "John", &x)
 	assert.NoError(t, err)
-	assert.Equal(t, IndexedNameUser{Name: "John", ID: 1}, x)
+	assert.Equal(t, "John", x.Name)
+	assert.Equal(t, 1, x.ID)
+	assert.Zero(t, x.age)
+	assert.True(t, x.DateOfBirth.IsZero())
 
 	err = db.One("Name", "Mike", &x)
 	assert.Error(t, err)
