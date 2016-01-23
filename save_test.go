@@ -171,4 +171,33 @@ func TestSaveIndex(t *testing.T) {
 
 		return nil
 	})
+
+	name1 := "Jake"
+	name2 := "Jane"
+	name3 := "James"
+
+	for i := 0; i < 1000; i++ {
+		u := IndexedNameUser{ID: i + 1}
+
+		if i%2 == 0 {
+			u.Name = name1
+		} else {
+			u.Name = name2
+		}
+
+		db.Save(&u)
+	}
+
+	var users []IndexedNameUser
+	err = db.Find("Name", name1, &users)
+	assert.NoError(t, err)
+	assert.Len(t, users, 500)
+
+	err = db.Find("Name", name2, &users)
+	assert.NoError(t, err)
+	assert.Len(t, users, 500)
+
+	err = db.Find("Name", name3, &users)
+	assert.Error(t, err)
+	assert.EqualError(t, err, "not found")
 }
