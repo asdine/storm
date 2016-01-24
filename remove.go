@@ -8,7 +8,7 @@ import (
 	"github.com/fatih/structs"
 )
 
-// Remove removes a structure from the assiociated bucket
+// Remove removes a structure from the associated bucket
 func (s *DB) Remove(data interface{}) error {
 	if !structs.IsStruct(data) {
 		return errors.New("provided data must be a struct or a pointer to struct")
