@@ -23,7 +23,7 @@ db, err := storm.Open("my.db")
 defer db.Close()
 ```
 
-By default, Storm open a database with the mode `0600` and a timeout of one second.
+By default, Storm opens a database with the mode `0600` and a timeout of one second.
 You can change this behavior by using `OpenWithOptions`
 ```go
 db, err := storm.OpenWithOptions("my.db", 0600, &bolt.Options{Timeout: 1 * time.Second})
@@ -58,6 +58,7 @@ db.Get("sessions", someObjectId, &details)
 Deleting data :
 ```go
 db.Delete("sessions", someObjectId)
+db.Delete("weird storage", "754-3010")
 ```
 
 ## Simple ORM
@@ -68,12 +69,12 @@ db.Delete("sessions", someObjectId)
 type User struct {
   ID int // primary key
   Group string `storm:"index"` // this field will be indexed
-  Email string `storm:"unique"` // this field will be indexed and marked as unique
+  Email string `storm:"unique"` // this field will be indexed with a unique constraint
   Name string // this field will not be indexed
 }
 ```
 
-The primary key can be of any type as long as it is not a zero value. Storm will search for the tag `id`, if not present storm will search for a field named `ID`.
+The primary key can be of any type as long as it is not a zero value. Storm will search for the tag `id`, if not present Storm will search for a field named `ID`.
 
 ```go
 type User struct {
@@ -84,7 +85,7 @@ type User struct {
 }
 ```
 
-Storm handles tags in nested structures
+Storm handles tags in nested structures with the `inline` tag
 
 ```go
 type Base struct {
