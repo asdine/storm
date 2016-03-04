@@ -1,7 +1,6 @@
 package storm
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/fatih/structs"
@@ -10,7 +9,8 @@ import (
 type tags struct {
 	Name    string
 	ID      interface{}
-	IDField interface{}
+	IDField *structs.Field
+	ZeroID  bool
 	Uniques []*structs.Field
 	Indexes []*structs.Field
 }
@@ -40,9 +40,10 @@ func extractTags(data interface{}, tg ...*tags) (*tags, error) {
 			switch tag {
 			case "id":
 				if f.IsZero() {
-					return nil, errors.New("id field must not be a zero value")
+					t.ZeroID = true
 				}
 				t.ID = f.Value()
+				t.IDField = f
 			case "unique":
 				t.Uniques = append(t.Uniques, f)
 			case "index":
@@ -59,9 +60,14 @@ func extractTags(data interface{}, tg ...*tags) (*tags, error) {
 			}
 		}
 
-		if f.Name() == "ID" {
-			t.IDField = f.Value()
+		if f.Name() == "ID" && t.ID == nil {
+			t.ID = f.Value()
+			t.IDField = f
 		}
+	}
+
+	if t.ID != nil {
+		t.Uniques = append(t.Uniques, t.IDField)
 	}
 
 	return t, nil

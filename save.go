@@ -19,11 +19,12 @@ func (s *DB) Save(data interface{}) error {
 		return err
 	}
 
+	if t.ZeroID {
+		return errors.New("id field must not be a zero value")
+	}
+
 	if t.ID == nil {
-		if t.IDField == nil {
-			return errors.New("missing struct tag id")
-		}
-		t.ID = t.IDField
+		return errors.New("missing struct tag id")
 	}
 
 	id, err := toBytes(t.ID)

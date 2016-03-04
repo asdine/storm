@@ -18,6 +18,9 @@ func (s *DB) addToUniqueIndex(index []byte, id []byte, key []byte, parent *bolt.
 
 	exists := bucket.Get(key)
 	if exists != nil {
+		if bytes.Equal(exists, id) {
+			return nil
+		}
 		return errors.New("already exists")
 	}
 
