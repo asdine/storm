@@ -40,4 +40,16 @@ func TestOne(t *testing.T) {
 	err = db.One("Name", "Mike", &x)
 	assert.Error(t, err)
 	assert.EqualError(t, err, "not found")
+
+	err = db.One("", nil, &x)
+	assert.Error(t, err)
+	assert.EqualError(t, err, "not found")
+
+	err = db.One("", "Mike", nil)
+	assert.Error(t, err)
+	assert.EqualError(t, err, "provided target must be a pointer to struct")
+
+	err = db.One("", nil, nil)
+	assert.Error(t, err)
+	assert.EqualError(t, err, "provided target must be a pointer to struct")
 }

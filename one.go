@@ -14,8 +14,12 @@ import (
 func (s *DB) One(index string, value interface{}, to interface{}) error {
 	ref := reflect.ValueOf(to)
 
-	if ref.Kind() != reflect.Ptr && structs.IsStruct(to) {
+	if !ref.IsValid() || (ref.Kind() != reflect.Ptr && structs.IsStruct(to)) {
 		return errors.New("provided target must be a pointer to struct")
+	}
+
+	if index == "" {
+		return errors.New("not found")
 	}
 
 	d := structs.New(to)

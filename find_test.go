@@ -73,4 +73,9 @@ func TestFind(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Len(t, users, 1)
 	assert.Equal(t, 10, users[0].ID)
+
+	users = []User{}
+	err = db.Find("Name", nil, &users)
+	assert.Error(t, err)
+	assert.EqualError(t, err, "not found")
 }

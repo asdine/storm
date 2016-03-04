@@ -9,6 +9,9 @@ import (
 
 // toBytes turns an interface into a slice of bytes
 func toBytes(key interface{}) ([]byte, error) {
+	if key == nil {
+		return nil, nil
+	}
 	if k, ok := key.([]byte); ok {
 		return k, nil
 	}

@@ -44,4 +44,10 @@ func TestGet(t *testing.T) {
 
 	err = db.Get("logs", tm, nil)
 	assert.EqualError(t, err, "provided target must be a pointer to a valid variable")
+
+	err = db.Get("", nil, nil)
+	assert.EqualError(t, err, "provided target must be a pointer to a valid variable")
+
+	err = db.Get("", "100 bucks", &hand)
+	assert.EqualError(t, err, "not found")
 }

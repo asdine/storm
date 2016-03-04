@@ -200,4 +200,8 @@ func TestSaveIndex(t *testing.T) {
 	err = db.Find("Name", name3, &users)
 	assert.Error(t, err)
 	assert.EqualError(t, err, "not found")
+
+	err = db.Save(nil)
+	assert.Error(t, err)
+	assert.EqualError(t, err, "provided data must be a struct or a pointer to struct")
 }

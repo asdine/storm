@@ -51,4 +51,16 @@ func TestSet(t *testing.T) {
 
 		return nil
 	})
+
+	err = db.Set("", 0, 100)
+	assert.Error(t, err)
+
+	err = db.Set("b", nil, 100)
+	assert.Error(t, err)
+
+	err = db.Set("b", 10, nil)
+	assert.NoError(t, err)
+
+	err = db.Set("b", nil, nil)
+	assert.Error(t, err)
 }
