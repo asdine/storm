@@ -1,5 +1,9 @@
 # Storm
 
+[![Build Status](https://travis-ci.org/asdine/storm.svg)](https://travis-ci.org/asdine/storm)
+[![GoDoc](https://godoc.org/github.com/asdine/storm?status.svg)](https://godoc.org/github.com/asdine/storm)
+![License MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=flat)
+
 Storm is a wrapper and simple ORM around BoltDB. The goal of this project is to provide a simple way to save any object in BoltDB and to easily retrieve it.
 
 ## Getting Started
@@ -139,6 +143,13 @@ err = db.One("Name", "John", &user)
 ```go
 var users []User
 err := db.Find("Group", "staff", &users)
+```
+
+### Fetch all objects
+
+```go
+var users []User
+err := db.All(&users)
 ```
 
 ### Remove an object

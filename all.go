@@ -10,7 +10,7 @@ import (
 	"github.com/fatih/structs"
 )
 
-// All the records of a bucket
+// All get all the records of a bucket
 func (s *DB) All(to interface{}) error {
 	ref := reflect.ValueOf(to)
 
