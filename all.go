@@ -55,10 +55,8 @@ func (s *DB) AllByIndex(index string, to interface{}) error {
 			return fmt.Errorf("index %s not found", index)
 		}
 
-		stats := idx.Stats()
-		results := reflect.MakeSlice(reflect.Indirect(ref).Type(), stats.KeyN, stats.KeyN)
+		results := reflect.MakeSlice(reflect.Indirect(ref).Type(), 0, 0)
 
-		i := 0
 		err := idx.ForEach(func(k []byte, v []byte) error {
 			if kind == "list" {
 				var list [][]byte
@@ -71,14 +69,25 @@ func (s *DB) AllByIndex(index string, to interface{}) error {
 					return nil
 				}
 
-				v = list[0]
+				for i := range list {
+					raw := bucket.Get(list[i])
+					newElem = reflect.New(typ)
+					err := json.Unmarshal(raw, newElem.Interface())
+					if err != nil {
+						return err
+					}
+
+					results = reflect.Append(results, reflect.Indirect(newElem))
+				}
+			} else {
+				raw := bucket.Get(v)
+				newElem = reflect.New(typ)
+				err := json.Unmarshal(raw, newElem.Interface())
+				if err != nil {
+					return err
+				}
+				results = reflect.Append(results, reflect.Indirect(newElem))
 			}
-			raw := bucket.Get(v)
-			err := json.Unmarshal(raw, results.Index(i).Addr().Interface())
-			if err != nil {
-				return err
-			}
-			i++
 			return nil
 		})
 		if err != nil {

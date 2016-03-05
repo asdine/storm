@@ -49,11 +49,11 @@ func TestAllByIndex(t *testing.T) {
 	assert.Equal(t, 100, users[0].ID)
 	assert.Equal(t, 1, users[99].ID)
 
-	err = db.AllByIndex("John", &users)
+	err = db.AllByIndex("Name", &users)
 	assert.NoError(t, err)
 	assert.Len(t, users, 100)
-	assert.Equal(t, 100, users[0].ID)
-	assert.Equal(t, 1, users[99].ID)
+	assert.Equal(t, 1, users[0].ID)
+	assert.Equal(t, 100, users[99].ID)
 
 	var unknowns []UserWithNoID
 	err = db.All(&unknowns)
