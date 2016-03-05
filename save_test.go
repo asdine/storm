@@ -45,7 +45,7 @@ func TestSave(t *testing.T) {
 
 	err = db.Save(&UserWithNoID{Name: "John"})
 	assert.Error(t, err)
-	assert.EqualError(t, err, "missing struct tag id")
+	assert.EqualError(t, err, "missing struct tag id or ID field")
 
 	err = db.Save(&UserWithIDField{ID: 10, Name: "John"})
 	assert.NoError(t, err)

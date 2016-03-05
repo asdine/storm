@@ -97,10 +97,11 @@ type Base struct {
 }
 
 type User struct {
-  Base `storm:"inline"`
-  Group string `storm:"index"`
-  Email string `storm:"unique"`
-  Name string
+	Base      `storm:"inline"`
+	Group     string `storm:"index"`
+	Email     string `storm:"unique"`
+	Name      string
+	CreatedAt time.Time `storm:"index"`
 }
 ```
 
@@ -112,6 +113,7 @@ user := User{
   Group: "staff",
   Email: "john@provider.com",
   Name: "John",
+  CreatedAt: time.Now(),
 }
 
 err := db.Save(&user)
@@ -150,6 +152,13 @@ err := db.Find("Group", "staff", &users)
 ```go
 var users []User
 err := db.All(&users)
+```
+
+### Fetch all objects sorted by index
+
+```go
+var users []User
+err := db.AllByIndex("CreatedAt", &users)
 ```
 
 ### Remove an object

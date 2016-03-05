@@ -10,8 +10,8 @@ import (
 	"github.com/fatih/structs"
 )
 
-// All get all the records of a bucket
-func (s *DB) All(to interface{}) error {
+// AllByIndex gets all the records of a bucket that are indexed in the specified index
+func (s *DB) AllByIndex(index string, to interface{}) error {
 	ref := reflect.ValueOf(to)
 
 	if ref.Kind() != reflect.Ptr || reflect.Indirect(ref).Kind() != reflect.Slice {
@@ -32,23 +32,47 @@ func (s *DB) All(to interface{}) error {
 		return err
 	}
 
+	if index == "" {
+		if t.ID == nil {
+			return errors.New("missing struct tag id or ID field")
+		}
+		index = t.IDField.Name()
+	}
+
+	kind := indexKind(index, t)
+	if kind == "" {
+		return fmt.Errorf("index %s not found", index)
+	}
+
 	return s.Bolt.View(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket([]byte(bucketName))
 		if bucket == nil {
 			return fmt.Errorf("bucket %s not found", bucketName)
 		}
 
-		idx := bucket.Bucket([]byte(t.IDField.Name()))
+		idx := bucket.Bucket([]byte(index))
 		if idx == nil {
-			return fmt.Errorf("index %s not found", t.IDField.Name())
+			return fmt.Errorf("index %s not found", index)
 		}
 
 		stats := idx.Stats()
-
 		results := reflect.MakeSlice(reflect.Indirect(ref).Type(), stats.KeyN, stats.KeyN)
 
 		i := 0
 		err := idx.ForEach(func(k []byte, v []byte) error {
+			if kind == "list" {
+				var list [][]byte
+				err = json.Unmarshal(v, &list)
+				if err != nil {
+					return err
+				}
+
+				if len(list) == 0 {
+					return nil
+				}
+
+				v = list[0]
+			}
 			raw := bucket.Get(v)
 			err := json.Unmarshal(raw, results.Index(i).Addr().Interface())
 			if err != nil {
@@ -64,4 +88,9 @@ func (s *DB) All(to interface{}) error {
 		reflect.Indirect(ref).Set(results)
 		return nil
 	})
+}
+
+// All get all the records of a bucket
+func (s *DB) All(to interface{}) error {
+	return s.AllByIndex("", to)
 }

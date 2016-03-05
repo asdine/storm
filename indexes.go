@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"reflect"
+	"sort"
 
 	"github.com/boltdb/bolt"
 	"github.com/fatih/structs"
@@ -27,8 +28,8 @@ func (s *DB) addToUniqueIndex(index []byte, id []byte, key []byte, parent *bolt.
 	return bucket.Put(key, id)
 }
 
-func (s *DB) addToListIndex(index []byte, id []byte, key []byte, parent *bolt.Bucket) error {
-	bucket, err := parent.CreateBucketIfNotExists(index)
+func (s *DB) addToListIndex(idx []byte, id []byte, key []byte, parent *bolt.Bucket) error {
+	bucket, err := parent.CreateBucketIfNotExists(idx)
 	if err != nil {
 		return err
 	}
@@ -44,7 +45,8 @@ func (s *DB) addToListIndex(index []byte, id []byte, key []byte, parent *bolt.Bu
 	}
 
 	list = append(list, id)
-	raw, err = json.Marshal(&list)
+	sort.Sort(index(list))
+	raw, err = json.Marshal(list)
 	if err != nil {
 		return err
 	}
@@ -115,3 +117,9 @@ func (s *DB) deleteOldIndexes(parent *bolt.Bucket, id []byte, indexes []*structs
 
 	return nil
 }
+
+type index [][]byte
+
+func (s index) Len() int           { return len(s) }
+func (s index) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+func (s index) Less(i, j int) bool { return bytes.Compare(s[i], s[j]) == -1 }

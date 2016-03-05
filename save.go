@@ -24,7 +24,7 @@ func (s *DB) Save(data interface{}) error {
 	}
 
 	if t.ID == nil {
-		return errors.New("missing struct tag id")
+		return errors.New("missing struct tag id or ID field")
 	}
 
 	id, err := toBytes(t.ID)

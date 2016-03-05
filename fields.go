@@ -72,3 +72,19 @@ func extractTags(data interface{}, tg ...*tags) (*tags, error) {
 
 	return t, nil
 }
+
+func indexKind(index string, t *tags) string {
+	for i := range t.Indexes {
+		if t.Indexes[i].Name() == index {
+			return "list"
+		}
+	}
+
+	for i := range t.Uniques {
+		if t.Uniques[i].Name() == index {
+			return "unique"
+		}
+	}
+
+	return ""
+}
