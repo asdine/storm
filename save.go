@@ -2,7 +2,6 @@ package storm
 
 import (
 	"encoding/json"
-	"errors"
 
 	"github.com/boltdb/bolt"
 	"github.com/fatih/structs"
@@ -11,7 +10,7 @@ import (
 // Save a structure
 func (s *DB) Save(data interface{}) error {
 	if !structs.IsStruct(data) {
-		return errors.New("provided data must be a struct or a pointer to struct")
+		return ErrBadType
 	}
 
 	t, err := extractTags(data)
@@ -20,11 +19,11 @@ func (s *DB) Save(data interface{}) error {
 	}
 
 	if t.ZeroID {
-		return errors.New("id field must not be a zero value")
+		return ErrZeroID
 	}
 
 	if t.ID == nil {
-		return errors.New("missing struct tag id or ID field")
+		return ErrNoID
 	}
 
 	id, err := toBytes(t.ID)
