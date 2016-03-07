@@ -6,19 +6,9 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 )
-
-type User struct {
-	ID          int    `storm:"id"`
-	Name        string `storm:"index"`
-	age         int
-	DateOfBirth time.Time `storm:"index"`
-	Group       string
-	Slug        string `storm:"unique"`
-}
 
 func TestFind(t *testing.T) {
 	dir, _ := ioutil.TempDir(os.TempDir(), "storm")

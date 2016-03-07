@@ -6,31 +6,10 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
 
 	"github.com/boltdb/bolt"
 	"github.com/stretchr/testify/assert"
 )
-
-type SimpleUser struct {
-	ID   int `storm:"id"`
-	Name string
-	age  int
-}
-
-type UserWithNoID struct {
-	Name string
-}
-
-type UserWithIDField struct {
-	ID   int
-	Name string
-}
-
-type UserWithEmbeddedIDField struct {
-	UserWithIDField `storm:"inline"`
-	Age             int
-}
 
 func TestSave(t *testing.T) {
 	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
@@ -119,14 +98,6 @@ func TestSaveUnique(t *testing.T) {
 		assert.Nil(t, id)
 		return nil
 	})
-}
-
-type IndexedNameUser struct {
-	ID          int    `storm:"id"`
-	Name        string `storm:"index"`
-	age         int
-	DateOfBirth time.Time `storm:"index"`
-	Group       string
 }
 
 func TestSaveIndex(t *testing.T) {

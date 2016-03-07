@@ -11,15 +11,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type ToEmbed struct {
-	ID string
-}
-
-type NestedID struct {
-	ToEmbed `storm:"inline"`
-	Name    string
-}
-
 func TestAllByIndex(t *testing.T) {
 	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
 	defer os.RemoveAll(dir)
