@@ -74,6 +74,10 @@ func TestUniqueIndex(t *testing.T) {
 		assert.Nil(t, id)
 		id = idx.Get([]byte("yo"))
 		assert.Equal(t, []byte("id3"), id)
+		ids, err := idx.All([]byte("yo"))
+		assert.NoError(t, err)
+		assert.Len(t, ids, 1)
+		assert.Equal(t, []byte("id3"), ids[0])
 
 		err = idx.RemoveID([]byte("id2"))
 		assert.NoError(t, err)
@@ -118,21 +122,21 @@ func TestListIndex(t *testing.T) {
 		assert.Error(t, err)
 		assert.Equal(t, ErrNilParam, err)
 
-		ids, err := idx.Get([]byte("hello"))
+		ids, err := idx.All([]byte("hello"))
 		assert.Len(t, ids, 1)
 		assert.Equal(t, []byte("id1"), ids[0])
 
-		ids, err = idx.Get([]byte("goodbye"))
+		ids, err = idx.All([]byte("goodbye"))
 		assert.Len(t, ids, 1)
 		assert.Equal(t, []byte("id2"), ids[0])
 
-		ids, err = idx.Get([]byte("yo"))
+		ids, err = idx.All([]byte("yo"))
 		assert.Nil(t, ids)
 
 		err = idx.RemoveID([]byte("id2"))
 		assert.NoError(t, err)
 
-		ids, err = idx.Get([]byte("goodbye"))
+		ids, err = idx.All([]byte("goodbye"))
 		assert.Len(t, ids, 0)
 
 		err = idx.RemoveID(nil)
@@ -145,7 +149,7 @@ func TestListIndex(t *testing.T) {
 		err = idx.RemoveID([]byte("id3"))
 		assert.NoError(t, err)
 
-		ids, err = idx.Get([]byte("hello"))
+		ids, err = idx.All([]byte("hello"))
 		assert.NoError(t, err)
 		assert.Nil(t, ids)
 
@@ -161,12 +165,12 @@ func TestListIndex(t *testing.T) {
 		err = idx.RemoveID([]byte("id2"))
 		assert.NoError(t, err)
 
-		ids, err = idx.Get([]byte("hello"))
+		ids, err = idx.All([]byte("hello"))
 		assert.Len(t, ids, 1)
 		assert.Equal(t, []byte("id1"), ids[0])
-		ids, err = idx.Get([]byte("hi"))
+		ids, err = idx.All([]byte("hi"))
 		assert.Len(t, ids, 0)
-		ids, err = idx.Get([]byte("yo"))
+		ids, err = idx.All([]byte("yo"))
 		assert.Len(t, ids, 1)
 		assert.Equal(t, []byte("id3"), ids[0])
 
@@ -174,6 +178,25 @@ func TestListIndex(t *testing.T) {
 		assert.NoError(t, err)
 		err = idx.RemoveID([]byte("id4"))
 		assert.NoError(t, err)
+
+		err = idx.Add([]byte("hey"), []byte("id1"))
+		err = idx.Add([]byte("hey"), []byte("id2"))
+		err = idx.Add([]byte("hey"), []byte("id3"))
+		err = idx.Add([]byte("hey"), []byte("id4"))
+		ids, err = idx.All([]byte("hey"))
+		assert.Len(t, ids, 4)
+
+		id := idx.Get([]byte("hey"))
+		assert.Equal(t, []byte("id1"), id)
+
+		idx.Remove([]byte("hey"))
+		ids, err = idx.All([]byte("hey"))
+		assert.NoError(t, err)
+		assert.Len(t, ids, 0)
+
+		ids, err = idx.All([]byte("hey"))
+		assert.NoError(t, err)
+		assert.Len(t, ids, 0)
 		return nil
 	})
 

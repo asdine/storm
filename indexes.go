@@ -11,6 +11,15 @@ import (
 	"github.com/fatih/structs"
 )
 
+// Index interface
+type Index interface {
+	Add(value []byte, targetID []byte) error
+	Remove(value []byte) error
+	RemoveID(id []byte) error
+	Get(value []byte) []byte
+	All(value []byte) ([][]byte, error)
+}
+
 // NewUniqueIndex loads a UniqueIndex
 func NewUniqueIndex(parent *bolt.Bucket, indexName []byte) (*UniqueIndex, error) {
 	b, err := parent.CreateBucketIfNotExists(indexName)
@@ -72,8 +81,18 @@ func (idx *UniqueIndex) Get(value []byte) []byte {
 	return idx.IndexBucket.Get(value)
 }
 
-// GetAll the IDs of this index
-func (idx *UniqueIndex) GetAll() [][]byte {
+// All returns all the ids corresponding to the given value
+func (idx *UniqueIndex) All(value []byte) ([][]byte, error) {
+	id := idx.IndexBucket.Get(value)
+	if id != nil {
+		return [][]byte{id}, nil
+	}
+
+	return nil, nil
+}
+
+// allRecords returns all the IDs of this index
+func (idx *UniqueIndex) allRecords() [][]byte {
 	c := idx.IndexBucket.Cursor()
 
 	var list [][]byte
@@ -82,6 +101,16 @@ func (idx *UniqueIndex) GetAll() [][]byte {
 		list = append(list, ident)
 	}
 	return list
+}
+
+// first returns the first ID of this index
+func (idx *UniqueIndex) first() []byte {
+	c := idx.IndexBucket.Cursor()
+
+	for val, ident := c.First(); val != nil; val, ident = c.Next() {
+		return ident
+	}
+	return nil
 }
 
 // NewListIndex loads a ListIndex
@@ -150,6 +179,15 @@ func (idx *ListIndex) Add(value []byte, targetID []byte) error {
 	return idx.IDs.Add(targetID, value)
 }
 
+// Remove a value from the unique index
+func (idx *ListIndex) Remove(value []byte) error {
+	err := idx.IDs.RemoveID(value)
+	if err != nil {
+		return err
+	}
+	return idx.IndexBucket.DeleteBucket(value)
+}
+
 // RemoveID removes an ID from the list index
 func (idx *ListIndex) RemoveID(targetID []byte) error {
 	c := idx.IndexBucket.Cursor()
@@ -173,13 +211,22 @@ func (idx *ListIndex) RemoveID(targetID []byte) error {
 	return nil
 }
 
-// Get the IDs corresponding to the given value
-func (idx *ListIndex) Get(value []byte) ([][]byte, error) {
+// Get the first ID corresponding to the given value
+func (idx *ListIndex) Get(value []byte) []byte {
+	uni, err := NewUniqueIndex(idx.IndexBucket, value)
+	if err != nil {
+		return nil
+	}
+	return uni.first()
+}
+
+// All the IDs corresponding to the given value
+func (idx *ListIndex) All(value []byte) ([][]byte, error) {
 	uni, err := NewUniqueIndex(idx.IndexBucket, value)
 	if err != nil {
 		return nil, err
 	}
-	return uni.GetAll(), nil
+	return uni.allRecords(), nil
 }
 
 func (s *DB) addToUniqueIndex(index []byte, id []byte, key []byte, parent *bolt.Bucket) error {
