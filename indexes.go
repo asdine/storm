@@ -12,8 +12,8 @@ import (
 )
 
 // NewUniqueIndex loads a UniqueIndex
-func NewUniqueIndex(parent *bolt.Bucket, indexName string) (*UniqueIndex, error) {
-	b, err := parent.CreateBucketIfNotExists([]byte(indexName))
+func NewUniqueIndex(parent *bolt.Bucket, indexName []byte) (*UniqueIndex, error) {
+	b, err := parent.CreateBucketIfNotExists(indexName)
 	if err != nil {
 		return nil, err
 	}
@@ -32,6 +32,9 @@ type UniqueIndex struct {
 
 // Add a value to the unique index
 func (idx *UniqueIndex) Add(value []byte, targetID []byte) error {
+	if value == nil || len(value) == 0 {
+		return ErrNilParam
+	}
 	if targetID == nil || len(targetID) == 0 {
 		return ErrNilParam
 	}
@@ -67,6 +70,116 @@ func (idx *UniqueIndex) RemoveID(id []byte) error {
 // Get the id corresponding to the given value
 func (idx *UniqueIndex) Get(value []byte) []byte {
 	return idx.IndexBucket.Get(value)
+}
+
+// GetAll the IDs of this index
+func (idx *UniqueIndex) GetAll() [][]byte {
+	c := idx.IndexBucket.Cursor()
+
+	var list [][]byte
+
+	for val, ident := c.First(); val != nil; val, ident = c.Next() {
+		list = append(list, ident)
+	}
+	return list
+}
+
+// NewListIndex loads a ListIndex
+func NewListIndex(parent *bolt.Bucket, indexName []byte) (*ListIndex, error) {
+	b, err := parent.CreateBucketIfNotExists(indexName)
+	if err != nil {
+		return nil, err
+	}
+
+	ids, err := NewUniqueIndex(b, []byte("storm__ids"))
+	if err != nil {
+		return nil, err
+	}
+
+	return &ListIndex{
+		IndexBucket: b,
+		Parent:      parent,
+		IDs:         ids,
+	}, nil
+}
+
+// ListIndex is an index that references values and the corresponding IDs.
+type ListIndex struct {
+	Parent      *bolt.Bucket
+	IndexBucket *bolt.Bucket
+	IDs         *UniqueIndex
+}
+
+// Add a value to the list index
+func (idx *ListIndex) Add(value []byte, targetID []byte) error {
+	if value == nil || len(value) == 0 {
+		return ErrNilParam
+	}
+	if targetID == nil || len(targetID) == 0 {
+		return ErrNilParam
+	}
+
+	oldValue := idx.IDs.Get(targetID)
+	if oldValue != nil {
+		uni, err := NewUniqueIndex(idx.IndexBucket, oldValue)
+		if err != nil {
+			return err
+		}
+
+		err = uni.Remove(targetID)
+		if err != nil {
+			return err
+		}
+
+		err = idx.IDs.Remove(targetID)
+		if err != nil {
+			return err
+		}
+	}
+
+	uni, err := NewUniqueIndex(idx.IndexBucket, value)
+	if err != nil {
+		return err
+	}
+
+	err = uni.Add(targetID, targetID)
+	if err != nil {
+		return err
+	}
+
+	return idx.IDs.Add(targetID, value)
+}
+
+// RemoveID removes an ID from the list index
+func (idx *ListIndex) RemoveID(targetID []byte) error {
+	c := idx.IndexBucket.Cursor()
+
+	for bucketName, val := c.First(); bucketName != nil; bucketName, val = c.Next() {
+		if val != nil {
+			continue
+		}
+
+		uni, err := NewUniqueIndex(idx.IndexBucket, bucketName)
+		if err != nil {
+			return err
+		}
+
+		err = uni.Remove(targetID)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// Get the IDs corresponding to the given value
+func (idx *ListIndex) Get(value []byte) ([][]byte, error) {
+	uni, err := NewUniqueIndex(idx.IndexBucket, value)
+	if err != nil {
+		return nil, err
+	}
+	return uni.GetAll(), nil
 }
 
 func (s *DB) addToUniqueIndex(index []byte, id []byte, key []byte, parent *bolt.Bucket) error {

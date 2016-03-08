@@ -20,7 +20,7 @@ func TestUniqueIndex(t *testing.T) {
 		b, err := tx.CreateBucket([]byte("test"))
 		assert.NoError(t, err)
 
-		idx, err := NewUniqueIndex(b, "uindex1")
+		idx, err := NewUniqueIndex(b, []byte("uindex1"))
 		assert.NoError(t, err)
 
 		err = idx.Add([]byte("hello"), []byte("id1"))
@@ -35,7 +35,7 @@ func TestUniqueIndex(t *testing.T) {
 
 		err = idx.Add(nil, []byte("id2"))
 		assert.Error(t, err)
-		assert.Equal(t, bolt.ErrKeyRequired, err)
+		assert.Equal(t, ErrNilParam, err)
 
 		err = idx.Add([]byte("hi"), nil)
 		assert.Error(t, err)
@@ -74,6 +74,101 @@ func TestUniqueIndex(t *testing.T) {
 		assert.Nil(t, id)
 		id = idx.Get([]byte("yo"))
 		assert.Equal(t, []byte("id3"), id)
+
+		err = idx.RemoveID([]byte("id2"))
+		assert.NoError(t, err)
+		err = idx.RemoveID([]byte("id4"))
+		assert.NoError(t, err)
+		return nil
+	})
+
+	assert.NoError(t, err)
+}
+
+func TestListIndex(t *testing.T) {
+	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
+	defer os.RemoveAll(dir)
+	db, _ := Open(filepath.Join(dir, "storm.db"))
+	defer db.Close()
+
+	err := db.Bolt.Update(func(tx *bolt.Tx) error {
+		b, err := tx.CreateBucket([]byte("test"))
+		assert.NoError(t, err)
+
+		idx, err := NewListIndex(b, []byte("lindex1"))
+		assert.NoError(t, err)
+
+		err = idx.Add([]byte("hello"), []byte("id1"))
+		assert.NoError(t, err)
+
+		err = idx.Add([]byte("hello"), []byte("id1"))
+		assert.NoError(t, err)
+
+		err = idx.Add([]byte("hello"), []byte("id2"))
+		assert.NoError(t, err)
+
+		err = idx.Add([]byte("goodbye"), []byte("id2"))
+		assert.NoError(t, err)
+
+		err = idx.Add(nil, []byte("id2"))
+		assert.Error(t, err)
+		assert.Equal(t, ErrNilParam, err)
+
+		err = idx.Add([]byte("hi"), nil)
+		assert.Error(t, err)
+		assert.Equal(t, ErrNilParam, err)
+
+		ids, err := idx.Get([]byte("hello"))
+		assert.Len(t, ids, 1)
+		assert.Equal(t, []byte("id1"), ids[0])
+
+		ids, err = idx.Get([]byte("goodbye"))
+		assert.Len(t, ids, 1)
+		assert.Equal(t, []byte("id2"), ids[0])
+
+		ids, err = idx.Get([]byte("yo"))
+		assert.Nil(t, ids)
+
+		err = idx.RemoveID([]byte("id2"))
+		assert.NoError(t, err)
+
+		ids, err = idx.Get([]byte("goodbye"))
+		assert.Len(t, ids, 0)
+
+		err = idx.RemoveID(nil)
+		assert.NoError(t, err)
+
+		err = idx.RemoveID([]byte("id1"))
+		assert.NoError(t, err)
+		err = idx.RemoveID([]byte("id2"))
+		assert.NoError(t, err)
+		err = idx.RemoveID([]byte("id3"))
+		assert.NoError(t, err)
+
+		ids, err = idx.Get([]byte("hello"))
+		assert.NoError(t, err)
+		assert.Nil(t, ids)
+
+		err = idx.Add([]byte("hello"), []byte("id1"))
+		assert.NoError(t, err)
+
+		err = idx.Add([]byte("hi"), []byte("id2"))
+		assert.NoError(t, err)
+
+		err = idx.Add([]byte("yo"), []byte("id3"))
+		assert.NoError(t, err)
+
+		err = idx.RemoveID([]byte("id2"))
+		assert.NoError(t, err)
+
+		ids, err = idx.Get([]byte("hello"))
+		assert.Len(t, ids, 1)
+		assert.Equal(t, []byte("id1"), ids[0])
+		ids, err = idx.Get([]byte("hi"))
+		assert.Len(t, ids, 0)
+		ids, err = idx.Get([]byte("yo"))
+		assert.Len(t, ids, 1)
+		assert.Equal(t, []byte("id3"), ids[0])
 
 		err = idx.RemoveID([]byte("id2"))
 		assert.NoError(t, err)
