@@ -2,7 +2,6 @@ package storm
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"reflect"
 
@@ -11,27 +10,27 @@ import (
 )
 
 // One returns one record by the specified index
-func (s *DB) One(index string, value interface{}, to interface{}) error {
+func (s *DB) One(fieldName string, value interface{}, to interface{}) error {
 	ref := reflect.ValueOf(to)
 
 	if !ref.IsValid() || (ref.Kind() != reflect.Ptr && structs.IsStruct(to)) {
-		return errors.New("provided target must be a pointer to struct")
+		return ErrStructPtrNeeded
 	}
 
-	if index == "" {
-		return errors.New("not found")
+	if fieldName == "" {
+		return ErrNotFound
 	}
 
 	d := structs.New(to)
 	bucketName := d.Name()
 	if bucketName == "" {
-		return errors.New("provided target must have a name")
+		return ErrNoName
 	}
 
-	field := d.Field(index)
+	field := d.Field(fieldName)
 	tag := field.Tag("storm")
 	if tag == "" {
-		return fmt.Errorf("index %s doesn't exist", index)
+		return fmt.Errorf("index %s doesn't exist", fieldName)
 	}
 
 	return s.Bolt.View(func(tx *bolt.Tx) error {
@@ -40,9 +39,22 @@ func (s *DB) One(index string, value interface{}, to interface{}) error {
 			return fmt.Errorf("bucket %s doesn't exist", bucketName)
 		}
 
-		idx := bucket.Bucket([]byte(index))
-		if idx == nil {
-			return fmt.Errorf("index %s doesn't exist", index)
+		var idx Index
+		var err error
+		switch tag {
+		case "unique":
+			idx, err = NewUniqueIndex(bucket, []byte(fieldName))
+		case "index":
+			idx, err = NewListIndex(bucket, []byte(fieldName))
+		default:
+			err = ErrBadIndexType
+		}
+
+		if err != nil {
+			if err == ErrIndexNotFound {
+				return ErrNotFound
+			}
+			return err
 		}
 
 		val, err := toBytes(value)
@@ -50,34 +62,14 @@ func (s *DB) One(index string, value interface{}, to interface{}) error {
 			return err
 		}
 
-		raw := idx.Get(val)
-		if raw == nil {
-			return errors.New("not found")
+		id := idx.Get(val)
+		if id == nil {
+			return ErrNotFound
 		}
 
-		var id []byte
-
-		if tag == "unique" {
-			id = raw
-		} else if tag == "index" {
-			var list [][]byte
-
-			err = json.Unmarshal(raw, &list)
-			if err != nil {
-				return err
-			}
-
-			if list == nil || len(list) == 0 {
-				return errors.New("not found")
-			}
-			id = list[0]
-		} else {
-			return fmt.Errorf("unsupported struct tag %s", tag)
-		}
-
-		raw = bucket.Get(id)
+		raw := bucket.Get(id)
 		if raw == nil {
-			return errors.New("not found")
+			return ErrNotFound
 		}
 
 		return json.Unmarshal(raw, to)

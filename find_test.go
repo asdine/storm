@@ -23,7 +23,7 @@ func TestFind(t *testing.T) {
 
 	err := db.Find("Name", "John", &User{})
 	assert.Error(t, err)
-	assert.EqualError(t, err, "provided target must be a pointer to a slice")
+	assert.Equal(t, ErrSlicePtrNeeded, err)
 
 	err = db.Find("Name", "John", &[]struct {
 		Name string

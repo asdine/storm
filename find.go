@@ -14,7 +14,7 @@ func (s *DB) Find(fieldName string, value interface{}, to interface{}) error {
 	ref := reflect.ValueOf(to)
 
 	if ref.Kind() != reflect.Ptr || reflect.Indirect(ref).Kind() != reflect.Slice {
-		return ErrBadTarget
+		return ErrSlicePtrNeeded
 	}
 
 	typ := reflect.Indirect(ref).Type().Elem()
