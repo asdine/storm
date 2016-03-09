@@ -1,10 +1,6 @@
 package storm
 
-import (
-	"errors"
-
-	"github.com/boltdb/bolt"
-)
+import "github.com/boltdb/bolt"
 
 // Delete deletes a key from a bucket
 func (s *DB) Delete(bucketName string, key interface{}) error {
@@ -16,7 +12,7 @@ func (s *DB) Delete(bucketName string, key interface{}) error {
 	return s.Bolt.Update(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket([]byte(bucketName))
 		if bucket == nil {
-			return errors.New("bucket not found")
+			return ErrNotFound
 		}
 
 		return bucket.Delete(id)

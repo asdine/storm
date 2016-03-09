@@ -2,7 +2,6 @@ package storm
 
 import (
 	"encoding/json"
-	"errors"
 	"reflect"
 
 	"github.com/boltdb/bolt"
@@ -13,7 +12,7 @@ func (s *DB) Get(bucketName string, key interface{}, to interface{}) error {
 	ref := reflect.ValueOf(to)
 
 	if !ref.IsValid() || ref.Kind() != reflect.Ptr {
-		return errors.New("provided target must be a pointer to a valid variable")
+		return ErrPtrNeeded
 	}
 
 	id, err := toBytes(key)
@@ -24,12 +23,12 @@ func (s *DB) Get(bucketName string, key interface{}, to interface{}) error {
 	return s.Bolt.View(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket([]byte(bucketName))
 		if bucket == nil {
-			return errors.New("not found")
+			return ErrNotFound
 		}
 
 		raw := bucket.Get(id)
 		if raw == nil {
-			return errors.New("not found")
+			return ErrNotFound
 		}
 
 		return json.Unmarshal(raw, to)

@@ -12,6 +12,7 @@ var (
 	ErrBadIndexType    = errors.New("bad index type")
 	ErrSlicePtrNeeded  = errors.New("provided target must be a pointer to slice")
 	ErrStructPtrNeeded = errors.New("provided target must be a pointer to struct")
+	ErrPtrNeeded       = errors.New("provided target must be a pointer to a valid variable")
 	ErrNoName          = errors.New("provided target must have a name")
 	ErrIndexNotFound   = errors.New("index not found")
 	ErrNotFound        = errors.New("not found")

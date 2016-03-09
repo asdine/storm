@@ -2,7 +2,6 @@ package storm
 
 import (
 	"encoding/json"
-	"errors"
 
 	"github.com/boltdb/bolt"
 )
@@ -10,7 +9,7 @@ import (
 // Set a key/value pair into a bucket
 func (s *DB) Set(bucketName string, key interface{}, value interface{}) error {
 	if key == nil {
-		return errors.New("key must not be nil")
+		return ErrNilParam
 	}
 
 	id, err := toBytes(key)
