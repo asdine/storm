@@ -41,9 +41,9 @@ func (s *DB) Remove(data interface{}) error {
 		for fieldName, idxInfo := range info.Indexes {
 			switch idxInfo.Type {
 			case "unique":
-				idx, err = NewUniqueIndex(bucket, []byte(fieldName))
+				idx, err = NewUniqueIndex(bucket, []byte(indexPrefix+fieldName))
 			case "index":
-				idx, err = NewListIndex(bucket, []byte(fieldName))
+				idx, err = NewListIndex(bucket, []byte(indexPrefix+fieldName))
 			default:
 				err = ErrBadIndexType
 			}

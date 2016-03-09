@@ -218,7 +218,7 @@ func (idx *ListIndex) RemoveID(targetID []byte) error {
 		}
 	}
 
-	return nil
+	return idx.IDs.Remove(targetID)
 }
 
 // Get the first ID corresponding to the given value
