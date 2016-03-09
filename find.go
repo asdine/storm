@@ -2,7 +2,6 @@ package storm
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"reflect"
 
@@ -11,11 +10,11 @@ import (
 )
 
 // Find returns one or more records by the specified index
-func (s *DB) Find(index string, value interface{}, to interface{}) error {
+func (s *DB) Find(fieldName string, value interface{}, to interface{}) error {
 	ref := reflect.ValueOf(to)
 
 	if ref.Kind() != reflect.Ptr || reflect.Indirect(ref).Kind() != reflect.Slice {
-		return errors.New("provided target must be a pointer to a slice")
+		return ErrBadTarget
 	}
 
 	typ := reflect.Indirect(ref).Type().Elem()
@@ -24,17 +23,17 @@ func (s *DB) Find(index string, value interface{}, to interface{}) error {
 	d := structs.New(newElem.Interface())
 	bucketName := d.Name()
 	if bucketName == "" {
-		return errors.New("provided target must have a name")
+		return ErrNoName
 	}
 
-	field, ok := d.FieldOk(index)
+	field, ok := d.FieldOk(fieldName)
 	if !ok {
-		return fmt.Errorf("field %s not found", index)
+		return fmt.Errorf("field %s not found", fieldName)
 	}
 
 	tag := field.Tag("storm")
 	if tag == "" {
-		return fmt.Errorf("index %s not found", index)
+		return fmt.Errorf("index %s not found", fieldName)
 	}
 
 	return s.Bolt.View(func(tx *bolt.Tx) error {
@@ -43,9 +42,22 @@ func (s *DB) Find(index string, value interface{}, to interface{}) error {
 			return fmt.Errorf("bucket %s not found", bucketName)
 		}
 
-		idx := bucket.Bucket([]byte(index))
-		if idx == nil {
-			return fmt.Errorf("index %s not found", index)
+		var idx Index
+		var err error
+		switch tag {
+		case "unique":
+			idx, err = NewUniqueIndex(bucket, []byte(fieldName))
+		case "index":
+			idx, err = NewListIndex(bucket, []byte(fieldName))
+		default:
+			err = ErrBadIndexType
+		}
+
+		if err != nil {
+			if err == ErrIndexNotFound {
+				return ErrNotFound
+			}
+			return err
 		}
 
 		val, err := toBytes(value)
@@ -53,34 +65,20 @@ func (s *DB) Find(index string, value interface{}, to interface{}) error {
 			return err
 		}
 
-		raw := idx.Get(val)
-		if raw == nil {
-			return errors.New("not found")
-		}
-
-		var list [][]byte
-
-		if tag == "unique" {
-			list = append(list, raw)
-		} else if tag == "index" {
-			err = json.Unmarshal(raw, &list)
-			if err != nil {
-				return err
+		list, err := idx.All(val)
+		if err != nil {
+			if err == ErrIndexNotFound {
+				return ErrNotFound
 			}
-
-			if list == nil || len(list) == 0 {
-				return errors.New("not found")
-			}
-		} else {
-			return fmt.Errorf("unsupported struct tag %s", tag)
+			return err
 		}
 
 		results := reflect.MakeSlice(reflect.Indirect(ref).Type(), len(list), len(list))
 
 		for i := range list {
-			raw = bucket.Get(list[i])
+			raw := bucket.Get(list[i])
 			if raw == nil {
-				return errors.New("not found")
+				return ErrNotFound
 			}
 
 			err = json.Unmarshal(raw, results.Index(i).Addr().Interface())

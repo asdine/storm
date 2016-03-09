@@ -13,69 +13,58 @@ func (s *DB) Save(data interface{}) error {
 		return ErrBadType
 	}
 
-	t, err := extractTags(data)
+	info, err := extract(data)
 	if err != nil {
 		return err
 	}
 
-	if t.ZeroID {
-		return ErrZeroID
-	}
-
-	if t.ID == nil {
+	if info.ID == nil {
 		return ErrNoID
 	}
 
-	id, err := toBytes(t.ID)
+	if info.ID.IsZero() {
+		return ErrZeroID
+	}
+
+	id, err := toBytes(info.ID.Value())
 	if err != nil {
 		return err
 	}
 
 	err = s.Bolt.Update(func(tx *bolt.Tx) error {
-		bucket, err := tx.CreateBucketIfNotExists([]byte(t.Name))
+		bucket, err := tx.CreateBucketIfNotExists([]byte(info.Name))
 		if err != nil {
 			return err
 		}
 
-		if len(t.Uniques) > 0 {
-			err = s.deleteOldIndexes(bucket, id, t.Uniques, true)
+		var idx Index
+		for fieldName, idxInfo := range info.Indexes {
+			switch idxInfo.Type {
+			case "unique":
+				idx, err = NewUniqueIndex(bucket, []byte(fieldName))
+			case "index":
+				idx, err = NewListIndex(bucket, []byte(fieldName))
+			default:
+				err = ErrBadIndexType
+			}
+
 			if err != nil {
 				return err
 			}
-		}
 
-		if len(t.Indexes) > 0 {
-			err = s.deleteOldIndexes(bucket, id, t.Indexes, false)
+			err = idx.RemoveID(id)
 			if err != nil {
 				return err
 			}
-		}
 
-		if t.Uniques != nil {
-			for _, field := range t.Uniques {
-				key, err := toBytes(field.Value())
-				if err != nil {
-					return err
-				}
-
-				err = s.addToUniqueIndex([]byte(field.Name()), id, key, bucket)
-				if err != nil {
-					return err
-				}
+			value, err := toBytes(idxInfo.Field.Value())
+			if err != nil {
+				return err
 			}
-		}
 
-		if t.Indexes != nil {
-			for _, field := range t.Indexes {
-				key, err := toBytes(field.Value())
-				if err != nil {
-					return err
-				}
-
-				err = s.addToListIndex([]byte(field.Name()), id, key, bucket)
-				if err != nil {
-					return err
-				}
+			err = idx.Add(value, id)
+			if err != nil {
+				return err
 			}
 		}
 

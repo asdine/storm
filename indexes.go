@@ -22,9 +22,16 @@ type Index interface {
 
 // NewUniqueIndex loads a UniqueIndex
 func NewUniqueIndex(parent *bolt.Bucket, indexName []byte) (*UniqueIndex, error) {
-	b, err := parent.CreateBucketIfNotExists(indexName)
-	if err != nil {
-		return nil, err
+	var err error
+	b := parent.Bucket(indexName)
+	if b == nil {
+		if !parent.Writable() {
+			return nil, ErrIndexNotFound
+		}
+		b, err = parent.CreateBucket(indexName)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &UniqueIndex{
@@ -115,9 +122,16 @@ func (idx *UniqueIndex) first() []byte {
 
 // NewListIndex loads a ListIndex
 func NewListIndex(parent *bolt.Bucket, indexName []byte) (*ListIndex, error) {
-	b, err := parent.CreateBucketIfNotExists(indexName)
-	if err != nil {
-		return nil, err
+	var err error
+	b := parent.Bucket(indexName)
+	if b == nil {
+		if !parent.Writable() {
+			return nil, ErrIndexNotFound
+		}
+		b, err = parent.CreateBucket(indexName)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	ids, err := NewUniqueIndex(b, []byte("storm__ids"))

@@ -17,6 +17,7 @@ func TestSave(t *testing.T) {
 	db, _ := Open(filepath.Join(dir, "storm.db"))
 
 	err := db.Save(&SimpleUser{ID: 10, Name: "John"})
+	assert.NoError(t, err)
 
 	err = db.Save(&SimpleUser{Name: "John"})
 	assert.Error(t, err)
@@ -117,32 +118,6 @@ func TestSaveIndex(t *testing.T) {
 	err = db.Save(&u2)
 	assert.NoError(t, err)
 
-	db.Bolt.View(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket([]byte("IndexedNameUser"))
-
-		listBucket := bucket.Bucket([]byte("Name"))
-		assert.NotNil(t, listBucket)
-
-		raw := listBucket.Get([]byte("John"))
-		assert.NotNil(t, raw)
-
-		var list [][]byte
-
-		err = json.Unmarshal(raw, &list)
-		assert.NoError(t, err)
-		assert.Len(t, list, 2)
-
-		id1, err := toBytes(u1.ID)
-		assert.NoError(t, err)
-		id2, err := toBytes(u2.ID)
-		assert.NoError(t, err)
-
-		assert.Equal(t, id1, list[0])
-		assert.Equal(t, id2, list[1])
-
-		return nil
-	})
-
 	name1 := "Jake"
 	name2 := "Jane"
 	name3 := "James"
@@ -170,7 +145,7 @@ func TestSaveIndex(t *testing.T) {
 
 	err = db.Find("Name", name3, &users)
 	assert.Error(t, err)
-	assert.EqualError(t, err, "not found")
+	assert.Equal(t, ErrNotFound, err)
 
 	err = db.Save(nil)
 	assert.Error(t, err)
