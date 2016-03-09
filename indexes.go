@@ -18,6 +18,7 @@ type Index interface {
 	RemoveID(id []byte) error
 	Get(value []byte) []byte
 	All(value []byte) ([][]byte, error)
+	AllRecords() ([][]byte, error)
 }
 
 // NewUniqueIndex loads a UniqueIndex
@@ -98,8 +99,8 @@ func (idx *UniqueIndex) All(value []byte) ([][]byte, error) {
 	return nil, nil
 }
 
-// allRecords returns all the IDs of this index
-func (idx *UniqueIndex) allRecords() [][]byte {
+// AllRecords returns all the IDs of this index
+func (idx *UniqueIndex) AllRecords() ([][]byte, error) {
 	c := idx.IndexBucket.Cursor()
 
 	var list [][]byte
@@ -107,7 +108,7 @@ func (idx *UniqueIndex) allRecords() [][]byte {
 	for val, ident := c.First(); val != nil; val, ident = c.Next() {
 		list = append(list, ident)
 	}
-	return list
+	return list, nil
 }
 
 // first returns the first ID of this index
@@ -240,7 +241,33 @@ func (idx *ListIndex) All(value []byte) ([][]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return uni.allRecords(), nil
+	return uni.AllRecords()
+}
+
+// AllRecords returns all the IDs of this index
+func (idx *ListIndex) AllRecords() ([][]byte, error) {
+	c := idx.IndexBucket.Cursor()
+
+	var list [][]byte
+
+	for bucketName, val := c.First(); bucketName != nil; bucketName, val = c.Next() {
+		if val != nil || bytes.Equal(bucketName, []byte("storm__ids")) {
+			continue
+		}
+
+		uni, err := NewUniqueIndex(idx.IndexBucket, bucketName)
+		if err != nil {
+			return nil, err
+		}
+
+		all, err := uni.AllRecords()
+		if err != nil {
+			return nil, err
+		}
+		list = append(list, all...)
+	}
+
+	return list, nil
 }
 
 func (s *DB) addToUniqueIndex(index []byte, id []byte, key []byte, parent *bolt.Bucket) error {

@@ -24,7 +24,7 @@ func TestAllByIndex(t *testing.T) {
 
 	err := db.AllByIndex("", nil)
 	assert.Error(t, err)
-	assert.EqualError(t, err, "provided target must be a pointer to a slice")
+	assert.Equal(t, ErrSlicePtrNeeded, err)
 
 	var users []User
 
