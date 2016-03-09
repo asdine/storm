@@ -21,27 +21,33 @@ func (s *DB) One(fieldName string, value interface{}, to interface{}) error {
 		return ErrNotFound
 	}
 
-	d := structs.New(to)
-	bucketName := d.Name()
-	if bucketName == "" {
+	info, err := extract(to)
+	if err != nil {
+		return err
+	}
+
+	if info.ID == nil {
+		return ErrNoID
+	}
+
+	if info.Name == "" {
 		return ErrNoName
 	}
 
-	field := d.Field(fieldName)
-	tag := field.Tag("storm")
-	if tag == "" {
-		return fmt.Errorf("index %s doesn't exist", fieldName)
+	idxInfo, ok := info.Indexes[fieldName]
+	if !ok {
+		return ErrNotFound
 	}
 
 	return s.Bolt.View(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket([]byte(bucketName))
+		bucket := tx.Bucket([]byte(info.Name))
 		if bucket == nil {
-			return fmt.Errorf("bucket %s doesn't exist", bucketName)
+			return fmt.Errorf("bucket %s doesn't exist", info.Name)
 		}
 
 		var idx Index
 		var err error
-		switch tag {
+		switch idxInfo.Type {
 		case "unique":
 			idx, err = NewUniqueIndex(bucket, []byte(indexPrefix+fieldName))
 		case "index":

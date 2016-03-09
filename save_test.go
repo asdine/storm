@@ -59,12 +59,6 @@ func TestSave(t *testing.T) {
 	})
 }
 
-type UniqueNameUser struct {
-	ID   int    `storm:"id"`
-	Name string `storm:"unique"`
-	age  int
-}
-
 func TestSaveUnique(t *testing.T) {
 	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
 	defer os.RemoveAll(dir)

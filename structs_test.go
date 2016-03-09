@@ -103,3 +103,9 @@ type IndexedNameUser struct {
 	DateOfBirth time.Time `storm:"index"`
 	Group       string
 }
+
+type UniqueNameUser struct {
+	ID   int    `storm:"id"`
+	Name string `storm:"unique"`
+	age  int
+}

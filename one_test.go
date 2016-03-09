@@ -52,4 +52,25 @@ func TestOne(t *testing.T) {
 	err = db.One("", nil, nil)
 	assert.Error(t, err)
 	assert.EqualError(t, err, "provided target must be a pointer to struct")
+
+	y := UniqueNameUser{Name: "Jake", ID: 200}
+	err = db.Save(&y)
+	assert.NoError(t, err)
+
+	var y2 UniqueNameUser
+	err = db.One("ID", 200, &y2)
+	assert.NoError(t, err)
+	assert.Equal(t, y, y2)
+
+	n := NestedID{}
+	n.ID = "100"
+	n.Name = "John"
+
+	err = db.Save(&n)
+	assert.NoError(t, err)
+
+	var n2 NestedID
+	err = db.One("ID", "100", &n2)
+	assert.NoError(t, err)
+	assert.Equal(t, n, n2)
 }

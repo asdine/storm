@@ -6,7 +6,6 @@ import (
 	"reflect"
 
 	"github.com/boltdb/bolt"
-	"github.com/fatih/structs"
 )
 
 // AllByIndex gets all the records of a bucket that are indexed in the specified index
@@ -20,46 +19,37 @@ func (s *DB) AllByIndex(fieldName string, to interface{}) error {
 	typ := reflect.Indirect(ref).Type().Elem()
 	newElem := reflect.New(typ)
 
-	d := structs.New(newElem.Interface())
-	bucketName := d.Name()
-	if bucketName == "" {
+	info, err := extract(newElem.Interface())
+	if err != nil {
+		return err
+	}
+
+	if info.ID == nil {
+		return ErrNoID
+	}
+
+	if info.Name == "" {
 		return ErrNoName
 	}
 
-	var tag string
 	if fieldName == "" {
-		info, err := extract(newElem.Interface())
-		if err != nil {
-			return err
-		}
-
-		if info.ID == nil {
-			return ErrNoID
-		}
-
 		fieldName = info.ID.Name()
-		tag = "unique"
-	} else {
-		field, ok := d.FieldOk(fieldName)
-		if !ok {
-			return fmt.Errorf("field %s not found", fieldName)
-		}
+	}
 
-		tag = field.Tag("storm")
-		if tag == "" {
-			return fmt.Errorf("index %s not found", fieldName)
-		}
+	idxInfo, ok := info.Indexes[fieldName]
+	if !ok {
+		return ErrNotFound
 	}
 
 	return s.Bolt.View(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket([]byte(bucketName))
+		bucket := tx.Bucket([]byte(info.Name))
 		if bucket == nil {
-			return fmt.Errorf("bucket %s not found", bucketName)
+			return fmt.Errorf("bucket %s not found", info.Name)
 		}
 
 		var idx Index
 		var err error
-		switch tag {
+		switch idxInfo.Type {
 		case "unique":
 			idx, err = NewUniqueIndex(bucket, []byte(indexPrefix+fieldName))
 		case "index":

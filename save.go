@@ -28,6 +28,10 @@ func (s *DB) Save(data interface{}) error {
 		return ErrZeroID
 	}
 
+	if info.Name == "" {
+		return ErrNoName
+	}
+
 	id, err := toBytes(info.ID.Value())
 	if err != nil {
 		return err

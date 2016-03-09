@@ -73,4 +73,25 @@ func TestAllByIndex(t *testing.T) {
 	err = db.All(&nested)
 	assert.NoError(t, err)
 	assert.Len(t, nested, 3)
+
+	y := UniqueNameUser{Name: "Jake", ID: 200}
+	err = db.Save(&y)
+	assert.NoError(t, err)
+
+	var y2 []UniqueNameUser
+	err = db.AllByIndex("ID", &y2)
+	assert.NoError(t, err)
+	assert.Len(t, y2, 1)
+
+	n := NestedID{}
+	n.ID = "100"
+	n.Name = "John"
+
+	err = db.Save(&n)
+	assert.NoError(t, err)
+
+	var n2 []NestedID
+	err = db.AllByIndex("ID", &n2)
+	assert.NoError(t, err)
+	assert.Len(t, n2, 4)
 }
