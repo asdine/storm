@@ -87,7 +87,7 @@ func TestSaveUnique(t *testing.T) {
 	db.Bolt.View(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket([]byte("UniqueNameUser"))
 
-		uniqueBucket := bucket.Bucket([]byte("Name"))
+		uniqueBucket := bucket.Bucket([]byte(indexPrefix + "Name"))
 		assert.NotNil(t, uniqueBucket)
 
 		id := uniqueBucket.Get([]byte("Jake"))

@@ -1,7 +1,6 @@
 package storm
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/boltdb/bolt"
@@ -11,41 +10,49 @@ import (
 // Remove removes a structure from the associated bucket
 func (s *DB) Remove(data interface{}) error {
 	if !structs.IsStruct(data) {
-		return errors.New("provided data must be a struct or a pointer to struct")
+		return ErrBadType
 	}
 
-	t, err := extractTags(data)
+	info, err := extract(data)
 	if err != nil {
 		return err
 	}
 
-	if t.ID == nil {
-		if t.IDField == nil {
-			return errors.New("missing struct tag id")
-		}
-		t.ID = t.IDField
+	if info.ID == nil {
+		return ErrNoID
 	}
 
-	id, err := toBytes(t.ID)
+	if info.ID.IsZero() {
+		return ErrZeroID
+	}
+
+	id, err := toBytes(info.ID.Value())
 	if err != nil {
 		return err
 	}
 
 	return s.Bolt.Update(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket([]byte(t.Name))
+		bucket := tx.Bucket([]byte(info.Name))
 		if bucket == nil {
-			return fmt.Errorf("bucket %s doesn't exist", t.Name)
+			return fmt.Errorf("bucket %s doesn't exist", info.Name)
 		}
 
-		if len(t.Uniques) > 0 {
-			err = s.deleteOldIndexes(bucket, id, t.Uniques, true)
+		var idx Index
+		for fieldName, idxInfo := range info.Indexes {
+			switch idxInfo.Type {
+			case "unique":
+				idx, err = NewUniqueIndex(bucket, []byte(fieldName))
+			case "index":
+				idx, err = NewListIndex(bucket, []byte(fieldName))
+			default:
+				err = ErrBadIndexType
+			}
+
 			if err != nil {
 				return err
 			}
-		}
 
-		if len(t.Indexes) > 0 {
-			err = s.deleteOldIndexes(bucket, id, t.Indexes, false)
+			err = idx.RemoveID(id)
 			if err != nil {
 				return err
 			}
@@ -53,7 +60,7 @@ func (s *DB) Remove(data interface{}) error {
 
 		raw := bucket.Get(id)
 		if raw == nil {
-			return errors.New("not found")
+			return ErrNotFound
 		}
 
 		return bucket.Delete(id)

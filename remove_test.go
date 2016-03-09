@@ -29,5 +29,5 @@ func TestRemove(t *testing.T) {
 	assert.EqualError(t, err, "not found")
 
 	err = db.Remove(nil)
-	assert.EqualError(t, err, "provided data must be a struct or a pointer to struct")
+	assert.Equal(t, ErrBadType, err)
 }

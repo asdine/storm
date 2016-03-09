@@ -7,6 +7,8 @@ import (
 	"github.com/fatih/structs"
 )
 
+const indexPrefix = "__storm_index_"
+
 // Save a structure
 func (s *DB) Save(data interface{}) error {
 	if !structs.IsStruct(data) {
@@ -41,9 +43,9 @@ func (s *DB) Save(data interface{}) error {
 		for fieldName, idxInfo := range info.Indexes {
 			switch idxInfo.Type {
 			case "unique":
-				idx, err = NewUniqueIndex(bucket, []byte(fieldName))
+				idx, err = NewUniqueIndex(bucket, []byte(indexPrefix+fieldName))
 			case "index":
-				idx, err = NewListIndex(bucket, []byte(fieldName))
+				idx, err = NewListIndex(bucket, []byte(indexPrefix+fieldName))
 			default:
 				err = ErrBadIndexType
 			}

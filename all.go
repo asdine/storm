@@ -61,9 +61,9 @@ func (s *DB) AllByIndex(fieldName string, to interface{}) error {
 		var err error
 		switch tag {
 		case "unique":
-			idx, err = NewUniqueIndex(bucket, []byte(fieldName))
+			idx, err = NewUniqueIndex(bucket, []byte(indexPrefix+fieldName))
 		case "index":
-			idx, err = NewListIndex(bucket, []byte(fieldName))
+			idx, err = NewListIndex(bucket, []byte(indexPrefix+fieldName))
 		default:
 			err = ErrBadIndexType
 		}
