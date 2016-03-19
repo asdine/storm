@@ -4,7 +4,7 @@
 [![GoDoc](https://godoc.org/github.com/asdine/storm?status.svg)](https://godoc.org/github.com/asdine/storm)
 ![License MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=flat)
 
-Storm is a wrapper and simple ORM around BoltDB. The goal of this project is to provide a simple way to save any object in BoltDB and to easily retrieve it.
+Storm is a wrapper and simple ORM around [BoltDB](https://github.com/boltdb/bolt). The goal of this project is to provide a simple way to save any object in BoltDB and to easily retrieve it.
 
 ## Getting Started
 
@@ -162,9 +162,18 @@ err := db.AllByIndex("CreatedAt", &users)
 ```
 
 ### Remove an object
+
 ```go
 err := db.Remove(&user)
 ```
+
+### Initialize buckets and indexes before saving an object
+
+```go
+err := db.Init(&User{})
+```
+
+Useful when starting your application
 
 ## BoltDB
 
@@ -183,7 +192,6 @@ db.Bolt.View(func(tx *bolt.Tx) error {
 
 - Improve documentation / comments
 - Btree indexes and more
-- Better errors
 - Order
 - Limit
 - Offset
