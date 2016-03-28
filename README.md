@@ -33,38 +33,6 @@ You can change this behavior by using `OpenWithOptions`
 db, err := storm.OpenWithOptions("my.db", 0600, &bolt.Options{Timeout: 1 * time.Second})
 ```
 
-## Simple Key/Value store
-
-Storm can be used as a simple, robust, key/value store that can store anything.
-The key and the value can be of any type as long as the key is not a zero value.
-
-Saving data :
-```go
-db.Set("logs", time.Now(), "I'm eating my breakfast man")
-db.Set("sessions", bson.NewObjectId(), &someUser)
-db.Set("weird storage", "754-3010", map[string]interface{}{
-  "hair": "blonde",
-  "likes": []string{"cheese", "star wars"},
-})
-```
-
-Fetching data :
-```go
-user := User{}
-db.Get("sessions", someObjectId, &user)
-
-var details map[string]interface{}
-db.Get("weird storage", "754-3010", &details)
-
-db.Get("sessions", someObjectId, &details)
-```
-
-Deleting data :
-```go
-db.Delete("sessions", someObjectId)
-db.Delete("weird storage", "754-3010")
-```
-
 ## Simple ORM
 
 ### Declare your structures
@@ -175,6 +143,38 @@ err := db.Init(&User{})
 
 Useful when starting your application
 
+## Simple Key/Value store
+
+Storm can be used as a simple, robust, key/value store that can store anything.
+The key and the value can be of any type as long as the key is not a zero value.
+
+Saving data :
+```go
+db.Set("logs", time.Now(), "I'm eating my breakfast man")
+db.Set("sessions", bson.NewObjectId(), &someUser)
+db.Set("weird storage", "754-3010", map[string]interface{}{
+  "hair": "blonde",
+  "likes": []string{"cheese", "star wars"},
+})
+```
+
+Fetching data :
+```go
+user := User{}
+db.Get("sessions", someObjectId, &user)
+
+var details map[string]interface{}
+db.Get("weird storage", "754-3010", &details)
+
+db.Get("sessions", someObjectId, &details)
+```
+
+Deleting data :
+```go
+db.Delete("sessions", someObjectId)
+db.Delete("weird storage", "754-3010")
+```
+
 ## BoltDB
 
 BoltDB is still easily accessible and can be used as usual
@@ -195,8 +195,6 @@ db.Bolt.View(func(tx *bolt.Tx) error {
 - Order
 - Limit
 - Offset
-- Create time tags
-- Update time tags
 
 ## License
 
