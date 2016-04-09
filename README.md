@@ -87,6 +87,7 @@ user := User{
 err := db.Save(&user)
 // err == nil
 
+user.ID++
 err = db.Save(&user)
 // err == "already exists"
 ```
