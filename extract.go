@@ -97,5 +97,13 @@ func extract(data interface{}, mi ...*modelInfo) (*modelInfo, error) {
 		m.AddIndex(m.ID, tagUniqueIdx, !child)
 	}
 
+	if m.ID == nil {
+		return nil, ErrNoID
+	}
+
+	if m.Name == "" {
+		return nil, ErrNoName
+	}
+
 	return m, nil
 }

@@ -24,14 +24,6 @@ func (s *DB) AllByIndex(fieldName string, to interface{}) error {
 		return err
 	}
 
-	if info.ID == nil {
-		return ErrNoID
-	}
-
-	if info.Name == "" {
-		return ErrNoName
-	}
-
 	if fieldName == "" {
 		fieldName = info.ID.Name()
 	}

@@ -16,14 +16,6 @@ func (s *DB) Init(data interface{}) error {
 		return err
 	}
 
-	if info.ID == nil {
-		return ErrNoID
-	}
-
-	if info.Name == "" {
-		return ErrNoName
-	}
-
 	err = s.Bolt.Update(func(tx *bolt.Tx) error {
 		bucket, err := tx.CreateBucketIfNotExists([]byte(info.Name))
 		if err != nil {

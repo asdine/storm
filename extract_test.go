@@ -8,12 +8,9 @@ import (
 
 func TestExtractNoTags(t *testing.T) {
 	s := ClassicNoTags{}
-	infos, err := extract(&s)
-	assert.NoError(t, err)
-	assert.NotNil(t, infos)
-	assert.Nil(t, infos.ID)
-	assert.Equal(t, "ClassicNoTags", infos.Name)
-	assert.Len(t, infos.AllByType("index"), 0)
+	_, err := extract(&s)
+	assert.Error(t, err)
+	assert.Equal(t, ErrNoID, err)
 }
 
 func TestExtractBadTags(t *testing.T) {
@@ -25,25 +22,27 @@ func TestExtractBadTags(t *testing.T) {
 }
 
 func TestExtractUniqueTags(t *testing.T) {
-	s := ClassicUnique{}
+	s := ClassicUnique{ID: "id"}
 	infos, err := extract(&s)
 	assert.NoError(t, err)
 	assert.NotNil(t, infos)
-	assert.Nil(t, infos.ID)
+	assert.NotNil(t, infos.ID)
+	assert.False(t, infos.ID.IsZero())
 	assert.Equal(t, "ClassicUnique", infos.Name)
 	assert.Len(t, infos.AllByType("index"), 0)
-	assert.Len(t, infos.AllByType("unique"), 4)
+	assert.Len(t, infos.AllByType("unique"), 5)
 }
 
 func TestExtractIndexTags(t *testing.T) {
-	s := ClassicIndex{}
+	s := ClassicIndex{ID: "id"}
 	infos, err := extract(&s)
 	assert.NoError(t, err)
 	assert.NotNil(t, infos)
-	assert.Nil(t, infos.ID)
+	assert.NotNil(t, infos.ID)
+	assert.False(t, infos.ID.IsZero())
 	assert.Equal(t, "ClassicIndex", infos.Name)
 	assert.Len(t, infos.AllByType("index"), 5)
-	assert.Len(t, infos.AllByType("unique"), 0)
+	assert.Len(t, infos.AllByType("unique"), 1)
 }
 
 func TestExtractInlineWithIndex(t *testing.T) {

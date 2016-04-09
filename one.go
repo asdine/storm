@@ -26,14 +26,6 @@ func (s *DB) One(fieldName string, value interface{}, to interface{}) error {
 		return err
 	}
 
-	if info.ID == nil {
-		return ErrNoID
-	}
-
-	if info.Name == "" {
-		return ErrNoName
-	}
-
 	idxInfo, ok := info.Indexes[fieldName]
 	if !ok {
 		return ErrNotFound

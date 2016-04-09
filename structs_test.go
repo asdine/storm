@@ -29,9 +29,10 @@ type ClassicBadTags struct {
 }
 
 type ClassicUnique struct {
+	ID            string
 	PublicField   int       `storm:"unique"`
 	privateField  string    `storm:"unique"`
-	privateField2 string    `storm:"id"`
+	privateField2 string    `storm:"unique"`
 	Date          time.Time `storm:"unique"`
 	InlineStruct  struct {
 		a float32
@@ -41,6 +42,7 @@ type ClassicUnique struct {
 }
 
 type ClassicIndex struct {
+	ID           string
 	PublicField  int       `storm:"index"`
 	privateField string    `storm:"index"`
 	Date         time.Time `storm:"index"`

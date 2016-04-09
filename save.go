@@ -18,14 +18,6 @@ func (s *DB) Save(data interface{}) error {
 		return err
 	}
 
-	if info.ID == nil {
-		return ErrNoID
-	}
-
-	if info.Name == "" {
-		return ErrNoName
-	}
-
 	if info.ID.IsZero() {
 		return ErrZeroID
 	}
@@ -43,10 +35,6 @@ func (s *DB) Save(data interface{}) error {
 
 		for fieldName, idxInfo := range info.Indexes {
 			idx, err := getIndex(bucket, idxInfo.Type, fieldName)
-			if err != nil {
-				return err
-			}
-
 			if err != nil {
 				return err
 			}
