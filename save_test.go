@@ -145,3 +145,45 @@ func TestSaveIndex(t *testing.T) {
 	assert.Error(t, err)
 	assert.EqualError(t, err, "provided data must be a struct or a pointer to struct")
 }
+
+func TestSaveEmptyValues(t *testing.T) {
+	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
+	defer os.RemoveAll(dir)
+	db, _ := Open(filepath.Join(dir, "storm.db"))
+	defer db.Close()
+
+	u := User{
+		ID: 10,
+	}
+	err := db.Save(&u)
+	assert.NoError(t, err)
+
+	var v User
+	err = db.One("ID", 10, &v)
+	assert.NoError(t, err)
+	assert.Equal(t, 10, v.ID)
+
+	u.Name = "John"
+	u.Slug = "john"
+	err = db.Save(&u)
+	assert.NoError(t, err)
+
+	err = db.One("Name", "John", &v)
+	assert.NoError(t, err)
+	assert.Equal(t, "John", v.Name)
+	assert.Equal(t, "john", v.Slug)
+	err = db.One("Slug", "john", &v)
+	assert.NoError(t, err)
+	assert.Equal(t, "John", v.Name)
+	assert.Equal(t, "john", v.Slug)
+
+	u.Name = ""
+	u.Slug = ""
+	err = db.Save(&u)
+	assert.NoError(t, err)
+
+	err = db.One("Name", "John", &v)
+	assert.Error(t, err)
+	err = db.One("Slug", "john", &v)
+	assert.Error(t, err)
+}

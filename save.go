@@ -63,6 +63,10 @@ func (s *DB) Save(data interface{}) error {
 				return err
 			}
 
+			if idxInfo.Field.IsZero() {
+				continue
+			}
+
 			value, err := toBytes(idxInfo.Field.Value())
 			if err != nil {
 				return err
