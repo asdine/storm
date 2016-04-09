@@ -67,28 +67,9 @@ func extract(data interface{}, mi ...*modelInfo) (*modelInfo, error) {
 			continue
 		}
 
-		tag := f.Tag("storm")
-		if tag != "" {
-			switch tag {
-			case "id":
-				m.ID = f
-			case tagUniqueIdx, tagIdx:
-				m.AddIndex(f, tag, !child)
-			case tagInline:
-				if structs.IsStruct(f.Value()) {
-					_, err := extract(f.Value(), m)
-					if err != nil {
-						return nil, err
-					}
-				}
-			default:
-				return nil, ErrBadIndexType
-			}
-		}
-
-		// the field is named ID and no ID field has been detected before
-		if f.Name() == "ID" && m.ID == nil {
-			m.ID = f
+		err := extractField(f, m, child)
+		if err != nil {
+			return nil, err
 		}
 	}
 
@@ -106,4 +87,32 @@ func extract(data interface{}, mi ...*modelInfo) (*modelInfo, error) {
 	}
 
 	return m, nil
+}
+
+func extractField(f *structs.Field, m *modelInfo, isChild bool) error {
+	tag := f.Tag("storm")
+	if tag != "" {
+		switch tag {
+		case "id":
+			m.ID = f
+		case tagUniqueIdx, tagIdx:
+			m.AddIndex(f, tag, !isChild)
+		case tagInline:
+			if structs.IsStruct(f.Value()) {
+				_, err := extract(f.Value(), m)
+				if err != nil {
+					return err
+				}
+			}
+		default:
+			return ErrBadIndexType
+		}
+	}
+
+	// the field is named ID and no ID field has been detected before
+	if f.Name() == "ID" && m.ID == nil {
+		m.ID = f
+	}
+
+	return nil
 }
