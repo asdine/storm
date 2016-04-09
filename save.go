@@ -37,7 +37,7 @@ func (s *DB) Save(data interface{}) error {
 		return err
 	}
 
-	err = s.Bolt.Update(func(tx *bolt.Tx) error {
+	return s.Bolt.Update(func(tx *bolt.Tx) error {
 		bucket, err := tx.CreateBucketIfNotExists([]byte(info.Name))
 		if err != nil {
 			return err
@@ -81,5 +81,4 @@ func (s *DB) Save(data interface{}) error {
 
 		return bucket.Put(id, raw)
 	})
-	return err
 }

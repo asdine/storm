@@ -13,6 +13,7 @@ func TestInit(t *testing.T) {
 	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
 	defer os.RemoveAll(dir)
 	db, _ := Open(filepath.Join(dir, "storm.db"))
+	defer db.Close()
 
 	var u IndexedNameUser
 	err := db.One("Name", "John", &u)
@@ -25,4 +26,20 @@ func TestInit(t *testing.T) {
 	err = db.One("Name", "John", &u)
 	assert.Error(t, err)
 	assert.EqualError(t, err, "not found")
+
+	err = db.Init(&ClassicBadTags{})
+	assert.Error(t, err)
+	assert.EqualError(t, err, "unknown tag mrots")
+
+	err = db.Init(10)
+	assert.Error(t, err)
+	assert.Equal(t, ErrBadType, err)
+
+	err = db.Init(&ClassicNoTags{})
+	assert.Error(t, err)
+	assert.Equal(t, ErrNoID, err)
+
+	err = db.Init(&struct{ ID string }{})
+	assert.Error(t, err)
+	assert.Equal(t, ErrNoName, err)
 }

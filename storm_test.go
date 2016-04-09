@@ -26,3 +26,13 @@ func TestNewStorm(t *testing.T) {
 	assert.Equal(t, file, db.Path)
 	assert.NotNil(t, db.Bolt)
 }
+
+func TestNewStormWithOptions(t *testing.T) {
+	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
+	defer os.RemoveAll(dir)
+	db, _ := OpenWithOptions(filepath.Join(dir, "storm.db"), 0600, nil)
+	defer db.Close()
+
+	err := db.Save(&SimpleUser{ID: 10})
+	assert.NoError(t, err)
+}
