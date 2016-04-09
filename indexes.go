@@ -6,6 +6,8 @@ import (
 	"github.com/boltdb/bolt"
 )
 
+const indexPrefix = "__storm_index_"
+
 // Index interface
 type Index interface {
 	Add(value []byte, targetID []byte) error
@@ -263,4 +265,20 @@ func (idx *ListIndex) AllRecords() ([][]byte, error) {
 	}
 
 	return list, nil
+}
+
+func getIndex(bucket *bolt.Bucket, idxKind string, fieldName string) (Index, error) {
+	var idx Index
+	var err error
+
+	switch idxKind {
+	case tagUniqueIdx:
+		idx, err = NewUniqueIndex(bucket, []byte(indexPrefix+fieldName))
+	case tagIdx:
+		idx, err = NewListIndex(bucket, []byte(indexPrefix+fieldName))
+	default:
+		err = ErrBadIndexType
+	}
+
+	return idx, err
 }

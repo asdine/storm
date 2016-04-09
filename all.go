@@ -47,17 +47,7 @@ func (s *DB) AllByIndex(fieldName string, to interface{}) error {
 			return fmt.Errorf("bucket %s not found", info.Name)
 		}
 
-		var idx Index
-		var err error
-		switch idxInfo.Type {
-		case "unique":
-			idx, err = NewUniqueIndex(bucket, []byte(indexPrefix+fieldName))
-		case "index":
-			idx, err = NewListIndex(bucket, []byte(indexPrefix+fieldName))
-		default:
-			err = ErrBadIndexType
-		}
-
+		idx, err := getIndex(bucket, idxInfo.Type, fieldName)
 		if err != nil {
 			if err == ErrIndexNotFound {
 				return ErrNotFound

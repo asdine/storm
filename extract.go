@@ -6,6 +6,14 @@ import (
 	"github.com/fatih/structs"
 )
 
+// Storm tags
+const (
+	tagID        = "id"
+	tagIdx       = "index"
+	tagUniqueIdx = "unique"
+	tagInline    = "inline"
+)
+
 type indexInfo struct {
 	Type  string
 	Field *structs.Field
@@ -68,9 +76,9 @@ func extract(data interface{}, mi ...*modelInfo) (*modelInfo, error) {
 			switch tag {
 			case "id":
 				m.ID = f
-			case "unique", "index":
+			case tagUniqueIdx, tagIdx:
 				m.AddIndex(f, tag, !child)
-			case "inline":
+			case tagInline:
 				if structs.IsStruct(f.Value()) {
 					_, err := extract(f.Value(), m)
 					if err != nil {
@@ -90,7 +98,7 @@ func extract(data interface{}, mi ...*modelInfo) (*modelInfo, error) {
 
 	// ID field or tag detected, add to the unique index
 	if m.ID != nil {
-		m.AddIndex(m.ID, "unique", !child)
+		m.AddIndex(m.ID, tagUniqueIdx, !child)
 	}
 
 	return m, nil

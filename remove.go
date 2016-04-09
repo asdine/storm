@@ -37,17 +37,8 @@ func (s *DB) Remove(data interface{}) error {
 			return fmt.Errorf("bucket %s doesn't exist", info.Name)
 		}
 
-		var idx Index
 		for fieldName, idxInfo := range info.Indexes {
-			switch idxInfo.Type {
-			case "unique":
-				idx, err = NewUniqueIndex(bucket, []byte(indexPrefix+fieldName))
-			case "index":
-				idx, err = NewListIndex(bucket, []byte(indexPrefix+fieldName))
-			default:
-				err = ErrBadIndexType
-			}
-
+			idx, err := getIndex(bucket, idxInfo.Type, fieldName)
 			if err != nil {
 				return err
 			}

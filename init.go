@@ -32,9 +32,9 @@ func (s *DB) Init(data interface{}) error {
 
 		for fieldName, idxInfo := range info.Indexes {
 			switch idxInfo.Type {
-			case "unique":
+			case tagUniqueIdx:
 				_, err = NewUniqueIndex(bucket, []byte(indexPrefix+fieldName))
-			case "index":
+			case tagIdx:
 				_, err = NewListIndex(bucket, []byte(indexPrefix+fieldName))
 			default:
 				err = ErrBadIndexType

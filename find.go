@@ -42,17 +42,7 @@ func (s *DB) Find(fieldName string, value interface{}, to interface{}) error {
 			return fmt.Errorf("bucket %s not found", bucketName)
 		}
 
-		var idx Index
-		var err error
-		switch tag {
-		case "unique":
-			idx, err = NewUniqueIndex(bucket, []byte(indexPrefix+fieldName))
-		case "index":
-			idx, err = NewListIndex(bucket, []byte(indexPrefix+fieldName))
-		default:
-			err = ErrBadIndexType
-		}
-
+		idx, err := getIndex(bucket, tag, fieldName)
 		if err != nil {
 			if err == ErrIndexNotFound {
 				return ErrNotFound
