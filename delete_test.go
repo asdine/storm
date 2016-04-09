@@ -21,7 +21,7 @@ func TestDelete(t *testing.T) {
 	err = db.Delete("files", "myfile.csv")
 	assert.NoError(t, err)
 	err = db.Delete("i don't exist", "myfile.csv")
-	assert.EqualError(t, err, "not found")
+	assert.Equal(t, ErrNotFound, err)
 	err = db.Delete("", nil)
-	assert.EqualError(t, err, "not found")
+	assert.Equal(t, ErrNotFound, err)
 }

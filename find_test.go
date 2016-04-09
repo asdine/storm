@@ -30,7 +30,7 @@ func TestFind(t *testing.T) {
 		ID   int
 	}{})
 	assert.Error(t, err)
-	assert.EqualError(t, err, "provided target must have a name")
+	assert.Equal(t, ErrNoName, err)
 
 	notTheRightUsers := []UniqueNameUser{}
 
@@ -46,7 +46,7 @@ func TestFind(t *testing.T) {
 
 	err = db.Find("DateOfBirth", "John", &users)
 	assert.Error(t, err)
-	assert.EqualError(t, err, "not found")
+	assert.Equal(t, ErrNotFound, err)
 
 	err = db.Find("Group", "John", &users)
 	assert.Error(t, err)
@@ -67,5 +67,5 @@ func TestFind(t *testing.T) {
 	users = []User{}
 	err = db.Find("Name", nil, &users)
 	assert.Error(t, err)
-	assert.EqualError(t, err, "not found")
+	assert.Equal(t, ErrNotFound, err)
 }

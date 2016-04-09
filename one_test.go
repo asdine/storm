@@ -39,19 +39,19 @@ func TestOne(t *testing.T) {
 
 	err = db.One("Name", "Mike", &x)
 	assert.Error(t, err)
-	assert.EqualError(t, err, "not found")
+	assert.Equal(t, ErrNotFound, err)
 
 	err = db.One("", nil, &x)
 	assert.Error(t, err)
-	assert.EqualError(t, err, "not found")
+	assert.Equal(t, ErrNotFound, err)
 
 	err = db.One("", "Mike", nil)
 	assert.Error(t, err)
-	assert.EqualError(t, err, "provided target must be a pointer to struct")
+	assert.Equal(t, ErrStructPtrNeeded, err)
 
 	err = db.One("", nil, nil)
 	assert.Error(t, err)
-	assert.EqualError(t, err, "provided target must be a pointer to struct")
+	assert.Equal(t, ErrStructPtrNeeded, err)
 
 	y := UniqueNameUser{Name: "Jake", ID: 200}
 	err = db.Save(&y)

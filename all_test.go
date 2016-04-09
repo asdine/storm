@@ -49,7 +49,7 @@ func TestAllByIndex(t *testing.T) {
 	var unknowns []UserWithNoID
 	err = db.All(&unknowns)
 	assert.Error(t, err)
-	assert.EqualError(t, err, "missing struct tag id or ID field")
+	assert.Equal(t, ErrNoID, err)
 
 	err = db.Save(&NestedID{
 		ToEmbed: ToEmbed{ID: "id1"},

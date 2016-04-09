@@ -1,10 +1,6 @@
 package storm
 
-import (
-	"fmt"
-
-	"github.com/fatih/structs"
-)
+import "github.com/fatih/structs"
 
 // Storm tags
 const (
@@ -86,7 +82,7 @@ func extract(data interface{}, mi ...*modelInfo) (*modelInfo, error) {
 					}
 				}
 			default:
-				return nil, fmt.Errorf("unknown tag %s", tag)
+				return nil, ErrBadIndexType
 			}
 		}
 

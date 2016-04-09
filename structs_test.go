@@ -17,6 +17,7 @@ type ClassicNoTags struct {
 }
 
 type ClassicBadTags struct {
+	ID           string
 	PublicField  int `storm:"mrots"`
 	privateField string
 	Date         time.Time

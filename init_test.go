@@ -25,11 +25,11 @@ func TestInit(t *testing.T) {
 
 	err = db.One("Name", "John", &u)
 	assert.Error(t, err)
-	assert.EqualError(t, err, "not found")
+	assert.Equal(t, ErrNotFound, err)
 
 	err = db.Init(&ClassicBadTags{})
 	assert.Error(t, err)
-	assert.EqualError(t, err, "unknown tag mrots")
+	assert.Equal(t, ErrBadIndexType, err)
 
 	err = db.Init(10)
 	assert.Error(t, err)

@@ -20,7 +20,7 @@ func TestExtractBadTags(t *testing.T) {
 	s := ClassicBadTags{}
 	infos, err := extract(&s)
 	assert.Error(t, err)
-	assert.EqualError(t, err, "unknown tag mrots")
+	assert.Equal(t, ErrBadIndexType, err)
 	assert.Nil(t, infos)
 }
 

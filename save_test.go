@@ -21,11 +21,15 @@ func TestSave(t *testing.T) {
 
 	err = db.Save(&SimpleUser{Name: "John"})
 	assert.Error(t, err)
-	assert.EqualError(t, err, "id field must not be a zero value")
+	assert.Equal(t, ErrZeroID, err)
+
+	err = db.Save(&ClassicBadTags{ID: "id", PublicField: 100})
+	assert.Error(t, err)
+	assert.Equal(t, ErrBadIndexType, err)
 
 	err = db.Save(&UserWithNoID{Name: "John"})
 	assert.Error(t, err)
-	assert.EqualError(t, err, "missing struct tag id or ID field")
+	assert.Equal(t, ErrNoID, err)
 
 	err = db.Save(&UserWithIDField{ID: 10, Name: "John"})
 	assert.NoError(t, err)
@@ -71,7 +75,7 @@ func TestSaveUnique(t *testing.T) {
 	u2 := UniqueNameUser{ID: 11, Name: "John", age: 100}
 	err = db.Save(&u2)
 	assert.Error(t, err)
-	assert.EqualError(t, err, "already exists")
+	assert.Equal(t, ErrAlreadyExists, err)
 
 	// same id
 	u3 := UniqueNameUser{ID: 10, Name: "Jake", age: 100}
@@ -143,7 +147,7 @@ func TestSaveIndex(t *testing.T) {
 
 	err = db.Save(nil)
 	assert.Error(t, err)
-	assert.EqualError(t, err, "provided data must be a struct or a pointer to struct")
+	assert.Equal(t, ErrBadType, err)
 }
 
 func TestSaveEmptyValues(t *testing.T) {

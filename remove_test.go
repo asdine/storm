@@ -24,11 +24,11 @@ func TestRemove(t *testing.T) {
 	assert.NoError(t, err)
 
 	err = db.Remove(&u1)
-	assert.EqualError(t, err, "not found")
+	assert.Equal(t, ErrNotFound, err)
 
 	u2 := IndexedNameUser{}
 	err = db.Get("IndexedNameUser", 10, &u2)
-	assert.EqualError(t, err, "not found")
+	assert.Equal(t, ErrNotFound, err)
 
 	err = db.Remove(nil)
 	assert.Equal(t, ErrBadType, err)
