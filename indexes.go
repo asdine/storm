@@ -16,6 +16,7 @@ type Index interface {
 	Get(value []byte) []byte
 	All(value []byte) ([][]byte, error)
 	AllRecords() ([][]byte, error)
+	Range([]byte, []byte) ([][]byte, error)
 }
 
 // NewUniqueIndex loads a UniqueIndex
@@ -84,6 +85,17 @@ func (idx *UniqueIndex) RemoveID(id []byte) error {
 // Get the id corresponding to the given value
 func (idx *UniqueIndex) Get(value []byte) []byte {
 	return idx.IndexBucket.Get(value)
+}
+
+// Get the ids corresponding to the given range of values
+func (idx *UniqueIndex) Range(min []byte, max []byte) ([][]byte, error) {
+	var list [][]byte
+	c := idx.IndexBucket.Cursor()
+	for val, id := c.Seek(min); val != nil && bytes.Compare(val, max) <= 0; val, id = c.Next() {
+		list = append(list, id)
+	}
+	return list, nil
+
 }
 
 // All returns all the ids corresponding to the given value
@@ -230,6 +242,20 @@ func (idx *ListIndex) Get(value []byte) []byte {
 		return nil
 	}
 	return uni.first()
+}
+
+// Get the ids corresponding to the given range of values
+func (idx *ListIndex) Range(min []byte, max []byte) ([][]byte, error) {
+	var list [][]byte
+	c := idx.IndexBucket.Cursor()
+	for val, _ := c.Seek(min); val != nil && bytes.Compare(val, max) <= 0; val, _ = c.Next() {
+		uni := idx.IndexBucket.Bucket(val)
+		uni.ForEach(func(k, v []byte) error {
+			list = append(list, k)
+			return nil
+		})
+	}
+	return list, nil
 }
 
 // All the IDs corresponding to the given value
