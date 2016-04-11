@@ -39,6 +39,7 @@ func (s *DB) Range(fieldName string, min []byte, max []byte, to interface{}) err
 	return s.Bolt.View(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket([]byte(bucketName))
 		if bucket == nil {
+			fmt.Printf("******************* %s", bucketName)
 			return fmt.Errorf("bucket %s not found", bucketName)
 		}
 
