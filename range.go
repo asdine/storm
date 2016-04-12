@@ -10,7 +10,7 @@ import (
 )
 
 // Range returns one or more records by the specified index within the specified range
-func (s *DB) Range(fieldName string, min []byte, max []byte, to interface{}) error {
+func (s *DB) Range(fieldName string, min interface{}, max interface{}, to interface{}) error {
 	ref := reflect.ValueOf(to)
 
 	if ref.Kind() != reflect.Ptr || reflect.Indirect(ref).Kind() != reflect.Slice {

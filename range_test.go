@@ -24,8 +24,8 @@ func TestRange(t *testing.T) {
 		assert.NoError(t, err)
 	}
 
-	min := []byte("John010")
-	max := []byte("John020")
+	min := "John010"
+	max := "John020"
 	var users []User
 	err := db.Range("Slug", min, max, &users)
 	assert.NoError(t, err)
@@ -33,8 +33,8 @@ func TestRange(t *testing.T) {
 	assert.Equal(t, "John010", users[0].Slug)
 	assert.Equal(t, "John020", users[10].Slug)
 
-	min = []byte("Zach010")
-	max = []byte("Zach020")
+	min = "Zach010"
+	max = "Zach020"
 	users = nil
 	err = db.Range("Name", min, max, &users)
 	assert.NoError(t, err)
