@@ -1,6 +1,10 @@
 package storm
 
-import "github.com/fatih/structs"
+import (
+	"reflect"
+
+	"github.com/fatih/structs"
+)
 
 // Storm tags
 const (
@@ -18,8 +22,8 @@ type indexInfo struct {
 // modelInfo is a structure gathering all the relevant informations about a model
 type modelInfo struct {
 	Name    string
-	ID      *structs.Field
 	Indexes map[string]indexInfo
+	ID      identInfo
 }
 
 func (m *modelInfo) AddIndex(f *structs.Field, indexType string, override bool) {
@@ -74,11 +78,15 @@ func extract(data interface{}, mi ...*modelInfo) (*modelInfo, error) {
 	}
 
 	// ID field or tag detected, add to the unique index
-	if m.ID != nil {
-		m.AddIndex(m.ID, tagUniqueIdx, !child)
-	}
+	if m.ID.Field != nil {
+		m.AddIndex(m.ID.Field, tagUniqueIdx, !child)
 
-	if m.ID == nil {
+		if m.ID.Field.IsZero() {
+			m.ID.IsZero = true
+		} else {
+			m.ID.Value = m.ID.Field.Value()
+		}
+	} else {
 		return nil, ErrNoID
 	}
 
@@ -94,7 +102,7 @@ func extractField(f *structs.Field, m *modelInfo, isChild bool) error {
 	if tag != "" {
 		switch tag {
 		case "id":
-			m.ID = f
+			m.ID.Field = f
 		case tagUniqueIdx, tagIdx:
 			m.AddIndex(f, tag, !isChild)
 		case tagInline:
@@ -110,9 +118,24 @@ func extractField(f *structs.Field, m *modelInfo, isChild bool) error {
 	}
 
 	// the field is named ID and no ID field has been detected before
-	if f.Name() == "ID" && m.ID == nil {
-		m.ID = f
+	if f.Name() == "ID" && m.ID.Field == nil {
+		m.ID.Field = f
 	}
 
 	return nil
+}
+
+// Prefill the most requested informations
+type identInfo struct {
+	Field  *structs.Field
+	IsZero bool
+	Value  interface{}
+}
+
+func (i *identInfo) Type() reflect.Type {
+	return reflect.TypeOf(i.Field.Value())
+}
+
+func (i *identInfo) IsOfIntegerFamily() bool {
+	return i.Field != nil && i.Field.Kind() >= reflect.Int && i.Field.Kind() <= reflect.Uint64
 }
