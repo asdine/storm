@@ -1,7 +1,6 @@
 package storm
 
 import (
-	"encoding/json"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -56,7 +55,7 @@ func TestSave(t *testing.T) {
 		val := bucket.Get(i)
 		assert.NotNil(t, val)
 
-		content, err := json.Marshal(&v)
+		content, err := db.Codec.Encode(&v)
 		assert.NoError(t, err)
 		assert.Equal(t, content, val)
 		return nil
