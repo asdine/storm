@@ -14,6 +14,13 @@ func Codec(c EncodeDecoder) func(*DB) {
 	}
 }
 
+// AutoIncrement used to enable bolt.NextSequence on empty integer ids.
+func AutoIncrement() func(*DB) {
+	return func(d *DB) {
+		d.AutoIncrement = true
+	}
+}
+
 // Open opens a database at the given path with optional Storm options.
 func Open(path string, stormOptions ...func(*DB)) (*DB, error) {
 	db, err := bolt.Open(path, 0600, &bolt.Options{Timeout: 1 * time.Second})
@@ -64,6 +71,9 @@ type DB struct {
 
 	// Handles encoding and decoding of objects
 	Codec EncodeDecoder
+
+	// Enable auto increment on empty integer fields
+	AutoIncrement bool
 
 	// Bolt is still easily accessible
 	Bolt *bolt.DB
