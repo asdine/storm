@@ -18,7 +18,7 @@ func (s *DB) Remove(data interface{}) error {
 		return err
 	}
 
-	id, err := toBytes(info.ID.Value())
+	id, err := toBytes(info.ID.Value)
 	if err != nil {
 		return err
 	}

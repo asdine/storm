@@ -24,7 +24,7 @@ func (s *DB) AllByIndex(fieldName string, to interface{}) error {
 	}
 
 	if fieldName == "" {
-		fieldName = info.ID.Name()
+		fieldName = info.ID.Field.Name()
 	}
 
 	idxInfo, ok := info.Indexes[fieldName]

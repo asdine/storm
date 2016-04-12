@@ -16,11 +16,11 @@ func (s *DB) Save(data interface{}) error {
 		return err
 	}
 
-	if info.ID.IsZero() {
+	if info.ID.IsZero {
 		return ErrZeroID
 	}
 
-	id, err := toBytes(info.ID.Value())
+	id, err := toBytes(info.ID.Value)
 	if err != nil {
 		return err
 	}
