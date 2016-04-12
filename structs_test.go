@@ -94,6 +94,16 @@ type UserWithIDField struct {
 	Name string
 }
 
+type UserWithUint64IDField struct {
+	ID   uint64
+	Name string
+}
+
+type UserWithStringIDField struct {
+	ID   string
+	Name string
+}
+
 type UserWithEmbeddedIDField struct {
 	UserWithIDField `storm:"inline"`
 	Age             int

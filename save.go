@@ -1,6 +1,8 @@
 package storm
 
 import (
+	"reflect"
+
 	"github.com/boltdb/bolt"
 	"github.com/fatih/structs"
 )
@@ -16,19 +18,39 @@ func (s *DB) Save(data interface{}) error {
 		return err
 	}
 
-	if info.ID.IsZero {
-		return ErrZeroID
-	}
+	var id []byte
 
-	id, err := toBytes(info.ID.Value)
-	if err != nil {
-		return err
+	if info.ID.IsZero {
+		if !info.ID.IsOfIntegerFamily() || !s.AutoIncrement {
+			return ErrZeroID
+		}
+	} else {
+		id, err = toBytes(info.ID.Value)
+		if err != nil {
+			return err
+		}
 	}
 
 	return s.Bolt.Update(func(tx *bolt.Tx) error {
 		bucket, err := tx.CreateBucketIfNotExists([]byte(info.Name))
 		if err != nil {
 			return err
+		}
+
+		if info.ID.IsZero {
+			// isZero and integer, generate next sequence
+			intID, _ := bucket.NextSequence()
+
+			// convert to the right integer size
+			err = info.ID.Field.Set(reflect.ValueOf(intID).Convert(info.ID.Type()).Interface())
+			if err != nil {
+				return err
+			}
+
+			id, err = toBytes(intID)
+			if err != nil {
+				return err
+			}
 		}
 
 		for fieldName, idxInfo := range info.Indexes {

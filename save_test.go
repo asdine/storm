@@ -190,3 +190,27 @@ func TestSaveEmptyValues(t *testing.T) {
 	err = db.One("Slug", "john", &v)
 	assert.Error(t, err)
 }
+
+func TestSaveAutoIncrement(t *testing.T) {
+	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
+	defer os.RemoveAll(dir)
+	db, _ := Open(filepath.Join(dir, "storm.db"), AutoIncrement())
+	defer db.Close()
+
+	for i := 1; i < 10; i++ {
+		s := SimpleUser{Name: "John"}
+		err := db.Save(&s)
+		assert.NoError(t, err)
+		assert.Equal(t, i, s.ID)
+	}
+
+	u := UserWithUint64IDField{Name: "John"}
+	err := db.Save(&u)
+	assert.NoError(t, err)
+	assert.Equal(t, uint64(1), u.ID)
+
+	us := UserWithStringIDField{Name: "John"}
+	err = db.Save(&us)
+	assert.Error(t, err)
+	assert.Equal(t, ErrZeroID, err)
+}
