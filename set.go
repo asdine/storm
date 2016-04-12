@@ -1,8 +1,6 @@
 package storm
 
 import (
-	"encoding/json"
-
 	"github.com/boltdb/bolt"
 )
 
@@ -19,7 +17,7 @@ func (s *DB) Set(bucketName string, key interface{}, value interface{}) error {
 
 	var data []byte
 	if value != nil {
-		data, err = json.Marshal(value)
+		data, err = s.Codec.Encode(value)
 		if err != nil {
 			return err
 		}

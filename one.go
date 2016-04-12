@@ -1,7 +1,6 @@
 package storm
 
 import (
-	"encoding/json"
 	"fmt"
 	"reflect"
 
@@ -60,6 +59,6 @@ func (s *DB) One(fieldName string, value interface{}, to interface{}) error {
 			return ErrNotFound
 		}
 
-		return json.Unmarshal(raw, to)
+		return s.Codec.Decode(raw, to)
 	})
 }

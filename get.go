@@ -1,7 +1,6 @@
 package storm
 
 import (
-	"encoding/json"
 	"reflect"
 
 	"github.com/boltdb/bolt"
@@ -31,6 +30,6 @@ func (s *DB) Get(bucketName string, key interface{}, to interface{}) error {
 			return ErrNotFound
 		}
 
-		return json.Unmarshal(raw, to)
+		return s.Codec.Decode(raw, to)
 	})
 }
