@@ -1,8 +1,6 @@
 package storm
 
 import (
-	"encoding/json"
-
 	"github.com/boltdb/bolt"
 	"github.com/fatih/structs"
 )
@@ -59,7 +57,7 @@ func (s *DB) Save(data interface{}) error {
 			}
 		}
 
-		raw, err := json.Marshal(data)
+		raw, err := s.Codec.Encode(data)
 		if err != nil {
 			return err
 		}

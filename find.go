@@ -1,7 +1,6 @@
 package storm
 
 import (
-	"encoding/json"
 	"fmt"
 	"reflect"
 
@@ -71,7 +70,7 @@ func (s *DB) Find(fieldName string, value interface{}, to interface{}) error {
 				return ErrNotFound
 			}
 
-			err = json.Unmarshal(raw, results.Index(i).Addr().Interface())
+			err = s.Codec.Decode(raw, results.Index(i).Addr().Interface())
 			if err != nil {
 				return err
 			}

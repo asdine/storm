@@ -25,6 +25,7 @@ func TestNewStorm(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, file, db.Path)
 	assert.NotNil(t, db.Bolt)
+	assert.Equal(t, defaultCodec, db.Codec)
 }
 
 func TestNewStormWithOptions(t *testing.T) {
@@ -35,4 +36,25 @@ func TestNewStormWithOptions(t *testing.T) {
 
 	err := db.Save(&SimpleUser{ID: 10})
 	assert.NoError(t, err)
+}
+
+func TestNewStormWithStormOptions(t *testing.T) {
+	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
+	defer os.RemoveAll(dir)
+	dc := new(dummyCodec)
+	db1, _ := OpenWithOptions(filepath.Join(dir, "storm1.db"), 0600, nil, Codec(dc))
+	assert.Equal(t, dc, db1.Codec)
+	assert.IsType(t, dc, db1.Codec)
+	db2, _ := Open(filepath.Join(dir, "storm2.db"), Codec(dc))
+	assert.Equal(t, dc, db2.Codec)
+}
+
+type dummyCodec int
+
+func (c dummyCodec) Encode(v interface{}) ([]byte, error) {
+	return []byte("dummy"), nil
+}
+
+func (c dummyCodec) Decode(b []byte, v interface{}) error {
+	return nil
 }
