@@ -21,6 +21,7 @@ func TestNewStorm(t *testing.T) {
 
 	file := filepath.Join(dir, "storm.db")
 	db, err = Open(file)
+	defer db.Close()
 
 	assert.NoError(t, err)
 	assert.Equal(t, file, db.Path)
@@ -41,10 +42,13 @@ func TestNewStormWithOptions(t *testing.T) {
 func TestNewStormWithStormOptions(t *testing.T) {
 	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
 	defer os.RemoveAll(dir)
+
 	dc := new(dummyCodec)
-	db1, _ := OpenWithOptions(filepath.Join(dir, "storm1.db"), 0600, nil, Codec(dc))
+	db1, _ := OpenWithOptions(filepath.Join(dir, "storm1.db"), 0600, nil, Codec(dc), AutoIncrement())
 	assert.Equal(t, dc, db1.Codec)
 	assert.IsType(t, dc, db1.Codec)
+	assert.True(t, db1.AutoIncrement)
+
 	db2, _ := Open(filepath.Join(dir, "storm2.db"), Codec(dc))
 	assert.Equal(t, dc, db2.Codec)
 }
