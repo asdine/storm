@@ -21,7 +21,7 @@ func (s *DB) Save(data interface{}) error {
 	var id []byte
 
 	if info.ID.IsZero {
-		if !info.ID.IsOfIntegerFamily() || !s.AutoIncrement {
+		if !info.ID.IsOfIntegerFamily() || !s.autoIncrement {
 			return ErrZeroID
 		}
 	} else {

@@ -17,7 +17,7 @@ func Codec(c EncodeDecoder) func(*DB) {
 // AutoIncrement used to enable bolt.NextSequence on empty integer ids.
 func AutoIncrement() func(*DB) {
 	return func(d *DB) {
-		d.AutoIncrement = true
+		d.autoIncrement = true
 	}
 }
 
@@ -72,9 +72,9 @@ type DB struct {
 	// Handles encoding and decoding of objects
 	Codec EncodeDecoder
 
-	// Enable auto increment on empty integer fields
-	AutoIncrement bool
-
 	// Bolt is still easily accessible
 	Bolt *bolt.DB
+
+	// Enable auto increment on empty integer fields
+	autoIncrement bool
 }
