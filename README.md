@@ -144,6 +144,26 @@ err := db.Init(&User{})
 
 Useful when starting your application
 
+### Options
+
+Storm options are functions that can be passed when constructing you Storm instance. You can pass it any number of options.
+
+#### EncodeDecoder
+
+To store the data in BoltDB, Storm encodes it in JSON by default. If you wish to change this behavior you can pass a codec that implements [`storm.EncodeDecoder`](https://godoc.org/github.com/asdine/storm#EncodeDecoder) via the [`storm.Codec`](https://godoc.org/github.com/asdine/storm#Codec) option:
+
+```go
+db := storm.Open("my.db", storm.Codec(myCodec))
+```
+
+#### Auto Increment
+
+Storm can auto increment integer IDs so you don't have to worry about that when saving your objects.
+
+```go
+db := storm.Open("my.db", storm.AutoIncrement())
+```
+
 ## Simple Key/Value store
 
 Storm can be used as a simple, robust, key/value store that can store anything.
