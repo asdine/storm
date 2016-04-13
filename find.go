@@ -9,7 +9,7 @@ import (
 )
 
 // Find returns one or more records by the specified index
-func (s *DB) Find(fieldName string, value interface{}, to interface{}) error {
+func (n *Node) Find(fieldName string, value interface{}, to interface{}) error {
 	ref := reflect.ValueOf(to)
 
 	if ref.Kind() != reflect.Ptr || reflect.Indirect(ref).Kind() != reflect.Slice {
@@ -35,8 +35,8 @@ func (s *DB) Find(fieldName string, value interface{}, to interface{}) error {
 		return fmt.Errorf("index %s not found", fieldName)
 	}
 
-	return s.Bolt.View(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket([]byte(bucketName))
+	return n.s.Bolt.View(func(tx *bolt.Tx) error {
+		bucket := n.getBucket(tx, bucketName)
 		if bucket == nil {
 			return fmt.Errorf("bucket %s not found", bucketName)
 		}
@@ -70,7 +70,7 @@ func (s *DB) Find(fieldName string, value interface{}, to interface{}) error {
 				return ErrNotFound
 			}
 
-			err = s.Codec.Decode(raw, results.Index(i).Addr().Interface())
+			err = n.s.Codec.Decode(raw, results.Index(i).Addr().Interface())
 			if err != nil {
 				return err
 			}
@@ -79,4 +79,9 @@ func (s *DB) Find(fieldName string, value interface{}, to interface{}) error {
 		reflect.Indirect(ref).Set(results)
 		return nil
 	})
+}
+
+// Find returns one or more records by the specified index
+func (s *DB) Find(fieldName string, value interface{}, to interface{}) error {
+	return s.root.Find(fieldName, value, to)
 }

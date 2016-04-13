@@ -21,6 +21,13 @@ func AutoIncrement() func(*DB) {
 	}
 }
 
+// Root used to set the root bucket. See also the From method.
+func Root(root ...string) func(*DB) {
+	return func(d *DB) {
+		d.rootBucket = root
+	}
+}
+
 // Open opens a database at the given path with optional Storm options.
 func Open(path string, stormOptions ...func(*DB)) (*DB, error) {
 	db, err := bolt.Open(path, 0600, &bolt.Options{Timeout: 1 * time.Second})
@@ -38,6 +45,8 @@ func Open(path string, stormOptions ...func(*DB)) (*DB, error) {
 	for _, option := range stormOptions {
 		option(s)
 	}
+
+	s.root = &Node{s: s, rootBucket: s.rootBucket}
 
 	return s, nil
 }
@@ -60,6 +69,8 @@ func OpenWithOptions(path string, mode os.FileMode, boltOptions *bolt.Options, s
 		option(s)
 	}
 
+	s.root = &Node{s: s, rootBucket: s.rootBucket}
+
 	return s, nil
 }
 
@@ -77,4 +88,19 @@ type DB struct {
 
 	// Enable auto increment on empty integer fields
 	autoIncrement bool
+
+	// The root node that points to the root bucket.
+	root *Node
+
+	// The root bucket name
+	rootBucket []string
+}
+
+// From returns a new Storm node with a new bucket root.
+// All DB operations on the new node will be executed relative to the given
+// bucket.
+func (s *DB) From(root ...string) *Node {
+	newNode := *s.root
+	newNode.rootBucket = root
+	return &newNode
 }

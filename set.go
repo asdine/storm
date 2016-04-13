@@ -5,7 +5,7 @@ import (
 )
 
 // Set a key/value pair into a bucket
-func (s *DB) Set(bucketName string, key interface{}, value interface{}) error {
+func (n *Node) Set(bucketName string, key interface{}, value interface{}) error {
 	if key == nil {
 		return ErrNilParam
 	}
@@ -17,17 +17,22 @@ func (s *DB) Set(bucketName string, key interface{}, value interface{}) error {
 
 	var data []byte
 	if value != nil {
-		data, err = s.Codec.Encode(value)
+		data, err = n.s.Codec.Encode(value)
 		if err != nil {
 			return err
 		}
 	}
 
-	return s.Bolt.Update(func(tx *bolt.Tx) error {
-		bucket, err := tx.CreateBucketIfNotExists([]byte(bucketName))
+	return n.s.Bolt.Update(func(tx *bolt.Tx) error {
+		bucket, err := n.createBucketIfNotExists(tx, bucketName)
 		if err != nil {
 			return err
 		}
 		return bucket.Put(id, data)
 	})
+}
+
+// Set a key/value pair into a bucket
+func (s *DB) Set(bucketName string, key interface{}, value interface{}) error {
+	return s.root.Set(bucketName, key, value)
 }
