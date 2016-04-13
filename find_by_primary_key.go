@@ -8,7 +8,7 @@ import (
 	"github.com/fatih/structs"
 )
 
-// Find returns one record by primary key
+// Find returns one or more records by the specified index
 func (s *DB) FindByPrimaryKey(value interface{}, to interface{}) error {
 	d := structs.New(to)
 	bucketName := d.Name()
