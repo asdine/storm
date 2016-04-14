@@ -7,7 +7,7 @@ import (
 )
 
 // Get a value from a bucket
-func (s *DB) Get(bucketName string, key interface{}, to interface{}) error {
+func (n *Node) Get(bucketName string, key interface{}, to interface{}) error {
 	ref := reflect.ValueOf(to)
 
 	if !ref.IsValid() || ref.Kind() != reflect.Ptr {
@@ -19,8 +19,8 @@ func (s *DB) Get(bucketName string, key interface{}, to interface{}) error {
 		return err
 	}
 
-	return s.Bolt.View(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket([]byte(bucketName))
+	return n.s.Bolt.View(func(tx *bolt.Tx) error {
+		bucket := n.getBucket(tx, bucketName)
 		if bucket == nil {
 			return ErrNotFound
 		}
@@ -30,6 +30,11 @@ func (s *DB) Get(bucketName string, key interface{}, to interface{}) error {
 			return ErrNotFound
 		}
 
-		return s.Codec.Decode(raw, to)
+		return n.s.Codec.Decode(raw, to)
 	})
+}
+
+// Get a value from a bucket
+func (s *DB) Get(bucketName string, key interface{}, to interface{}) error {
+	return s.root.Get(bucketName, key, to)
 }

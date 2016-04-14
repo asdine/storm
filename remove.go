@@ -8,7 +8,7 @@ import (
 )
 
 // Remove removes a structure from the associated bucket
-func (s *DB) Remove(data interface{}) error {
+func (n *Node) Remove(data interface{}) error {
 	if !structs.IsStruct(data) {
 		return ErrBadType
 	}
@@ -23,8 +23,8 @@ func (s *DB) Remove(data interface{}) error {
 		return err
 	}
 
-	return s.Bolt.Update(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket([]byte(info.Name))
+	return n.s.Bolt.Update(func(tx *bolt.Tx) error {
+		bucket := n.getBucket(tx, info.Name)
 		if bucket == nil {
 			return fmt.Errorf("bucket %s doesn't exist", info.Name)
 		}
@@ -48,4 +48,9 @@ func (s *DB) Remove(data interface{}) error {
 
 		return bucket.Delete(id)
 	})
+}
+
+// Remove removes a structure from the associated bucket
+func (s *DB) Remove(data interface{}) error {
+	return s.root.Remove(data)
 }

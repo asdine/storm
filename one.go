@@ -9,7 +9,7 @@ import (
 )
 
 // One returns one record by the specified index
-func (s *DB) One(fieldName string, value interface{}, to interface{}) error {
+func (n *Node) One(fieldName string, value interface{}, to interface{}) error {
 	ref := reflect.ValueOf(to)
 
 	if !ref.IsValid() || (ref.Kind() != reflect.Ptr && structs.IsStruct(to)) {
@@ -30,8 +30,8 @@ func (s *DB) One(fieldName string, value interface{}, to interface{}) error {
 		return ErrNotFound
 	}
 
-	return s.Bolt.View(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket([]byte(info.Name))
+	return n.s.Bolt.View(func(tx *bolt.Tx) error {
+		bucket := n.getBucket(tx, info.Name)
 		if bucket == nil {
 			return fmt.Errorf("bucket %s doesn't exist", info.Name)
 		}
@@ -59,6 +59,11 @@ func (s *DB) One(fieldName string, value interface{}, to interface{}) error {
 			return ErrNotFound
 		}
 
-		return s.Codec.Decode(raw, to)
+		return n.s.Codec.Decode(raw, to)
 	})
+}
+
+// One returns one record by the specified index
+func (s *DB) One(fieldName string, value interface{}, to interface{}) error {
+	return s.root.One(fieldName, value, to)
 }

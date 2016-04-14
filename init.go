@@ -6,7 +6,7 @@ import (
 )
 
 // Init creates the indexes and buckets for a given structure
-func (s *DB) Init(data interface{}) error {
+func (n *Node) Init(data interface{}) error {
 	if !structs.IsStruct(data) {
 		return ErrBadType
 	}
@@ -16,8 +16,8 @@ func (s *DB) Init(data interface{}) error {
 		return err
 	}
 
-	err = s.Bolt.Update(func(tx *bolt.Tx) error {
-		bucket, err := tx.CreateBucketIfNotExists([]byte(info.Name))
+	err = n.s.Bolt.Update(func(tx *bolt.Tx) error {
+		bucket, err := n.createBucketIfNotExists(tx, info.Name)
 		if err != nil {
 			return err
 		}
@@ -40,4 +40,9 @@ func (s *DB) Init(data interface{}) error {
 		return nil
 	})
 	return err
+}
+
+// Init creates the indexes and buckets for a given structure
+func (s *DB) Init(data interface{}) error {
+	return s.root.Init(data)
 }

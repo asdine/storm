@@ -214,3 +214,37 @@ func TestSaveAutoIncrement(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, ErrZeroID, err)
 }
+
+func TestSaveDifferentBucketRoot(t *testing.T) {
+	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
+	defer os.RemoveAll(dir)
+	db, _ := Open(filepath.Join(dir, "storm.db"), AutoIncrement())
+	defer db.Close()
+
+	assert.Len(t, db.rootBucket, 0)
+
+	dbSub := db.From("sub")
+
+	assert.NotEqual(t, dbSub, db)
+	assert.Len(t, dbSub.rootBucket, 1)
+
+	err := db.Save(&User{ID: 10, Name: "John"})
+	assert.NoError(t, err)
+	err = dbSub.Save(&User{ID: 11, Name: "Paul"})
+	assert.NoError(t, err)
+
+	var (
+		john User
+		paul User
+	)
+
+	err = db.One("Name", "John", &john)
+	assert.NoError(t, err)
+	err = db.One("Name", "Paul", &paul)
+	assert.Error(t, err)
+
+	err = dbSub.One("Name", "Paul", &paul)
+	assert.NoError(t, err)
+	err = dbSub.One("Name", "John", &john)
+	assert.Error(t, err)
+}

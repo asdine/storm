@@ -8,7 +8,7 @@ import (
 )
 
 // Save a structure
-func (s *DB) Save(data interface{}) error {
+func (n *Node) Save(data interface{}) error {
 	if !structs.IsStruct(data) {
 		return ErrBadType
 	}
@@ -21,7 +21,7 @@ func (s *DB) Save(data interface{}) error {
 	var id []byte
 
 	if info.ID.IsZero {
-		if !info.ID.IsOfIntegerFamily() || !s.autoIncrement {
+		if !info.ID.IsOfIntegerFamily() || !n.s.autoIncrement {
 			return ErrZeroID
 		}
 	} else {
@@ -31,8 +31,8 @@ func (s *DB) Save(data interface{}) error {
 		}
 	}
 
-	return s.Bolt.Update(func(tx *bolt.Tx) error {
-		bucket, err := tx.CreateBucketIfNotExists([]byte(info.Name))
+	return n.s.Bolt.Update(func(tx *bolt.Tx) error {
+		bucket, err := n.createBucketIfNotExists(tx, info.Name)
 		if err != nil {
 			return err
 		}
@@ -79,11 +79,16 @@ func (s *DB) Save(data interface{}) error {
 			}
 		}
 
-		raw, err := s.Codec.Encode(data)
+		raw, err := n.s.Codec.Encode(data)
 		if err != nil {
 			return err
 		}
 
 		return bucket.Put(id, raw)
 	})
+}
+
+// Save a structure
+func (s *DB) Save(data interface{}) error {
+	return s.root.Save(data)
 }

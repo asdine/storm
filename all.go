@@ -8,7 +8,7 @@ import (
 )
 
 // AllByIndex gets all the records of a bucket that are indexed in the specified index
-func (s *DB) AllByIndex(fieldName string, to interface{}) error {
+func (n *Node) AllByIndex(fieldName string, to interface{}) error {
 	ref := reflect.ValueOf(to)
 
 	if ref.Kind() != reflect.Ptr || reflect.Indirect(ref).Kind() != reflect.Slice {
@@ -32,8 +32,8 @@ func (s *DB) AllByIndex(fieldName string, to interface{}) error {
 		return ErrNotFound
 	}
 
-	return s.Bolt.View(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket([]byte(info.Name))
+	return n.s.Bolt.View(func(tx *bolt.Tx) error {
+		bucket := n.getBucket(tx, info.Name)
 		if bucket == nil {
 			return fmt.Errorf("bucket %s not found", info.Name)
 		}
@@ -62,7 +62,7 @@ func (s *DB) AllByIndex(fieldName string, to interface{}) error {
 				return ErrNotFound
 			}
 
-			err = s.Codec.Decode(raw, results.Index(i).Addr().Interface())
+			err = n.s.Codec.Decode(raw, results.Index(i).Addr().Interface())
 			if err != nil {
 				return err
 			}
@@ -73,7 +73,17 @@ func (s *DB) AllByIndex(fieldName string, to interface{}) error {
 	})
 }
 
+// AllByIndex gets all the records of a bucket that are indexed in the specified index
+func (s *DB) AllByIndex(fieldName string, to interface{}) error {
+	return s.root.AllByIndex(fieldName, to)
+}
+
+// All get all the records of a bucket
+func (n *Node) All(to interface{}) error {
+	return n.AllByIndex("", to)
+}
+
 // All get all the records of a bucket
 func (s *DB) All(to interface{}) error {
-	return s.AllByIndex("", to)
+	return s.root.All(to)
 }

@@ -44,11 +44,11 @@ func TestNewStormWithStormOptions(t *testing.T) {
 	defer os.RemoveAll(dir)
 
 	dc := new(dummyCodec)
-	db1, _ := OpenWithOptions(filepath.Join(dir, "storm1.db"), 0600, nil, Codec(dc), AutoIncrement())
+	db1, _ := OpenWithOptions(filepath.Join(dir, "storm1.db"), 0600, nil, Codec(dc), AutoIncrement(), Root("a", "b"))
 	assert.Equal(t, dc, db1.Codec)
-	assert.IsType(t, dc, db1.Codec)
 	assert.True(t, db1.autoIncrement)
-
+	assert.Equal(t, []string{"a", "b"}, db1.rootBucket)
+	assert.Equal(t, []string{"a", "b"}, db1.root.rootBucket)
 	db2, _ := Open(filepath.Join(dir, "storm2.db"), Codec(dc))
 	assert.Equal(t, dc, db2.Codec)
 }
