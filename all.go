@@ -16,6 +16,11 @@ func (n *Node) AllByIndex(fieldName string, to interface{}) error {
 	}
 
 	typ := reflect.Indirect(ref).Type().Elem()
+
+	if typ.Kind() == reflect.Ptr {
+		typ = typ.Elem()
+	}
+
 	newElem := reflect.New(typ)
 
 	info, err := extract(newElem.Interface())
