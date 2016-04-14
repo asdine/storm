@@ -169,6 +169,40 @@ Storm can auto increment integer IDs so you don't have to worry about that when 
 db := storm.Open("my.db", storm.AutoIncrement())
 ```
 
+## Nodes and nested buckets
+
+Storm takes advantage of BoltDB nested buckets feature by using `storm.Node`.
+A `storm.Node` is the underlying object used by `storm.DB` to manipulate a bucket.
+To create a nested bucket and use the same API as `storm.DB`, you can use the `DB.From` method.
+
+```go
+repo := db.From("repo")
+
+err := repo.Save(&Issue{
+  Title: "I want more features",
+  Author: user.ID,
+})
+
+err = repo.Save(newRelease("0.10"))
+
+var issues []Issue
+err = repo.Find("Author", user.ID, &issues)
+
+var release Release
+err = repo.One("Tag", "0.10", &release)
+```
+
+You can also chain the nodes to create a hierarchy
+
+```go
+chars := db.From("characters")
+heroes := chars.From("heroes")
+enemies := chars.From("enemies")
+
+items := db.From("items")
+potions := items.From("consumables").From("medicine").From("potions")
+```
+
 ## Simple Key/Value store
 
 Storm can be used as a simple, robust, key/value store that can store anything.
