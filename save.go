@@ -32,7 +32,7 @@ func (n *Node) Save(data interface{}) error {
 	}
 
 	return n.s.Bolt.Update(func(tx *bolt.Tx) error {
-		bucket, err := n.createBucketIfNotExists(tx, info.Name)
+		bucket, err := n.CreateBucketIfNotExists(tx, info.Name)
 		if err != nil {
 			return err
 		}

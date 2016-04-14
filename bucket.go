@@ -4,7 +4,9 @@ import (
 	"github.com/boltdb/bolt"
 )
 
-func (n *Node) createBucketIfNotExists(tx *bolt.Tx, bucket string) (*bolt.Bucket, error) {
+// CreateBucketIfNotExists creates the bucket below the current node if it doesn't
+// already exist.
+func (n *Node) CreateBucketIfNotExists(tx *bolt.Tx, bucket string) (*bolt.Bucket, error) {
 	var b *bolt.Bucket
 	var err error
 
@@ -26,7 +28,8 @@ func (n *Node) createBucketIfNotExists(tx *bolt.Tx, bucket string) (*bolt.Bucket
 	return b, nil
 }
 
-func (n *Node) getBucket(tx *bolt.Tx, bucket string) *bolt.Bucket {
+// GetBucket returns the given bucket below the current node.
+func (n *Node) GetBucket(tx *bolt.Tx, bucket string) *bolt.Bucket {
 	var b *bolt.Bucket
 
 	bucketNames := append(n.rootBucket, bucket)

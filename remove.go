@@ -24,7 +24,7 @@ func (n *Node) Remove(data interface{}) error {
 	}
 
 	return n.s.Bolt.Update(func(tx *bolt.Tx) error {
-		bucket := n.getBucket(tx, info.Name)
+		bucket := n.GetBucket(tx, info.Name)
 		if bucket == nil {
 			return fmt.Errorf("bucket %s doesn't exist", info.Name)
 		}

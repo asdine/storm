@@ -24,7 +24,7 @@ func (n *Node) Set(bucketName string, key interface{}, value interface{}) error 
 	}
 
 	return n.s.Bolt.Update(func(tx *bolt.Tx) error {
-		bucket, err := n.createBucketIfNotExists(tx, bucketName)
+		bucket, err := n.CreateBucketIfNotExists(tx, bucketName)
 		if err != nil {
 			return err
 		}

@@ -38,7 +38,7 @@ func (n *Node) AllByIndex(fieldName string, to interface{}) error {
 	}
 
 	return n.s.Bolt.View(func(tx *bolt.Tx) error {
-		bucket := n.getBucket(tx, info.Name)
+		bucket := n.GetBucket(tx, info.Name)
 		if bucket == nil {
 			return fmt.Errorf("bucket %s not found", info.Name)
 		}

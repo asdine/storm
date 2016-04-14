@@ -21,9 +21,9 @@ func TestBucket(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assert.Nil(t, db.root.getBucket(readTx, "none"))
+	assert.Nil(t, db.root.GetBucket(readTx, "none"))
 
-	b, err := db.root.createBucketIfNotExists(readTx, "new")
+	b, err := db.root.CreateBucketIfNotExists(readTx, "new")
 
 	// Cannot create buckets in a read transaction
 	assert.Error(t, err)
@@ -41,15 +41,15 @@ func TestBucket(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assert.Nil(t, db.root.getBucket(writeTx, "none"))
+	assert.Nil(t, db.root.GetBucket(writeTx, "none"))
 
-	b, err = db.root.createBucketIfNotExists(writeTx, "new")
+	b, err = db.root.CreateBucketIfNotExists(writeTx, "new")
 
 	assert.NoError(t, err)
 	assert.NotNil(t, b)
 
 	n2 := db.From("a", "b")
-	b, err = n2.createBucketIfNotExists(writeTx, "c")
+	b, err = n2.CreateBucketIfNotExists(writeTx, "c")
 
 	assert.NoError(t, err)
 	assert.NotNil(t, b)
@@ -64,9 +64,9 @@ func TestBucket(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assert.NotNil(t, db.root.getBucket(readTx, "new"))
-	assert.Nil(t, db.root.getBucket(readTx, "c"))
-	assert.NotNil(t, n2.getBucket(readTx, "c"))
+	assert.NotNil(t, db.root.GetBucket(readTx, "new"))
+	assert.Nil(t, db.root.GetBucket(readTx, "c"))
+	assert.NotNil(t, n2.GetBucket(readTx, "c"))
 
 	readTx.Rollback()
 	// End read tx

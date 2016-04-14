@@ -36,7 +36,7 @@ func (n *Node) Find(fieldName string, value interface{}, to interface{}) error {
 	}
 
 	return n.s.Bolt.View(func(tx *bolt.Tx) error {
-		bucket := n.getBucket(tx, bucketName)
+		bucket := n.GetBucket(tx, bucketName)
 		if bucket == nil {
 			return fmt.Errorf("bucket %s not found", bucketName)
 		}
