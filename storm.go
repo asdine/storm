@@ -7,43 +7,63 @@ import (
 	"github.com/boltdb/bolt"
 )
 
+// BoltOptions used to pass options to BoltDB.
+func BoltOptions(mode os.FileMode, options *bolt.Options) func(*DB) error {
+	return func(d *DB) error {
+		d.boltMode = mode
+		d.boltOptions = options
+		return nil
+	}
+}
+
 // Codec used to set a custom encoder and decoder. The default is JSON.
-func Codec(c EncodeDecoder) func(*DB) {
-	return func(d *DB) {
+func Codec(c EncodeDecoder) func(*DB) error {
+	return func(d *DB) error {
 		d.Codec = c
+		return nil
 	}
 }
 
 // AutoIncrement used to enable bolt.NextSequence on empty integer ids.
-func AutoIncrement() func(*DB) {
-	return func(d *DB) {
+func AutoIncrement() func(*DB) error {
+	return func(d *DB) error {
 		d.autoIncrement = true
+		return nil
 	}
 }
 
 // Root used to set the root bucket. See also the From method.
-func Root(root ...string) func(*DB) {
-	return func(d *DB) {
+func Root(root ...string) func(*DB) error {
+	return func(d *DB) error {
 		d.rootBucket = root
+		return nil
 	}
 }
 
 // Open opens a database at the given path with optional Storm options.
-func Open(path string, stormOptions ...func(*DB)) (*DB, error) {
-	db, err := bolt.Open(path, 0600, &bolt.Options{Timeout: 1 * time.Second})
-
-	if err != nil {
-		return nil, err
-	}
+func Open(path string, stormOptions ...func(*DB) error) (*DB, error) {
+	var err error
 
 	s := &DB{
 		Path:  path,
-		Bolt:  db,
 		Codec: defaultCodec,
 	}
 
 	for _, option := range stormOptions {
 		option(s)
+	}
+
+	if s.boltMode == 0 {
+		s.boltMode = 0600
+	}
+
+	if s.boltOptions == nil {
+		s.boltOptions = &bolt.Options{Timeout: 1 * time.Second}
+	}
+
+	s.Bolt, err = bolt.Open(path, s.boltMode, s.boltOptions)
+	if err != nil {
+		return nil, err
 	}
 
 	s.root = &Node{s: s, rootBucket: s.rootBucket}
@@ -52,6 +72,7 @@ func Open(path string, stormOptions ...func(*DB)) (*DB, error) {
 }
 
 // OpenWithOptions opens a database with the given boltDB options and optional Storm options.
+// Deprecated: Use storm.Open with storm.BoltOptions instead.
 func OpenWithOptions(path string, mode os.FileMode, boltOptions *bolt.Options, stormOptions ...func(*DB)) (*DB, error) {
 	db, err := bolt.Open(path, mode, boltOptions)
 
@@ -85,6 +106,12 @@ type DB struct {
 
 	// Bolt is still easily accessible
 	Bolt *bolt.DB
+
+	// Bolt file mode
+	boltMode os.FileMode
+
+	// Bolt options
+	boltOptions *bolt.Options
 
 	// Enable auto increment on empty integer fields
 	autoIncrement bool

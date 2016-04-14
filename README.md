@@ -27,11 +27,7 @@ db, err := storm.Open("my.db")
 defer db.Close()
 ```
 
-By default, Storm opens a database with the mode `0600` and a timeout of one second.
-You can change this behavior by using `OpenWithOptions`
-```go
-db, err := storm.OpenWithOptions("my.db", 0600, &bolt.Options{Timeout: 1 * time.Second})
-```
+`Open` can receive multiple options to customize the way it behaves. See [Options](#options) below
 
 ## Simple ORM
 
@@ -147,6 +143,15 @@ Useful when starting your application
 ### Options
 
 Storm options are functions that can be passed when constructing you Storm instance. You can pass it any number of options.
+
+#### BoltOptions
+
+By default, Storm opens a database with the mode `0600` and a timeout of one second.
+You can change this behavior by using `BoltOptions`
+
+```go
+db, err := storm.Open("my.db", storm.BoltOptions(0600, &bolt.Options{Timeout: 1 * time.Second}))
+```
 
 #### EncodeDecoder
 
