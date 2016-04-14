@@ -10,7 +10,7 @@ func (n *Node) Delete(bucketName string, key interface{}) error {
 	}
 
 	return n.s.Bolt.Update(func(tx *bolt.Tx) error {
-		bucket := n.getBucket(tx, bucketName)
+		bucket := n.GetBucket(tx, bucketName)
 		if bucket == nil {
 			return ErrNotFound
 		}
