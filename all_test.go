@@ -34,6 +34,14 @@ func TestAllByIndex(t *testing.T) {
 	assert.Equal(t, 1, users[0].ID)
 	assert.Equal(t, 100, users[99].ID)
 
+	var users2 []*User
+
+	err = db.All(&users2)
+	assert.NoError(t, err)
+	assert.Len(t, users2, 100)
+	assert.Equal(t, 1, users2[0].ID)
+	assert.Equal(t, 100, users2[99].ID)
+
 	err = db.AllByIndex("DateOfBirth", &users)
 	assert.NoError(t, err)
 	assert.Len(t, users, 100)
