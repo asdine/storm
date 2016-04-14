@@ -202,6 +202,12 @@ enemies := chars.From("enemies")
 items := db.From("items")
 potions := items.From("consumables").From("medicine").From("potions")
 ```
+You can even pass the entire hierarchy as arguments to `From`:
+
+```go
+privateNotes := db.From("notes", "private")
+workNotes :=  db.From("notes", "work")
+```
 
 ## Simple Key/Value store
 
