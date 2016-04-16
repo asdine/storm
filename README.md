@@ -155,7 +155,7 @@ db, err := storm.Open("my.db", storm.BoltOptions(0600, &bolt.Options{Timeout: 1 
 
 #### EncodeDecoder
 
-To store the data in BoltDB, Storm encodes it in JSON by default. If you wish to change this behavior you can pass a codec that implements [`storm.EncodeDecoder`](https://godoc.org/github.com/asdine/storm#EncodeDecoder) via the [`storm.Codec`](https://godoc.org/github.com/asdine/storm#Codec) option:
+To store the data in BoltDB, Storm encodes it in JSON by default. If you wish to change this behavior you can pass a codec that implements [`codec.EncodeDecoder`](https://godoc.org/github.com/asdine/storm/codec#EncodeDecoder) via the [`storm.Codec`](https://godoc.org/github.com/asdine/storm#Codec) option:
 
 ```go
 db := storm.Open("my.db", storm.Codec(myCodec))
