@@ -4,6 +4,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/asdine/storm/codec"
 	"github.com/boltdb/bolt"
 )
 
@@ -17,7 +18,7 @@ func BoltOptions(mode os.FileMode, options *bolt.Options) func(*DB) error {
 }
 
 // Codec used to set a custom encoder and decoder. The default is JSON.
-func Codec(c EncodeDecoder) func(*DB) error {
+func Codec(c codec.EncodeDecoder) func(*DB) error {
 	return func(d *DB) error {
 		d.Codec = c
 		return nil
@@ -102,7 +103,7 @@ type DB struct {
 	Path string
 
 	// Handles encoding and decoding of objects
-	Codec EncodeDecoder
+	Codec codec.EncodeDecoder
 
 	// Bolt is still easily accessible
 	Bolt *bolt.DB

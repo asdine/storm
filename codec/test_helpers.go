@@ -6,16 +6,14 @@ import (
 	"testing"
 
 	"reflect"
-
-	"github.com/asdine/storm"
 )
 
 type testStruct struct {
 	Name string
 }
 
-// RountripTester is a test helper to test a storm.EncodeDecoder
-func RountripTester(t *testing.T, c storm.EncodeDecoder, vals ...interface{}) {
+// RountripTester is a test helper to test a EncodeDecoder
+func RountripTester(t *testing.T, c EncodeDecoder, vals ...interface{}) {
 	var val, to interface{}
 	if len(vals) > 0 {
 		if len(vals) != 2 {
