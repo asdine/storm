@@ -1,19 +1,19 @@
-// Package codec contains sub-packages with different codecs that can be used
-// to encode and decode entities in Storm.
-package codec
+package internal
 
 import (
+	"encoding/gob"
+	"reflect"
 	"testing"
 
-	"reflect"
+	"github.com/asdine/storm/codec"
 )
 
 type testStruct struct {
 	Name string
 }
 
-// RountripTester is a test helper to test a EncodeDecoder
-func RountripTester(t *testing.T, c EncodeDecoder, vals ...interface{}) {
+// RoundtripTester is a test helper to test a EncodeDecoder
+func RoundtripTester(t *testing.T, c codec.EncodeDecoder, vals ...interface{}) {
 	var val, to interface{}
 	if len(vals) > 0 {
 		if len(vals) != 2 {
@@ -26,9 +26,9 @@ func RountripTester(t *testing.T, c EncodeDecoder, vals ...interface{}) {
 		to = &testStruct{}
 	}
 
-	encoded, err := c.Encode(&val)
+	encoded, err := c.Encode(val)
 	if err != nil {
-		t.Fatalf("Encode error:", err)
+		t.Fatal("Encode error:", err)
 	}
 	err = c.Decode(encoded, to)
 	if err != nil {
@@ -37,4 +37,8 @@ func RountripTester(t *testing.T, c EncodeDecoder, vals ...interface{}) {
 	if !reflect.DeepEqual(val, to) {
 		t.Fatalf("Roundtrip codec mismatch, expected\n%#v\ngot\n%#v", val, to)
 	}
+}
+
+func init() {
+	gob.Register(&testStruct{})
 }

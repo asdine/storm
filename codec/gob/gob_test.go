@@ -6,6 +6,6 @@ import (
 	"github.com/asdine/storm/codec/internal"
 )
 
-func TestJSON(t *testing.T) {
+func TestGob(t *testing.T) {
 	internal.RoundtripTester(t, Codec)
 }
