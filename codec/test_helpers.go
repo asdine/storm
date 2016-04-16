@@ -3,9 +3,9 @@
 package codec
 
 import (
-	"testing"
-
+	"encoding/gob"
 	"reflect"
+	"testing"
 )
 
 type testStruct struct {
@@ -26,9 +26,9 @@ func RountripTester(t *testing.T, c EncodeDecoder, vals ...interface{}) {
 		to = &testStruct{}
 	}
 
-	encoded, err := c.Encode(&val)
+	encoded, err := c.Encode(val)
 	if err != nil {
-		t.Fatalf("Encode error:", err)
+		t.Fatal("Encode error:", err)
 	}
 	err = c.Decode(encoded, to)
 	if err != nil {
@@ -37,4 +37,8 @@ func RountripTester(t *testing.T, c EncodeDecoder, vals ...interface{}) {
 	if !reflect.DeepEqual(val, to) {
 		t.Fatalf("Roundtrip codec mismatch, expected\n%#v\ngot\n%#v", val, to)
 	}
+}
+
+func init() {
+	gob.Register(&testStruct{})
 }
