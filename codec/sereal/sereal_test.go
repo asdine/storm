@@ -3,7 +3,7 @@ package sereal
 import (
 	"testing"
 
-	"github.com/asdine/storm/codec"
+	"github.com/asdine/storm/codec/internal"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -16,6 +16,6 @@ func TestSereal(t *testing.T) {
 	u1 := &SerealUser{Name: "Sereal"}
 	u1.Self = u1 // cyclic ref
 	u2 := &SerealUser{}
-	codec.RountripTester(t, Codec, &u1, &u2)
+	internal.RoundtripTester(t, Codec, &u1, &u2)
 	assert.True(t, u2 == u2.Self)
 }

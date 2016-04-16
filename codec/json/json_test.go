@@ -3,9 +3,9 @@ package json
 import (
 	"testing"
 
-	"github.com/asdine/storm/codec"
+	"github.com/asdine/storm/codec/internal"
 )
 
 func TestJSON(t *testing.T) {
-	codec.RountripTester(t, Codec)
+	internal.RoundtripTester(t, Codec)
 }
