@@ -160,6 +160,24 @@ To store the data in BoltDB, Storm encodes it in JSON by default. If you wish to
 ```go
 db := storm.Open("my.db", storm.Codec(myCodec))
 ```
+##### Provided Codecs
+
+You can easily implement your own `EncodeDecoder`, but Storm comes with built-in support for [JSON](https://godoc.org/github.com/asdine/storm/codec/json) (default), [GOB](https://godoc.org/github.com/asdine/storm/codec/gob), and [Sereal](https://godoc.org/github.com/asdine/storm/codec/sereal).
+
+These can be used by importing the relevant package and use that codec to configure Storm. The example below shows all three (without proper error handling):
+
+```go
+import (
+	"github.com/asdine/storm"
+	"github.com/asdine/storm/codec/gob"
+	"github.com/asdine/storm/codec/json"
+	"github.com/asdine/storm/codec/sereal"
+)
+
+var gobDb, _ = storm.Open("gob.db", storm.Codec(gob.Codec))
+var jsonDb, _ = storm.Open("json.db", storm.Codec(json.Codec))
+var serealDb, _ = storm.Open("sereal.db", storm.Codec(sereal.Codec))
+```
 
 #### Auto Increment
 
