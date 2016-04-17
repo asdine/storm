@@ -25,48 +25,52 @@ func (n *Node) One(fieldName string, value interface{}, to interface{}) error {
 		return err
 	}
 
-	idxInfo, ok := info.Indexes[fieldName]
-	if !ok {
-		return ErrNotFound
-	}
-
 	val, err := toBytes(value, n.s.Codec, n.s.encodeKey)
 	if err != nil {
 		return err
 	}
 
 	return n.s.Bolt.View(func(tx *bolt.Tx) error {
-		bucket := n.GetBucket(tx, info.Name)
-		if bucket == nil {
-			return fmt.Errorf("bucket %s doesn't exist", info.Name)
-		}
-
-		var id []byte
-		if fieldName != info.ID.Field.Name() {
-			idx, err := getIndex(bucket, idxInfo.Type, fieldName)
-			if err != nil {
-				if err == ErrIndexNotFound {
-					return ErrNotFound
-				}
-				return err
-			}
-
-			id = idx.Get(val)
-		} else {
-			id = val
-		}
-
-		if id == nil {
-			return ErrNotFound
-		}
-
-		raw := bucket.Get(id)
-		if raw == nil {
-			return ErrNotFound
-		}
-
-		return n.s.Codec.Decode(raw, to)
+		return n.one(tx, fieldName, info, to, val, fieldName == info.ID.Field.Name())
 	})
+}
+
+func (n *Node) one(tx *bolt.Tx, fieldName string, info *modelInfo, to interface{}, val []byte, skipIndex bool) error {
+	bucket := n.GetBucket(tx, info.Name)
+	if bucket == nil {
+		return fmt.Errorf("bucket %s doesn't exist", info.Name)
+	}
+
+	var id []byte
+	if !skipIndex {
+		idxInfo, ok := info.Indexes[fieldName]
+		if !ok {
+			return ErrNotFound
+		}
+
+		idx, err := getIndex(bucket, idxInfo.Type, fieldName)
+		if err != nil {
+			if err == ErrIndexNotFound {
+				return ErrNotFound
+			}
+			return err
+		}
+
+		id = idx.Get(val)
+	} else {
+		id = val
+	}
+
+	if id == nil {
+		return ErrNotFound
+	}
+
+	raw := bucket.Get(id)
+	if raw == nil {
+		return ErrNotFound
+	}
+
+	return n.s.Codec.Decode(raw, to)
 }
 
 // One returns one record by the specified index

@@ -17,29 +17,33 @@ func (n *Node) Init(data interface{}) error {
 	}
 
 	err = n.s.Bolt.Update(func(tx *bolt.Tx) error {
-		bucket, err := n.CreateBucketIfNotExists(tx, info.Name)
+		return n.init(tx, info)
+	})
+	return err
+}
+
+func (n *Node) init(tx *bolt.Tx, info *modelInfo) error {
+	bucket, err := n.CreateBucketIfNotExists(tx, info.Name)
+	if err != nil {
+		return err
+	}
+
+	for fieldName, idxInfo := range info.Indexes {
+		switch idxInfo.Type {
+		case tagUniqueIdx:
+			_, err = NewUniqueIndex(bucket, []byte(indexPrefix+fieldName))
+		case tagIdx:
+			_, err = NewListIndex(bucket, []byte(indexPrefix+fieldName))
+		default:
+			err = ErrBadIndexType
+		}
+
 		if err != nil {
 			return err
 		}
+	}
 
-		for fieldName, idxInfo := range info.Indexes {
-			switch idxInfo.Type {
-			case tagUniqueIdx:
-				_, err = NewUniqueIndex(bucket, []byte(indexPrefix+fieldName))
-			case tagIdx:
-				_, err = NewListIndex(bucket, []byte(indexPrefix+fieldName))
-			default:
-				err = ErrBadIndexType
-			}
-
-			if err != nil {
-				return err
-			}
-		}
-
-		return nil
-	})
-	return err
+	return nil
 }
 
 // Init creates the indexes and buckets for a given structure

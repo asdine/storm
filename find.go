@@ -35,50 +35,54 @@ func (n *Node) Find(fieldName string, value interface{}, to interface{}) error {
 		return fmt.Errorf("index %s not found", fieldName)
 	}
 
+	val, err := toBytes(value, n.s.Codec, n.s.encodeKey)
+	if err != nil {
+		return err
+	}
+
 	return n.s.Bolt.View(func(tx *bolt.Tx) error {
-		bucket := n.GetBucket(tx, bucketName)
-		if bucket == nil {
-			return fmt.Errorf("bucket %s not found", bucketName)
-		}
-
-		idx, err := getIndex(bucket, tag, fieldName)
-		if err != nil {
-			if err == ErrIndexNotFound {
-				return ErrNotFound
-			}
-			return err
-		}
-
-		val, err := toBytes(value, n.s.Codec, n.s.encodeKey)
-		if err != nil {
-			return err
-		}
-
-		list, err := idx.All(val)
-		if err != nil {
-			if err == ErrIndexNotFound {
-				return ErrNotFound
-			}
-			return err
-		}
-
-		results := reflect.MakeSlice(reflect.Indirect(ref).Type(), len(list), len(list))
-
-		for i := range list {
-			raw := bucket.Get(list[i])
-			if raw == nil {
-				return ErrNotFound
-			}
-
-			err = n.s.Codec.Decode(raw, results.Index(i).Addr().Interface())
-			if err != nil {
-				return err
-			}
-		}
-
-		reflect.Indirect(ref).Set(results)
-		return nil
+		return n.find(tx, bucketName, fieldName, tag, &ref, val)
 	})
+}
+
+func (n *Node) find(tx *bolt.Tx, bucketName, fieldName, tag string, ref *reflect.Value, val []byte) error {
+	bucket := n.GetBucket(tx, bucketName)
+	if bucket == nil {
+		return fmt.Errorf("bucket %s not found", bucketName)
+	}
+
+	idx, err := getIndex(bucket, tag, fieldName)
+	if err != nil {
+		if err == ErrIndexNotFound {
+			return ErrNotFound
+		}
+		return err
+	}
+
+	list, err := idx.All(val)
+	if err != nil {
+		if err == ErrIndexNotFound {
+			return ErrNotFound
+		}
+		return err
+	}
+
+	results := reflect.MakeSlice(reflect.Indirect(*ref).Type(), len(list), len(list))
+
+	for i := range list {
+		raw := bucket.Get(list[i])
+		if raw == nil {
+			return ErrNotFound
+		}
+
+		err = n.s.Codec.Decode(raw, results.Index(i).Addr().Interface())
+		if err != nil {
+			return err
+		}
+	}
+
+	reflect.Indirect(*ref).Set(results)
+	return nil
 }
 
 // Find returns one or more records by the specified index
