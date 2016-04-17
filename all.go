@@ -9,6 +9,10 @@ import (
 
 // AllByIndex gets all the records of a bucket that are indexed in the specified index
 func (n *Node) AllByIndex(fieldName string, to interface{}) error {
+	if fieldName == "" {
+		return n.All(to)
+	}
+
 	ref := reflect.ValueOf(to)
 
 	if ref.Kind() != reflect.Ptr || reflect.Indirect(ref).Kind() != reflect.Slice {
@@ -26,10 +30,6 @@ func (n *Node) AllByIndex(fieldName string, to interface{}) error {
 	info, err := extract(newElem.Interface())
 	if err != nil {
 		return err
-	}
-
-	if fieldName == "" {
-		fieldName = info.ID.Field.Name()
 	}
 
 	idxInfo, ok := info.Indexes[fieldName]
@@ -78,14 +78,62 @@ func (n *Node) AllByIndex(fieldName string, to interface{}) error {
 	})
 }
 
+// All gets all the records of a bucket
+func (n *Node) All(to interface{}) error {
+	ref := reflect.ValueOf(to)
+
+	if ref.Kind() != reflect.Ptr || reflect.Indirect(ref).Kind() != reflect.Slice {
+		return ErrSlicePtrNeeded
+	}
+
+	rtyp := reflect.Indirect(ref).Type().Elem()
+	typ := rtyp
+
+	if rtyp.Kind() == reflect.Ptr {
+		typ = typ.Elem()
+	}
+
+	newElem := reflect.New(typ)
+
+	info, err := extract(newElem.Interface())
+	if err != nil {
+		return err
+	}
+
+	return n.s.Bolt.View(func(tx *bolt.Tx) error {
+		bucket := n.GetBucket(tx, info.Name)
+		if bucket == nil {
+			return fmt.Errorf("bucket %s not found", info.Name)
+		}
+
+		results := reflect.MakeSlice(reflect.Indirect(ref).Type(), 0, 0)
+		c := bucket.Cursor()
+		for k, v := c.First(); k != nil; k, v = c.Next() {
+			if v == nil {
+				continue
+			}
+
+			newElem = reflect.New(typ)
+			err = n.s.Codec.Decode(v, newElem.Interface())
+			if err != nil {
+				return err
+			}
+
+			if rtyp.Kind() == reflect.Ptr {
+				results = reflect.Append(results, newElem)
+			} else {
+				results = reflect.Append(results, reflect.Indirect(newElem))
+			}
+		}
+
+		reflect.Indirect(ref).Set(results)
+		return nil
+	})
+}
+
 // AllByIndex gets all the records of a bucket that are indexed in the specified index
 func (s *DB) AllByIndex(fieldName string, to interface{}) error {
 	return s.root.AllByIndex(fieldName, to)
-}
-
-// All get all the records of a bucket
-func (n *Node) All(to interface{}) error {
-	return n.AllByIndex("", to)
 }
 
 // All get all the records of a bucket

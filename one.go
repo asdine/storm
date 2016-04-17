@@ -30,26 +30,32 @@ func (n *Node) One(fieldName string, value interface{}, to interface{}) error {
 		return ErrNotFound
 	}
 
+	val, err := toBytes(value)
+	if err != nil {
+		return err
+	}
+
 	return n.s.Bolt.View(func(tx *bolt.Tx) error {
 		bucket := n.GetBucket(tx, info.Name)
 		if bucket == nil {
 			return fmt.Errorf("bucket %s doesn't exist", info.Name)
 		}
 
-		idx, err := getIndex(bucket, idxInfo.Type, fieldName)
-		if err != nil {
-			if err == ErrIndexNotFound {
-				return ErrNotFound
+		var id []byte
+		if fieldName != info.ID.Field.Name() {
+			idx, err := getIndex(bucket, idxInfo.Type, fieldName)
+			if err != nil {
+				if err == ErrIndexNotFound {
+					return ErrNotFound
+				}
+				return err
 			}
-			return err
+
+			id = idx.Get(val)
+		} else {
+			id = val
 		}
 
-		val, err := toBytes(value)
-		if err != nil {
-			return err
-		}
-
-		id := idx.Get(val)
 		if id == nil {
 			return ErrNotFound
 		}
