@@ -48,18 +48,3 @@ func (n *Node) GetBucket(tx *bolt.Tx, bucket string) *bolt.Bucket {
 
 	return b
 }
-
-func (n *Node) allRecords(bucket *bolt.Bucket) [][]byte {
-	c := bucket.Cursor()
-
-	var list [][]byte
-
-	for k, v := c.First(); k != nil; k, v = c.Next() {
-		if v != nil {
-			continue
-		}
-
-		list = append(list, v)
-	}
-	return list
-}
