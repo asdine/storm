@@ -42,18 +42,15 @@ func TestToBytes(t *testing.T) {
 }
 
 func TestToBytesWithCodec(t *testing.T) {
-	b, err := toBytes("a string", json.Codec, true)
-	assert.NoError(t, err)
-	assert.Equal(t, `"a string"`, string(b))
-
-	b, err = toBytes(new(isAStringer), json.Codec, true)
-	assert.NoError(t, err)
-	assert.Equal(t, "0", string(b))
-
-	b, err = toBytes(new(isAJSONMarshaler), json.Codec, true)
-	assert.Error(t, err)
-
-	b, err = toBytes(&SimpleUser{ID: 10, Name: "John", age: 100}, json.Codec, true)
+	b, err := toBytes(&SimpleUser{ID: 10, Name: "John", age: 100}, json.Codec, true)
 	assert.NoError(t, err)
 	assert.Equal(t, `{"ID":10,"Name":"John"}`, string(b))
+
+	b, err = toBytes(&SimpleUser{ID: 10, Name: "John", age: 100}, json.Codec, false)
+	assert.NoError(t, err)
+	assert.NotEqual(t, `{"ID":10,"Name":"John"}`, string(b))
+
+	b, err = toBytes(&SimpleUser{ID: 10, Name: "John", age: 100}, nil, false)
+	assert.NoError(t, err)
+	assert.NotEqual(t, `{"ID":10,"Name":"John"}`, string(b))
 }

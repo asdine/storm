@@ -11,10 +11,6 @@ import (
 
 // toBytes turns an interface into a slice of bytes
 func toBytes(key interface{}, encoder codec.EncodeDecoder, encodeKey bool) ([]byte, error) {
-	if encodeKey {
-		return encoder.Encode(key)
-	}
-
 	if key == nil {
 		return nil, nil
 	}
@@ -29,6 +25,10 @@ func toBytes(key interface{}, encoder codec.EncodeDecoder, encodeKey bool) ([]by
 	}
 	if k, ok := key.(json.Marshaler); ok {
 		return k.MarshalJSON()
+	}
+
+	if encodeKey {
+		return encoder.Encode(key)
 	}
 
 	var buf bytes.Buffer
