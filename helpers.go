@@ -5,10 +5,16 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
+
+	"github.com/asdine/storm/codec"
 )
 
 // toBytes turns an interface into a slice of bytes
-func toBytes(key interface{}) ([]byte, error) {
+func toBytes(key interface{}, encoder codec.EncodeDecoder, encodeKey bool) ([]byte, error) {
+	if encodeKey {
+		return encoder.Encode(key)
+	}
+
 	if key == nil {
 		return nil, nil
 	}

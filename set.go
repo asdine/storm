@@ -10,7 +10,7 @@ func (n *Node) Set(bucketName string, key interface{}, value interface{}) error 
 		return ErrNilParam
 	}
 
-	id, err := toBytes(key)
+	id, err := toBytes(key, n.s.Codec, n.s.encodeKey)
 	if err != nil {
 		return err
 	}

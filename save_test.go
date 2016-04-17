@@ -49,7 +49,7 @@ func TestSave(t *testing.T) {
 		bucket := tx.Bucket([]byte("UserWithIDField"))
 		assert.NotNil(t, bucket)
 
-		i, err := toBytes(10)
+		i, err := toBytes(10, nil, false)
 		assert.NoError(t, err)
 
 		val := bucket.Get(i)
@@ -88,7 +88,7 @@ func TestSaveUnique(t *testing.T) {
 		assert.NotNil(t, uniqueBucket)
 
 		id := uniqueBucket.Get([]byte("Jake"))
-		i, err := toBytes(10)
+		i, err := toBytes(10, nil, false)
 		assert.NoError(t, err)
 		assert.Equal(t, i, id)
 

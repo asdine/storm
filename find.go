@@ -49,7 +49,7 @@ func (n *Node) Find(fieldName string, value interface{}, to interface{}) error {
 			return err
 		}
 
-		val, err := toBytes(value)
+		val, err := toBytes(value, n.s.Codec, n.s.encodeKey)
 		if err != nil {
 			return err
 		}

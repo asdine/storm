@@ -4,7 +4,7 @@ import "github.com/boltdb/bolt"
 
 // Delete deletes a key from a bucket
 func (n *Node) Delete(bucketName string, key interface{}) error {
-	id, err := toBytes(key)
+	id, err := toBytes(key, n.s.Codec, n.s.encodeKey)
 	if err != nil {
 		return err
 	}

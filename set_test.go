@@ -35,7 +35,7 @@ func TestSet(t *testing.T) {
 		b2 := tx.Bucket([]byte("b2"))
 		assert.NotNil(t, b2)
 
-		k1, err := toBytes(10)
+		k1, err := toBytes(10, nil, false)
 		assert.NoError(t, err)
 		val := b1.Get(k1)
 		assert.NotNil(t, val)
@@ -44,7 +44,7 @@ func TestSet(t *testing.T) {
 		val = b1.Get(k2)
 		assert.NotNil(t, val)
 
-		k3, err := toBytes(0)
+		k3, err := toBytes(0, nil, false)
 		assert.NoError(t, err)
 		val = b1.Get(k3)
 		assert.NotNil(t, val)

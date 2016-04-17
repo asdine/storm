@@ -25,7 +25,7 @@ func (n *Node) Save(data interface{}) error {
 			return ErrZeroID
 		}
 	} else {
-		id, err = toBytes(info.ID.Value)
+		id, err = toBytes(info.ID.Value, n.s.Codec, n.s.encodeKey)
 		if err != nil {
 			return err
 		}
@@ -47,7 +47,7 @@ func (n *Node) Save(data interface{}) error {
 				return err
 			}
 
-			id, err = toBytes(intID)
+			id, err = toBytes(intID, n.s.Codec, n.s.encodeKey)
 			if err != nil {
 				return err
 			}
@@ -68,7 +68,7 @@ func (n *Node) Save(data interface{}) error {
 				continue
 			}
 
-			value, err := toBytes(idxInfo.Field.Value())
+			value, err := toBytes(idxInfo.Field.Value(), n.s.Codec, n.s.encodeKey)
 			if err != nil {
 				return err
 			}

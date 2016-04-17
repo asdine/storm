@@ -30,7 +30,7 @@ func (n *Node) One(fieldName string, value interface{}, to interface{}) error {
 		return ErrNotFound
 	}
 
-	val, err := toBytes(value)
+	val, err := toBytes(value, n.s.Codec, n.s.encodeKey)
 	if err != nil {
 		return err
 	}
