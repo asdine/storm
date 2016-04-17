@@ -1,4 +1,4 @@
-package json
+package gob
 
 import (
 	"bytes"
