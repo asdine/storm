@@ -140,6 +140,26 @@ err := db.Init(&User{})
 
 Useful when starting your application
 
+### Transactions
+
+```go
+tx, err := db.Begin(true)
+
+accountA.Amount -= 100
+accountB.Amount += 100
+
+err = tx.Save(accountA)
+if err != nil {
+  tx.Rollback()
+}
+
+err = tx.Save(accountB)
+if err != nil {
+  tx.Rollback()
+}
+
+tx.Commit()
+```
 ### Options
 
 Storm options are functions that can be passed when constructing you Storm instance. You can pass it any number of options.
