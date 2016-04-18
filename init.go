@@ -16,6 +16,10 @@ func (n *Node) Init(data interface{}) error {
 		return err
 	}
 
+	if n.tx != nil {
+		return n.init(n.tx, info)
+	}
+
 	err = n.s.Bolt.Update(func(tx *bolt.Tx) error {
 		return n.init(tx, info)
 	})

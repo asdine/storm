@@ -32,6 +32,10 @@ func (n *Node) AllByIndex(fieldName string, to interface{}) error {
 		return err
 	}
 
+	if n.tx != nil {
+		return n.allByIndex(n.tx, fieldName, info, &ref)
+	}
+
 	return n.s.Bolt.View(func(tx *bolt.Tx) error {
 		return n.allByIndex(tx, fieldName, info, &ref)
 	})
@@ -102,6 +106,10 @@ func (n *Node) All(to interface{}) error {
 	info, err := extract(newElem.Interface())
 	if err != nil {
 		return err
+	}
+
+	if n.tx != nil {
+		return n.all(n.tx, info, &ref, rtyp, typ)
 	}
 
 	return n.s.Bolt.View(func(tx *bolt.Tx) error {

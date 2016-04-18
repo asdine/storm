@@ -23,6 +23,10 @@ func (n *Node) Set(bucketName string, key interface{}, value interface{}) error 
 		}
 	}
 
+	if n.tx != nil {
+		return n.set(n.tx, bucketName, id, data)
+	}
+
 	return n.s.Bolt.Update(func(tx *bolt.Tx) error {
 		return n.set(tx, bucketName, id, data)
 	})

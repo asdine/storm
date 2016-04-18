@@ -23,6 +23,10 @@ func (n *Node) Remove(data interface{}) error {
 		return err
 	}
 
+	if n.tx != nil {
+		return n.remove(n.tx, info, id)
+	}
+
 	return n.s.Bolt.Update(func(tx *bolt.Tx) error {
 		return n.remove(tx, info, id)
 	})

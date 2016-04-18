@@ -19,6 +19,10 @@ func (n *Node) Get(bucketName string, key interface{}, to interface{}) error {
 		return err
 	}
 
+	if n.tx != nil {
+		return n.get(n.tx, bucketName, id, to)
+	}
+
 	return n.s.Bolt.View(func(tx *bolt.Tx) error {
 		return n.get(tx, bucketName, id, to)
 	})

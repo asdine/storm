@@ -40,6 +40,10 @@ func (n *Node) Find(fieldName string, value interface{}, to interface{}) error {
 		return err
 	}
 
+	if n.tx != nil {
+		return n.find(n.tx, bucketName, fieldName, tag, &ref, val)
+	}
+
 	return n.s.Bolt.View(func(tx *bolt.Tx) error {
 		return n.find(tx, bucketName, fieldName, tag, &ref, val)
 	})

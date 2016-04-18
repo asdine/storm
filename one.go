@@ -30,6 +30,10 @@ func (n *Node) One(fieldName string, value interface{}, to interface{}) error {
 		return err
 	}
 
+	if n.tx != nil {
+		return n.one(n.tx, fieldName, info, to, val, fieldName == info.ID.Field.Name())
+	}
+
 	return n.s.Bolt.View(func(tx *bolt.Tx) error {
 		return n.one(tx, fieldName, info, to, val, fieldName == info.ID.Field.Name())
 	})

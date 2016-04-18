@@ -9,6 +9,10 @@ func (n *Node) Delete(bucketName string, key interface{}) error {
 		return err
 	}
 
+	if n.tx != nil {
+		return n.delete(n.tx, bucketName, id)
+	}
+
 	return n.s.Bolt.Update(func(tx *bolt.Tx) error {
 		return n.delete(tx, bucketName, id)
 	})
