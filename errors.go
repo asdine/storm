@@ -4,17 +4,39 @@ import "errors"
 
 // Errors
 var (
-	ErrNoID             = errors.New("missing struct tag id or ID field")
-	ErrZeroID           = errors.New("id field must not be a zero value")
-	ErrBadType          = errors.New("provided data must be a struct or a pointer to struct")
-	ErrAlreadyExists    = errors.New("already exists")
-	ErrNilParam         = errors.New("param must not be nil")
-	ErrBadIndexType     = errors.New("bad index type")
-	ErrSlicePtrNeeded   = errors.New("provided target must be a pointer to slice")
-	ErrStructPtrNeeded  = errors.New("provided target must be a pointer to struct")
-	ErrPtrNeeded        = errors.New("provided target must be a pointer to a valid variable")
-	ErrNoName           = errors.New("provided target must have a name")
-	ErrIndexNotFound    = errors.New("index not found")
-	ErrNotFound         = errors.New("not found")
+	// ErrNoID is returned when no ID field or id tag is found in the struct.
+	ErrNoID = errors.New("missing struct tag id or ID field")
+
+	// ErrZeroID is returned when the ID field is a zero value.
+	ErrZeroID = errors.New("id field must not be a zero value")
+
+	// ErrBadType is returned when a method receives an unexpected value type.
+	ErrBadType = errors.New("provided data must be a struct or a pointer to struct")
+
+	// ErrAlreadyExists is returned uses when trying to set an existing value on a field that has a unique index.
+	ErrAlreadyExists = errors.New("already exists")
+
+	// ErrNilParam is returned when the specified param is expected to be not nil.
+	ErrNilParam = errors.New("param must not be nil")
+
+	// ErrUnknownTag is returned when an unexpected tag is specified.
+	ErrUnknownTag = errors.New("bad index type")
+
+	// ErrSlicePtrNeeded is returned when an unexpected value is given, instead of a pointer to slice.
+	ErrSlicePtrNeeded = errors.New("provided target must be a pointer to slice")
+
+	// ErrSlicePtrNeeded is returned when an unexpected value is given, instead of a pointer to struct.
+	ErrStructPtrNeeded = errors.New("provided target must be a pointer to struct")
+
+	// ErrSlicePtrNeeded is returned when an unexpected value is given, instead of a pointer.
+	ErrPtrNeeded = errors.New("provided target must be a pointer to a valid variable")
+
+	// ErrNoName is returned when the specified struct has no name.
+	ErrNoName = errors.New("provided target must have a name")
+
+	// ErrNotFound is returned when the specified record is not saved in the bucket.
+	ErrNotFound = errors.New("not found")
+
+	// ErrNotInTransaction is returned when trying to rollback or commit when not in transaction.
 	ErrNotInTransaction = errors.New("not in transaction")
 )

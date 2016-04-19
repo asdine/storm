@@ -32,6 +32,10 @@ func (n *Node) AllByIndex(fieldName string, to interface{}) error {
 		return err
 	}
 
+	if info.ID.Field.Name() == fieldName {
+		return n.All(to)
+	}
+
 	if n.tx != nil {
 		return n.allByIndex(n.tx, fieldName, info, &ref)
 	}
@@ -54,17 +58,11 @@ func (n *Node) allByIndex(tx *bolt.Tx, fieldName string, info *modelInfo, ref *r
 
 	idx, err := getIndex(bucket, idxInfo.Type, fieldName)
 	if err != nil {
-		if err == ErrIndexNotFound {
-			return ErrNotFound
-		}
 		return err
 	}
 
 	list, err := idx.AllRecords()
 	if err != nil {
-		if err == ErrIndexNotFound {
-			return ErrNotFound
-		}
 		return err
 	}
 

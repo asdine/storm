@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/boltdb/bolt"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -13,6 +14,7 @@ func TestOne(t *testing.T) {
 	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
 	defer os.RemoveAll(dir)
 	db, _ := Open(filepath.Join(dir, "storm.db"))
+	defer db.Close()
 
 	u := UniqueNameUser{Name: "John", ID: 10}
 	err := db.Save(&u)
@@ -73,4 +75,34 @@ func TestOne(t *testing.T) {
 	err = db.One("ID", "100", &n2)
 	assert.NoError(t, err)
 	assert.Equal(t, n, n2)
+}
+
+func TestOneNotWritable(t *testing.T) {
+	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
+	defer os.RemoveAll(dir)
+	db, _ := Open(filepath.Join(dir, "storm.db"))
+
+	err := db.Save(&User{ID: 10, Name: "John"})
+	assert.NoError(t, err)
+
+	db.Close()
+
+	db, _ = Open(filepath.Join(dir, "storm.db"), BoltOptions(0660, &bolt.Options{
+		ReadOnly: true,
+	}))
+	defer db.Close()
+
+	err = db.Save(&User{ID: 20, Name: "John"})
+	assert.Error(t, err)
+
+	var u User
+	err = db.One("ID", 10, &u)
+	assert.NoError(t, err)
+	assert.Equal(t, 10, u.ID)
+	assert.Equal(t, "John", u.Name)
+
+	err = db.One("Name", "John", &u)
+	assert.NoError(t, err)
+	assert.Equal(t, 10, u.ID)
+	assert.Equal(t, "John", u.Name)
 }

@@ -24,7 +24,7 @@ func NewUniqueIndex(parent *bolt.Bucket, indexName []byte) (*UniqueIndex, error)
 	b := parent.Bucket(indexName)
 	if b == nil {
 		if !parent.Writable() {
-			return nil, ErrIndexNotFound
+			return nil, ErrNotFound
 		}
 		b, err = parent.CreateBucket(indexName)
 		if err != nil {
@@ -124,7 +124,7 @@ func NewListIndex(parent *bolt.Bucket, indexName []byte) (*ListIndex, error) {
 	b := parent.Bucket(indexName)
 	if b == nil {
 		if !parent.Writable() {
-			return nil, ErrIndexNotFound
+			return nil, ErrNotFound
 		}
 		b, err = parent.CreateBucket(indexName)
 		if err != nil {
@@ -277,7 +277,7 @@ func getIndex(bucket *bolt.Bucket, idxKind string, fieldName string) (Index, err
 	case tagIdx:
 		idx, err = NewListIndex(bucket, []byte(indexPrefix+fieldName))
 	default:
-		err = ErrBadIndexType
+		err = ErrUnknownTag
 	}
 
 	return idx, err

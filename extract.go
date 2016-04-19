@@ -79,8 +79,6 @@ func extract(data interface{}, mi ...*modelInfo) (*modelInfo, error) {
 
 	// ID field or tag detected, add to the unique index
 	if m.ID.Field != nil {
-		m.AddIndex(m.ID.Field, tagUniqueIdx, !child)
-
 		if m.ID.Field.IsZero() {
 			m.ID.IsZero = true
 		} else {
@@ -113,7 +111,7 @@ func extractField(f *structs.Field, m *modelInfo, isChild bool) error {
 				}
 			}
 		default:
-			return ErrBadIndexType
+			return ErrUnknownTag
 		}
 	}
 

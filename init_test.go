@@ -29,7 +29,7 @@ func TestInit(t *testing.T) {
 
 	err = db.Init(&ClassicBadTags{})
 	assert.Error(t, err)
-	assert.Equal(t, ErrBadIndexType, err)
+	assert.Equal(t, ErrUnknownTag, err)
 
 	err = db.Init(10)
 	assert.Error(t, err)

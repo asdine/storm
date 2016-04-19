@@ -54,9 +54,6 @@ func (n *Node) one(tx *bolt.Tx, fieldName string, info *modelInfo, to interface{
 
 		idx, err := getIndex(bucket, idxInfo.Type, fieldName)
 		if err != nil {
-			if err == ErrIndexNotFound {
-				return ErrNotFound
-			}
 			return err
 		}
 

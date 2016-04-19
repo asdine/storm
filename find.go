@@ -57,17 +57,11 @@ func (n *Node) find(tx *bolt.Tx, bucketName, fieldName, tag string, ref *reflect
 
 	idx, err := getIndex(bucket, tag, fieldName)
 	if err != nil {
-		if err == ErrIndexNotFound {
-			return ErrNotFound
-		}
 		return err
 	}
 
 	list, err := idx.All(val)
 	if err != nil {
-		if err == ErrIndexNotFound {
-			return ErrNotFound
-		}
 		return err
 	}
 

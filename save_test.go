@@ -24,7 +24,7 @@ func TestSave(t *testing.T) {
 
 	err = db.Save(&ClassicBadTags{ID: "id", PublicField: 100})
 	assert.Error(t, err)
-	assert.Equal(t, ErrBadIndexType, err)
+	assert.Equal(t, ErrUnknownTag, err)
 
 	err = db.Save(&UserWithNoID{Name: "John"})
 	assert.Error(t, err)

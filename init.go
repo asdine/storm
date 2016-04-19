@@ -39,7 +39,7 @@ func (n *Node) init(tx *bolt.Tx, info *modelInfo) error {
 		case tagIdx:
 			_, err = NewListIndex(bucket, []byte(indexPrefix+fieldName))
 		default:
-			err = ErrBadIndexType
+			err = ErrUnknownTag
 		}
 
 		if err != nil {

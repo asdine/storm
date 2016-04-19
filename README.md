@@ -3,6 +3,7 @@
 [![Build Status](https://travis-ci.org/asdine/storm.svg)](https://travis-ci.org/asdine/storm)
 [![GoDoc](https://godoc.org/github.com/asdine/storm?status.svg)](https://godoc.org/github.com/asdine/storm)
 [![Go Report Card](https://goreportcard.com/badge/github.com/asdine/storm)](https://goreportcard.com/report/github.com/asdine/storm)
+[![Coverage Status](https://coveralls.io/repos/github/asdine/storm/badge.svg?branch=master)](https://coveralls.io/github/asdine/storm?branch=master)
 
 Storm is a wrapper and simple ORM around [BoltDB](https://github.com/boltdb/bolt). The goal of this project is to provide a simple way to save any object in BoltDB and to easily retrieve it.
 
