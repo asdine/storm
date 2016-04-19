@@ -1,16 +1,15 @@
 package storm
 
 // Begin starts a new transaction.
-func (n *Node) Begin(writable bool) (*Node, error) {
+func (n Node) Begin(writable bool) (*Node, error) {
 	var err error
 
-	t := *n
-	t.tx, err = n.s.Bolt.Begin(writable)
+	n.tx, err = n.s.Bolt.Begin(writable)
 	if err != nil {
 		return nil, err
 	}
 
-	return &t, nil
+	return &n, nil
 }
 
 // Rollback closes the transaction and ignores all previous updates.

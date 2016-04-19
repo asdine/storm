@@ -151,11 +151,13 @@ accountB.Amount += 100
 err = tx.Save(accountA)
 if err != nil {
   tx.Rollback()
+  return err
 }
 
 err = tx.Save(accountB)
 if err != nil {
   tx.Rollback()
+  return err
 }
 
 tx.Commit()
