@@ -23,13 +23,21 @@ func (n *Node) Set(bucketName string, key interface{}, value interface{}) error 
 		}
 	}
 
+	if n.tx != nil {
+		return n.set(n.tx, bucketName, id, data)
+	}
+
 	return n.s.Bolt.Update(func(tx *bolt.Tx) error {
-		bucket, err := n.CreateBucketIfNotExists(tx, bucketName)
-		if err != nil {
-			return err
-		}
-		return bucket.Put(id, data)
+		return n.set(tx, bucketName, id, data)
 	})
+}
+
+func (n *Node) set(tx *bolt.Tx, bucketName string, id, data []byte) error {
+	bucket, err := n.CreateBucketIfNotExists(tx, bucketName)
+	if err != nil {
+		return err
+	}
+	return bucket.Put(id, data)
 }
 
 // Set a key/value pair into a bucket

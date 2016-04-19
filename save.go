@@ -31,61 +31,69 @@ func (n *Node) Save(data interface{}) error {
 		}
 	}
 
+	raw, err := n.s.Codec.Encode(data)
+	if err != nil {
+		return err
+	}
+
+	if n.tx != nil {
+		return n.save(n.tx, info, id, raw)
+	}
+
 	return n.s.Bolt.Update(func(tx *bolt.Tx) error {
-		bucket, err := n.CreateBucketIfNotExists(tx, info.Name)
-		if err != nil {
-			return err
-		}
-
-		if info.ID.IsZero {
-			// isZero and integer, generate next sequence
-			intID, _ := bucket.NextSequence()
-
-			// convert to the right integer size
-			err = info.ID.Field.Set(reflect.ValueOf(intID).Convert(info.ID.Type()).Interface())
-			if err != nil {
-				return err
-			}
-
-			id, err = toBytes(intID, n.s.Codec, n.s.encodeKey)
-			if err != nil {
-				return err
-			}
-		}
-
-		for fieldName, idxInfo := range info.Indexes {
-			idx, err := getIndex(bucket, idxInfo.Type, fieldName)
-			if err != nil {
-				return err
-			}
-
-			err = idx.RemoveID(id)
-			if err != nil {
-				return err
-			}
-
-			if idxInfo.Field.IsZero() {
-				continue
-			}
-
-			value, err := toBytes(idxInfo.Field.Value(), n.s.Codec, n.s.encodeKey)
-			if err != nil {
-				return err
-			}
-
-			err = idx.Add(value, id)
-			if err != nil {
-				return err
-			}
-		}
-
-		raw, err := n.s.Codec.Encode(data)
-		if err != nil {
-			return err
-		}
-
-		return bucket.Put(id, raw)
+		return n.save(tx, info, id, raw)
 	})
+}
+
+func (n *Node) save(tx *bolt.Tx, info *modelInfo, id []byte, raw []byte) error {
+	bucket, err := n.CreateBucketIfNotExists(tx, info.Name)
+	if err != nil {
+		return err
+	}
+
+	if info.ID.IsZero {
+		// isZero and integer, generate next sequence
+		intID, _ := bucket.NextSequence()
+
+		// convert to the right integer size
+		err = info.ID.Field.Set(reflect.ValueOf(intID).Convert(info.ID.Type()).Interface())
+		if err != nil {
+			return err
+		}
+
+		id, err = toBytes(intID, n.s.Codec, n.s.encodeKey)
+		if err != nil {
+			return err
+		}
+	}
+
+	for fieldName, idxInfo := range info.Indexes {
+		idx, err := getIndex(bucket, idxInfo.Type, fieldName)
+		if err != nil {
+			return err
+		}
+
+		err = idx.RemoveID(id)
+		if err != nil {
+			return err
+		}
+
+		if idxInfo.Field.IsZero() {
+			continue
+		}
+
+		value, err := toBytes(idxInfo.Field.Value(), n.s.Codec, n.s.encodeKey)
+		if err != nil {
+			return err
+		}
+
+		err = idx.Add(value, id)
+		if err != nil {
+			return err
+		}
+	}
+
+	return bucket.Put(id, raw)
 }
 
 // Save a structure

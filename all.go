@@ -32,50 +32,58 @@ func (n *Node) AllByIndex(fieldName string, to interface{}) error {
 		return err
 	}
 
+	if n.tx != nil {
+		return n.allByIndex(n.tx, fieldName, info, &ref)
+	}
+
+	return n.s.Bolt.View(func(tx *bolt.Tx) error {
+		return n.allByIndex(tx, fieldName, info, &ref)
+	})
+}
+
+func (n *Node) allByIndex(tx *bolt.Tx, fieldName string, info *modelInfo, ref *reflect.Value) error {
+	bucket := n.GetBucket(tx, info.Name)
+	if bucket == nil {
+		return fmt.Errorf("bucket %s not found", info.Name)
+	}
+
 	idxInfo, ok := info.Indexes[fieldName]
 	if !ok {
 		return ErrNotFound
 	}
 
-	return n.s.Bolt.View(func(tx *bolt.Tx) error {
-		bucket := n.GetBucket(tx, info.Name)
-		if bucket == nil {
-			return fmt.Errorf("bucket %s not found", info.Name)
+	idx, err := getIndex(bucket, idxInfo.Type, fieldName)
+	if err != nil {
+		if err == ErrIndexNotFound {
+			return ErrNotFound
+		}
+		return err
+	}
+
+	list, err := idx.AllRecords()
+	if err != nil {
+		if err == ErrIndexNotFound {
+			return ErrNotFound
+		}
+		return err
+	}
+
+	results := reflect.MakeSlice(reflect.Indirect(*ref).Type(), len(list), len(list))
+
+	for i := range list {
+		raw := bucket.Get(list[i])
+		if raw == nil {
+			return ErrNotFound
 		}
 
-		idx, err := getIndex(bucket, idxInfo.Type, fieldName)
+		err = n.s.Codec.Decode(raw, results.Index(i).Addr().Interface())
 		if err != nil {
-			if err == ErrIndexNotFound {
-				return ErrNotFound
-			}
 			return err
 		}
+	}
 
-		list, err := idx.AllRecords()
-		if err != nil {
-			if err == ErrIndexNotFound {
-				return ErrNotFound
-			}
-			return err
-		}
-
-		results := reflect.MakeSlice(reflect.Indirect(ref).Type(), len(list), len(list))
-
-		for i := range list {
-			raw := bucket.Get(list[i])
-			if raw == nil {
-				return ErrNotFound
-			}
-
-			err = n.s.Codec.Decode(raw, results.Index(i).Addr().Interface())
-			if err != nil {
-				return err
-			}
-		}
-
-		reflect.Indirect(ref).Set(results)
-		return nil
-	})
+	reflect.Indirect(*ref).Set(results)
+	return nil
 }
 
 // All gets all the records of a bucket
@@ -100,35 +108,43 @@ func (n *Node) All(to interface{}) error {
 		return err
 	}
 
+	if n.tx != nil {
+		return n.all(n.tx, info, &ref, rtyp, typ)
+	}
+
 	return n.s.Bolt.View(func(tx *bolt.Tx) error {
-		bucket := n.GetBucket(tx, info.Name)
-		if bucket == nil {
-			return fmt.Errorf("bucket %s not found", info.Name)
-		}
-
-		results := reflect.MakeSlice(reflect.Indirect(ref).Type(), 0, 0)
-		c := bucket.Cursor()
-		for k, v := c.First(); k != nil; k, v = c.Next() {
-			if v == nil {
-				continue
-			}
-
-			newElem = reflect.New(typ)
-			err = n.s.Codec.Decode(v, newElem.Interface())
-			if err != nil {
-				return err
-			}
-
-			if rtyp.Kind() == reflect.Ptr {
-				results = reflect.Append(results, newElem)
-			} else {
-				results = reflect.Append(results, reflect.Indirect(newElem))
-			}
-		}
-
-		reflect.Indirect(ref).Set(results)
-		return nil
+		return n.all(tx, info, &ref, rtyp, typ)
 	})
+}
+
+func (n *Node) all(tx *bolt.Tx, info *modelInfo, ref *reflect.Value, rtyp, typ reflect.Type) error {
+	bucket := n.GetBucket(tx, info.Name)
+	if bucket == nil {
+		return fmt.Errorf("bucket %s not found", info.Name)
+	}
+
+	results := reflect.MakeSlice(reflect.Indirect(*ref).Type(), 0, 0)
+	c := bucket.Cursor()
+	for k, v := c.First(); k != nil; k, v = c.Next() {
+		if v == nil {
+			continue
+		}
+
+		newElem := reflect.New(typ)
+		err := n.s.Codec.Decode(v, newElem.Interface())
+		if err != nil {
+			return err
+		}
+
+		if rtyp.Kind() == reflect.Ptr {
+			results = reflect.Append(results, newElem)
+		} else {
+			results = reflect.Append(results, reflect.Indirect(newElem))
+		}
+	}
+
+	reflect.Indirect(*ref).Set(results)
+	return nil
 }
 
 // AllByIndex gets all the records of a bucket that are indexed in the specified index

@@ -1,11 +1,16 @@
 package storm
 
+import "github.com/boltdb/bolt"
+
 // A Node in Storm represents the API to a BoltDB bucket.
 type Node struct {
 	s *DB
 
 	// The root bucket. In the normal, simple case this will be empty.
 	rootBucket []string
+
+	// Transaction object. Nil if not in transaction
+	tx *bolt.Tx
 }
 
 // From returns a new Storm node with a new bucket root below the current.

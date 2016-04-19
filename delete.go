@@ -9,14 +9,22 @@ func (n *Node) Delete(bucketName string, key interface{}) error {
 		return err
 	}
 
-	return n.s.Bolt.Update(func(tx *bolt.Tx) error {
-		bucket := n.GetBucket(tx, bucketName)
-		if bucket == nil {
-			return ErrNotFound
-		}
+	if n.tx != nil {
+		return n.delete(n.tx, bucketName, id)
+	}
 
-		return bucket.Delete(id)
+	return n.s.Bolt.Update(func(tx *bolt.Tx) error {
+		return n.delete(tx, bucketName, id)
 	})
+}
+
+func (n *Node) delete(tx *bolt.Tx, bucketName string, id []byte) error {
+	bucket := n.GetBucket(tx, bucketName)
+	if bucket == nil {
+		return ErrNotFound
+	}
+
+	return bucket.Delete(id)
 }
 
 // Delete deletes a key from a bucket

@@ -19,19 +19,27 @@ func (n *Node) Get(bucketName string, key interface{}, to interface{}) error {
 		return err
 	}
 
+	if n.tx != nil {
+		return n.get(n.tx, bucketName, id, to)
+	}
+
 	return n.s.Bolt.View(func(tx *bolt.Tx) error {
-		bucket := n.GetBucket(tx, bucketName)
-		if bucket == nil {
-			return ErrNotFound
-		}
-
-		raw := bucket.Get(id)
-		if raw == nil {
-			return ErrNotFound
-		}
-
-		return n.s.Codec.Decode(raw, to)
+		return n.get(tx, bucketName, id, to)
 	})
+}
+
+func (n *Node) get(tx *bolt.Tx, bucketName string, id []byte, to interface{}) error {
+	bucket := n.GetBucket(tx, bucketName)
+	if bucket == nil {
+		return ErrNotFound
+	}
+
+	raw := bucket.Get(id)
+	if raw == nil {
+		return ErrNotFound
+	}
+
+	return n.s.Codec.Decode(raw, to)
 }
 
 // Get a value from a bucket
