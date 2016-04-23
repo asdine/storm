@@ -40,6 +40,7 @@ type User struct {
   Group string `storm:"index"` // this field will be indexed
   Email string `storm:"unique"` // this field will be indexed with a unique constraint
   Name string // this field will not be indexed
+  Age int `storm:"index"`
 }
 ```
 
@@ -78,6 +79,7 @@ user := User{
   Group: "staff",
   Email: "john@provider.com",
   Name: "John",
+  Age: 21,
   CreatedAt: time.Now(),
 }
 
@@ -125,6 +127,13 @@ err := db.All(&users)
 ```go
 var users []User
 err := db.AllByIndex("CreatedAt", &users)
+```
+
+### Fetch a range of objects
+
+```go
+var users []User
+err := db.Range("Age", 10, 21, &users)
 ```
 
 ### Remove an object
