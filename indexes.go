@@ -16,6 +16,7 @@ type Index interface {
 	Get(value []byte) []byte
 	All(value []byte) ([][]byte, error)
 	AllRecords() ([][]byte, error)
+	Range(min []byte, max []byte) ([][]byte, error)
 }
 
 // NewUniqueIndex loads a UniqueIndex
@@ -103,6 +104,18 @@ func (idx *UniqueIndex) AllRecords() ([][]byte, error) {
 	var list [][]byte
 
 	for val, ident := c.First(); val != nil; val, ident = c.Next() {
+		list = append(list, ident)
+	}
+	return list, nil
+}
+
+// Range returns the ids corresponding to the given range of values
+func (idx *UniqueIndex) Range(min []byte, max []byte) ([][]byte, error) {
+	c := idx.IndexBucket.Cursor()
+
+	var list [][]byte
+
+	for val, ident := c.Seek(min); val != nil && bytes.Compare(val, max) <= 0; val, ident = c.Next() {
 		list = append(list, ident)
 	}
 	return list, nil
@@ -248,6 +261,32 @@ func (idx *ListIndex) AllRecords() ([][]byte, error) {
 	var list [][]byte
 
 	for bucketName, val := c.First(); bucketName != nil; bucketName, val = c.Next() {
+		if val != nil || bytes.Equal(bucketName, []byte("storm__ids")) {
+			continue
+		}
+
+		uni, err := NewUniqueIndex(idx.IndexBucket, bucketName)
+		if err != nil {
+			return nil, err
+		}
+
+		all, err := uni.AllRecords()
+		if err != nil {
+			return nil, err
+		}
+		list = append(list, all...)
+	}
+
+	return list, nil
+}
+
+// Range returns the ids corresponding to the given range of values
+func (idx *ListIndex) Range(min []byte, max []byte) ([][]byte, error) {
+	c := idx.IndexBucket.Cursor()
+
+	var list [][]byte
+
+	for bucketName, val := c.Seek(min); bucketName != nil && bytes.Compare(bucketName, max) <= 0; bucketName, val = c.Next() {
 		if val != nil || bytes.Equal(bucketName, []byte("storm__ids")) {
 			continue
 		}

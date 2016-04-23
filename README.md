@@ -5,7 +5,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/asdine/storm)](https://goreportcard.com/report/github.com/asdine/storm)
 [![Coverage](http://gocover.io/_badge/github.com/asdine/storm)](http://gocover.io/github.com/asdine/storm)
 
-Storm is a wrapper and simple ORM around [BoltDB](https://github.com/boltdb/bolt). The goal of this project is to provide a simple way to save any object in BoltDB and to easily retrieve it.
+Storm is simple and powerful ORM for [BoltDB](https://github.com/boltdb/bolt). The goal of this project is to provide a simple way to save any object in BoltDB and to easily retrieve it.
 
 ## Getting Started
 
@@ -298,11 +298,9 @@ db.Bolt.View(func(tx *bolt.Tx) error {
 
 ## TODO
 
-- Improve documentation / comments
-- Btree indexes and more
-- Order
-- Limit
-- Offset
+- Search
+- Reverse order
+- More indexes
 
 ## License
 
