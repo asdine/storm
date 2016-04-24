@@ -318,6 +318,18 @@ db.Bolt.View(func(tx *bolt.Tx) error {
 })
 ```
 
+A transaction can be also be passed to Storm
+
+```go
+db.Bolt.Update(func(tx *bolt.Tx) error {
+  ...
+  dbx := db.WithTransaction(tx)
+  err = dbx.Save(&user)
+  ...
+  return nil
+})
+```
+
 ## TODO
 
 - Search

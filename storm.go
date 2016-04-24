@@ -102,3 +102,8 @@ func (s *DB) From(root ...string) *Node {
 	newNode.rootBucket = root
 	return &newNode
 }
+
+// WithTransaction returns a New Storm node that will use the given transaction.
+func (s *DB) WithTransaction(tx *bolt.Tx) *Node {
+	return s.root.WithTransaction(tx)
+}

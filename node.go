@@ -19,3 +19,9 @@ func (n Node) From(addend ...string) *Node {
 	n.rootBucket = append(n.rootBucket, addend...)
 	return &n
 }
+
+// WithTransaction returns a New Storm node that will use the given transaction.
+func (n Node) WithTransaction(tx *bolt.Tx) *Node {
+	n.tx = tx
+	return &n
+}
