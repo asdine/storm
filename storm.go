@@ -8,43 +8,6 @@ import (
 	"github.com/boltdb/bolt"
 )
 
-// BoltOptions used to pass options to BoltDB.
-func BoltOptions(mode os.FileMode, options *bolt.Options) func(*DB) error {
-	return func(d *DB) error {
-		d.boltMode = mode
-		d.boltOptions = options
-		return nil
-	}
-}
-
-// Codec used to set a custom encoder and decoder. The default is JSON.
-// The optional encodeKey param allows to use the selected codec to encode the keys too.
-func Codec(c codec.EncodeDecoder, encodeKey ...bool) func(*DB) error {
-	return func(d *DB) error {
-		d.Codec = c
-		if len(encodeKey) > 0 {
-			d.encodeKey = encodeKey[0]
-		}
-		return nil
-	}
-}
-
-// AutoIncrement used to enable bolt.NextSequence on empty integer ids.
-func AutoIncrement() func(*DB) error {
-	return func(d *DB) error {
-		d.autoIncrement = true
-		return nil
-	}
-}
-
-// Root used to set the root bucket. See also the From method.
-func Root(root ...string) func(*DB) error {
-	return func(d *DB) error {
-		d.rootBucket = root
-		return nil
-	}
-}
-
 // Open opens a database at the given path with optional Storm options.
 func Open(path string, stormOptions ...func(*DB) error) (*DB, error) {
 	var err error

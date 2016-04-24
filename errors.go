@@ -20,7 +20,10 @@ var (
 	ErrNilParam = errors.New("param must not be nil")
 
 	// ErrUnknownTag is returned when an unexpected tag is specified.
-	ErrUnknownTag = errors.New("bad index type")
+	ErrUnknownTag = errors.New("unknown tag")
+
+	// ErrIdxNotFound is returned when the specified index is not found.
+	ErrIdxNotFound = errors.New("index not found")
 
 	// ErrSlicePtrNeeded is returned when an unexpected value is given, instead of a pointer to slice.
 	ErrSlicePtrNeeded = errors.New("provided target must be a pointer to slice")

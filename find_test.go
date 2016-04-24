@@ -68,4 +68,10 @@ func TestFind(t *testing.T) {
 	err = db.Find("Name", nil, &users)
 	assert.Error(t, err)
 	assert.Equal(t, ErrNotFound, err)
+
+	err = db.Find("Name", "John", &users, Limit(10), Skip(20))
+	assert.NoError(t, err)
+	assert.Len(t, users, 10)
+	assert.Equal(t, 21, users[0].ID)
+	assert.Equal(t, 30, users[9].ID)
 }

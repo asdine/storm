@@ -72,6 +72,12 @@ func TestRange(t *testing.T) {
 	assert.Equal(t, "John050", users[0].Slug)
 	assert.Equal(t, "John048", users[2].Slug)
 
+	err = db.Range("Slug", "John010", "John040", &users, Limit(10), Skip(20))
+	assert.NoError(t, err)
+	assert.Len(t, users, 10)
+	assert.Equal(t, 30, users[0].ID)
+	assert.Equal(t, 39, users[9].ID)
+
 	err = db.Range("Group", min, max, &users)
 	assert.Error(t, err)
 	assert.EqualError(t, err, "index Group not found")

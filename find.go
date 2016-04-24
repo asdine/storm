@@ -9,7 +9,7 @@ import (
 )
 
 // Find returns one or more records by the specified index
-func (n *Node) Find(fieldName string, value interface{}, to interface{}) error {
+func (n *Node) Find(fieldName string, value interface{}, to interface{}, options ...func(q *queryOptions)) error {
 	ref := reflect.ValueOf(to)
 
 	if ref.Kind() != reflect.Ptr || reflect.Indirect(ref).Kind() != reflect.Slice {
@@ -40,16 +40,21 @@ func (n *Node) Find(fieldName string, value interface{}, to interface{}) error {
 		return err
 	}
 
+	opts := newQueryOptions()
+	for _, fn := range options {
+		fn(opts)
+	}
+
 	if n.tx != nil {
-		return n.find(n.tx, bucketName, fieldName, tag, &ref, val)
+		return n.find(n.tx, bucketName, fieldName, tag, &ref, val, opts)
 	}
 
 	return n.s.Bolt.View(func(tx *bolt.Tx) error {
-		return n.find(tx, bucketName, fieldName, tag, &ref, val)
+		return n.find(tx, bucketName, fieldName, tag, &ref, val, opts)
 	})
 }
 
-func (n *Node) find(tx *bolt.Tx, bucketName, fieldName, tag string, ref *reflect.Value, val []byte) error {
+func (n *Node) find(tx *bolt.Tx, bucketName, fieldName, tag string, ref *reflect.Value, val []byte, opts *queryOptions) error {
 	bucket := n.GetBucket(tx, bucketName)
 	if bucket == nil {
 		return fmt.Errorf("bucket %s not found", bucketName)
@@ -60,7 +65,7 @@ func (n *Node) find(tx *bolt.Tx, bucketName, fieldName, tag string, ref *reflect
 		return err
 	}
 
-	list, err := idx.All(val)
+	list, err := idx.All(val, opts)
 	if err != nil {
 		return err
 	}
@@ -84,6 +89,6 @@ func (n *Node) find(tx *bolt.Tx, bucketName, fieldName, tag string, ref *reflect
 }
 
 // Find returns one or more records by the specified index
-func (s *DB) Find(fieldName string, value interface{}, to interface{}) error {
-	return s.root.Find(fieldName, value, to)
+func (s *DB) Find(fieldName string, value interface{}, to interface{}, options ...func(q *queryOptions)) error {
+	return s.root.Find(fieldName, value, to, options...)
 }

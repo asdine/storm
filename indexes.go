@@ -14,9 +14,9 @@ type Index interface {
 	Remove(value []byte) error
 	RemoveID(id []byte) error
 	Get(value []byte) []byte
-	All(value []byte) ([][]byte, error)
-	AllRecords() ([][]byte, error)
-	Range(min []byte, max []byte) ([][]byte, error)
+	All(value []byte, opts *queryOptions) ([][]byte, error)
+	AllRecords(opts *queryOptions) ([][]byte, error)
+	Range(min []byte, max []byte, opts *queryOptions) ([][]byte, error)
 }
 
 // NewUniqueIndex loads a UniqueIndex
@@ -88,7 +88,7 @@ func (idx *UniqueIndex) Get(value []byte) []byte {
 }
 
 // All returns all the ids corresponding to the given value
-func (idx *UniqueIndex) All(value []byte) ([][]byte, error) {
+func (idx *UniqueIndex) All(value []byte, opts *queryOptions) ([][]byte, error) {
 	id := idx.IndexBucket.Get(value)
 	if id != nil {
 		return [][]byte{id}, nil
@@ -98,24 +98,50 @@ func (idx *UniqueIndex) All(value []byte) ([][]byte, error) {
 }
 
 // AllRecords returns all the IDs of this index
-func (idx *UniqueIndex) AllRecords() ([][]byte, error) {
-	c := idx.IndexBucket.Cursor()
-
+func (idx *UniqueIndex) AllRecords(opts *queryOptions) ([][]byte, error) {
 	var list [][]byte
 
+	c := idx.IndexBucket.Cursor()
+
 	for val, ident := c.First(); val != nil; val, ident = c.Next() {
+		if opts != nil && opts.skip > 0 {
+			opts.skip--
+			continue
+		}
+
+		if opts != nil && opts.limit == 0 {
+			break
+		}
+
+		if opts != nil && opts.limit > 0 {
+			opts.limit--
+		}
+
 		list = append(list, ident)
 	}
 	return list, nil
 }
 
 // Range returns the ids corresponding to the given range of values
-func (idx *UniqueIndex) Range(min []byte, max []byte) ([][]byte, error) {
-	c := idx.IndexBucket.Cursor()
-
+func (idx *UniqueIndex) Range(min []byte, max []byte, opts *queryOptions) ([][]byte, error) {
 	var list [][]byte
 
+	c := idx.IndexBucket.Cursor()
+
 	for val, ident := c.Seek(min); val != nil && bytes.Compare(val, max) <= 0; val, ident = c.Next() {
+		if opts != nil && opts.skip > 0 {
+			opts.skip--
+			continue
+		}
+
+		if opts != nil && opts.limit == 0 {
+			break
+		}
+
+		if opts != nil && opts.limit > 0 {
+			opts.limit--
+		}
+
 		list = append(list, ident)
 	}
 	return list, nil
@@ -246,19 +272,19 @@ func (idx *ListIndex) Get(value []byte) []byte {
 }
 
 // All the IDs corresponding to the given value
-func (idx *ListIndex) All(value []byte) ([][]byte, error) {
+func (idx *ListIndex) All(value []byte, opts *queryOptions) ([][]byte, error) {
 	uni, err := NewUniqueIndex(idx.IndexBucket, value)
 	if err != nil {
 		return nil, err
 	}
-	return uni.AllRecords()
+	return uni.AllRecords(opts)
 }
 
 // AllRecords returns all the IDs of this index
-func (idx *ListIndex) AllRecords() ([][]byte, error) {
-	c := idx.IndexBucket.Cursor()
-
+func (idx *ListIndex) AllRecords(opts *queryOptions) ([][]byte, error) {
 	var list [][]byte
+
+	c := idx.IndexBucket.Cursor()
 
 	for bucketName, val := c.First(); bucketName != nil; bucketName, val = c.Next() {
 		if val != nil || bytes.Equal(bucketName, []byte("storm__ids")) {
@@ -270,7 +296,7 @@ func (idx *ListIndex) AllRecords() ([][]byte, error) {
 			return nil, err
 		}
 
-		all, err := uni.AllRecords()
+		all, err := uni.AllRecords(opts)
 		if err != nil {
 			return nil, err
 		}
@@ -281,10 +307,10 @@ func (idx *ListIndex) AllRecords() ([][]byte, error) {
 }
 
 // Range returns the ids corresponding to the given range of values
-func (idx *ListIndex) Range(min []byte, max []byte) ([][]byte, error) {
-	c := idx.IndexBucket.Cursor()
-
+func (idx *ListIndex) Range(min []byte, max []byte, opts *queryOptions) ([][]byte, error) {
 	var list [][]byte
+
+	c := idx.IndexBucket.Cursor()
 
 	for bucketName, val := c.Seek(min); bucketName != nil && bytes.Compare(bucketName, max) <= 0; bucketName, val = c.Next() {
 		if val != nil || bytes.Equal(bucketName, []byte("storm__ids")) {
@@ -296,10 +322,11 @@ func (idx *ListIndex) Range(min []byte, max []byte) ([][]byte, error) {
 			return nil, err
 		}
 
-		all, err := uni.AllRecords()
+		all, err := uni.AllRecords(opts)
 		if err != nil {
 			return nil, err
 		}
+
 		list = append(list, all...)
 	}
 
@@ -316,7 +343,7 @@ func getIndex(bucket *bolt.Bucket, idxKind string, fieldName string) (Index, err
 	case tagIdx:
 		idx, err = NewListIndex(bucket, []byte(indexPrefix+fieldName))
 	default:
-		err = ErrUnknownTag
+		err = ErrIdxNotFound
 	}
 
 	return idx, err

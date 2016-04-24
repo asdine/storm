@@ -136,6 +136,19 @@ var users []User
 err := db.Range("Age", 10, 21, &users)
 ```
 
+### Skip and Limit
+
+```go
+var users []User
+err := db.Find("Group", "staff", &users, storm.Skip(10))
+err = db.Find("Group", "staff", &users, storm.Limit(10))
+err = db.Find("Group", "staff", &users, storm.Limit(10), storm.Skip(10))
+
+err = db.All(&users, storm.Limit(10), storm.Skip(10))
+err = db.AllByIndex("CreatedAt", &users, storm.Limit(10), storm.Skip(10))
+err = db.Range("Age", 10, 21, &users, storm.Limit(10), storm.Skip(10))
+```
+
 ### Remove an object
 
 ```go
