@@ -24,6 +24,7 @@ type modelInfo struct {
 	Name    string
 	Indexes map[string]indexInfo
 	ID      identInfo
+	data    interface{}
 }
 
 func (m *modelInfo) AddIndex(f *structs.Field, indexType string, override bool) {
@@ -60,6 +61,7 @@ func extract(data interface{}, mi ...*modelInfo) (*modelInfo, error) {
 	} else {
 		m = &modelInfo{}
 		m.Indexes = make(map[string]indexInfo)
+		m.data = data
 	}
 
 	if m.Name == "" {
