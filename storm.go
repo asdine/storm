@@ -89,9 +89,6 @@ type DB struct {
 
 	// The root bucket name
 	rootBucket []string
-
-	// Encode the key with the selected Codec
-	encodeKey bool
 }
 
 // From returns a new Storm node with a new bucket root.

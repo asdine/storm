@@ -25,7 +25,7 @@ func (n *Node) One(fieldName string, value interface{}, to interface{}) error {
 		return err
 	}
 
-	val, err := toBytes(value, n.s.Codec, n.s.encodeKey)
+	val, err := toBytes(value, n.s.Codec)
 	if err != nil {
 		return err
 	}

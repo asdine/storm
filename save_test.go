@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/asdine/storm/codec/gob"
 	"github.com/boltdb/bolt"
 	"github.com/stretchr/testify/assert"
 )
@@ -49,7 +50,7 @@ func TestSave(t *testing.T) {
 		bucket := tx.Bucket([]byte("UserWithIDField"))
 		assert.NotNil(t, bucket)
 
-		i, err := toBytes(10, nil, false)
+		i, err := toBytes(10, gob.Codec)
 		assert.NoError(t, err)
 
 		val := bucket.Get(i)
@@ -88,7 +89,7 @@ func TestSaveUnique(t *testing.T) {
 		assert.NotNil(t, uniqueBucket)
 
 		id := uniqueBucket.Get([]byte("Jake"))
-		i, err := toBytes(10, nil, false)
+		i, err := toBytes(10, gob.Codec)
 		assert.NoError(t, err)
 		assert.Equal(t, i, id)
 

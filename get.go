@@ -14,7 +14,7 @@ func (n *Node) Get(bucketName string, key interface{}, to interface{}) error {
 		return ErrPtrNeeded
 	}
 
-	id, err := toBytes(key, n.s.Codec, n.s.encodeKey)
+	id, err := toBytes(key, n.s.Codec)
 	if err != nil {
 		return err
 	}

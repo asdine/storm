@@ -18,7 +18,7 @@ func (n *Node) Remove(data interface{}) error {
 		return err
 	}
 
-	id, err := toBytes(info.ID.Value, n.s.Codec, n.s.encodeKey)
+	id, err := toBytes(info.ID.Value, n.s.Codec)
 	if err != nil {
 		return err
 	}

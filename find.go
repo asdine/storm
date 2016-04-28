@@ -35,7 +35,7 @@ func (n *Node) Find(fieldName string, value interface{}, to interface{}, options
 		return fmt.Errorf("index %s not found", fieldName)
 	}
 
-	val, err := toBytes(value, n.s.Codec, n.s.encodeKey)
+	val, err := toBytes(value, n.s.Codec)
 	if err != nil {
 		return err
 	}

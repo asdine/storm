@@ -1,8 +1,6 @@
 package storm
 
-import (
-	"github.com/asdine/storm/codec/json"
-)
+import "github.com/asdine/storm/codec/gob"
 
-// Defaults to JSON
-var defaultCodec = json.Codec
+// Defaults to gob
+var defaultCodec = gob.Codec

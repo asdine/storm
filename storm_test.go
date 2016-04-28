@@ -57,7 +57,7 @@ func TestNewStormWithStormOptions(t *testing.T) {
 	err := db1.Save(&SimpleUser{ID: 1})
 	assert.NoError(t, err)
 
-	db2, _ := Open(filepath.Join(dir, "storm2.db"), Codec(dc, true))
+	db2, _ := Open(filepath.Join(dir, "storm2.db"), Codec(dc))
 	assert.Equal(t, dc, db2.Codec)
 }
 

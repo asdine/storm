@@ -35,12 +35,12 @@ func (n *Node) Range(fieldName string, min, max, to interface{}, options ...func
 		return fmt.Errorf("index %s not found", fieldName)
 	}
 
-	mn, err := toBytes(min, n.s.Codec, n.s.encodeKey)
+	mn, err := toBytes(min, n.s.Codec)
 	if err != nil {
 		return err
 	}
 
-	mx, err := toBytes(max, n.s.Codec, n.s.encodeKey)
+	mx, err := toBytes(max, n.s.Codec)
 	if err != nil {
 		return err
 	}

@@ -16,14 +16,10 @@ func BoltOptions(mode os.FileMode, options *bolt.Options) func(*DB) error {
 	}
 }
 
-// Codec used to set a custom encoder and decoder. The default is JSON.
-// The optional encodeKey param allows to use the selected codec to encode the keys too.
-func Codec(c codec.EncodeDecoder, encodeKey ...bool) func(*DB) error {
+// Codec used to set a custom encoder and decoder. The default is GOB.
+func Codec(c codec.EncodeDecoder) func(*DB) error {
 	return func(d *DB) error {
 		d.Codec = c
-		if len(encodeKey) > 0 {
-			d.encodeKey = encodeKey[0]
-		}
 		return nil
 	}
 }
