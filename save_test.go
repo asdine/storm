@@ -219,6 +219,15 @@ func TestSaveAutoIncrement(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, u, v)
 
+	ui := UserWithIDField{Name: "John"}
+	err = db.Save(&ui)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, ui.ID)
+	vi := UserWithIDField{}
+	err = db.One("ID", 1, &vi)
+	assert.NoError(t, err)
+	assert.Equal(t, ui, vi)
+
 	us := UserWithStringIDField{Name: "John"}
 	err = db.Save(&us)
 	assert.Error(t, err)

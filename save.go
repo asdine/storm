@@ -65,7 +65,7 @@ func (n *Node) save(tx *bolt.Tx, info *modelInfo, id []byte, raw []byte) error {
 			return err
 		}
 
-		id, err = toBytes(intID, n.s.Codec)
+		id, err = toBytes(info.ID.Field.Value(), n.s.Codec)
 		if err != nil {
 			return err
 		}
