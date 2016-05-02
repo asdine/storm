@@ -43,7 +43,12 @@ func TestSave(t *testing.T) {
 
 	v := UserWithIDField{ID: 10, Name: "John"}
 	err = db.Save(&v)
+	assert.NoError(t, err)
 
+	w := UserWithEmbeddedField{}
+	w.ID = 150
+	w.Name = "John"
+	err = db.Save(&w)
 	assert.NoError(t, err)
 
 	db.Bolt.View(func(tx *bolt.Tx) error {

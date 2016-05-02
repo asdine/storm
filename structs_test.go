@@ -109,6 +109,11 @@ type UserWithEmbeddedIDField struct {
 	Age             int
 }
 
+type UserWithEmbeddedField struct {
+	UserWithNoID `storm:"inline"`
+	ID           uint64
+}
+
 type IndexedNameUser struct {
 	ID          int    `storm:"id"`
 	Name        string `storm:"index"`

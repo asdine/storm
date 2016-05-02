@@ -79,14 +79,20 @@ func extract(data interface{}, mi ...*modelInfo) (*modelInfo, error) {
 		}
 	}
 
-	// ID field or tag detected, add to the unique index
+	// ID field or tag detected
 	if m.ID.Field != nil {
 		if m.ID.Field.IsZero() {
 			m.ID.IsZero = true
 		} else {
 			m.ID.Value = m.ID.Field.Value()
 		}
-	} else {
+	}
+
+	if child {
+		return m, nil
+	}
+
+	if m.ID.Field == nil {
 		return nil, ErrNoID
 	}
 
