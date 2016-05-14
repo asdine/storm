@@ -38,7 +38,10 @@ func (n *Node) count(tx *bolt.Tx, info *modelInfo, count *int) error {
 
 	*count = 0
 	c := bucket.Cursor()
-	for k, v := c.First(); k != nil && v != nil; k, v = c.Next() {
+	for k, v := c.First(); k != nil; k, v = c.Next() {
+		if v == nil {
+			continue
+		}
 		(*count)++
 	}
 
