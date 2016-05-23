@@ -15,5 +15,5 @@ func TestProtobuf(t *testing.T) {
 	}
 	u2 := SimpleUser{}
 	internal.RoundtripTester(t, Codec, &u1, &u2)
-	assert.True(t, u2.GetId() == u2.GetId())
+	assert.True(t, u1.GetId() == u2.GetId())
 }
