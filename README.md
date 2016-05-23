@@ -208,7 +208,7 @@ db := storm.Open("my.db", storm.Codec(myCodec))
 
 ##### Provided Codecs
 
-You can easily implement your own `EncodeDecoder`, but Storm comes with built-in support for [GOB](https://godoc.org/github.com/asdine/storm/codec/gob) (default), [JSON](https://godoc.org/github.com/asdine/storm/codec/json), and [Sereal](https://godoc.org/github.com/asdine/storm/codec/sereal).
+You can easily implement your own `EncodeDecoder`, but Storm comes with built-in support for [GOB](https://godoc.org/github.com/asdine/storm/codec/gob) (default), [JSON](https://godoc.org/github.com/asdine/storm/codec/json), [Sereal](https://godoc.org/github.com/asdine/storm/codec/sereal) and [Protocol Buffers](https://godoc.org/github.com/asdine/storm/codec/protobuf)
 
 These can be used by importing the relevant package and use that codec to configure Storm. The example below shows all three (without proper error handling):
 
@@ -218,11 +218,13 @@ import (
 	"github.com/asdine/storm/codec/gob"
 	"github.com/asdine/storm/codec/json"
 	"github.com/asdine/storm/codec/sereal"
+	"github.com/asdine/storm/codec/protobuf"
 )
 
 var gobDb, _ = storm.Open("gob.db", storm.Codec(gob.Codec))
 var jsonDb, _ = storm.Open("json.db", storm.Codec(json.Codec))
 var serealDb, _ = storm.Open("sereal.db", storm.Codec(sereal.Codec))
+var protobufDb, _ = storm.Open("protobuf.db", storm.Codec(protobuf.Codec))
 ```
 
 #### Auto Increment

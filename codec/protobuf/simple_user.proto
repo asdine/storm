@@ -1,0 +1,7 @@
+package protobuf;
+
+message SimpleUser {
+    required uint64 id = 1;
+    required string name = 2;
+    optional int32 age = 3 [default=0];
+}
