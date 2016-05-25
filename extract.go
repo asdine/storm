@@ -3,6 +3,8 @@ package storm
 import (
 	"reflect"
 
+	"github.com/asdine/storm/index"
+	"github.com/boltdb/bolt"
 	"github.com/fatih/structs"
 )
 
@@ -12,6 +14,7 @@ const (
 	tagIdx       = "index"
 	tagUniqueIdx = "unique"
 	tagInline    = "inline"
+	indexPrefix  = "__storm_index_"
 )
 
 type indexInfo struct {
@@ -144,4 +147,20 @@ func (i *identInfo) Type() reflect.Type {
 
 func (i *identInfo) IsOfIntegerFamily() bool {
 	return i.Field != nil && i.Field.Kind() >= reflect.Int && i.Field.Kind() <= reflect.Uint64
+}
+
+func getIndex(bucket *bolt.Bucket, idxKind string, fieldName string) (index.Index, error) {
+	var idx index.Index
+	var err error
+
+	switch idxKind {
+	case tagUniqueIdx:
+		idx, err = index.NewUniqueIndex(bucket, []byte(indexPrefix+fieldName))
+	case tagIdx:
+		idx, err = index.NewListIndex(bucket, []byte(indexPrefix+fieldName))
+	default:
+		err = ErrIdxNotFound
+	}
+
+	return idx, err
 }

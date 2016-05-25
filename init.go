@@ -1,6 +1,7 @@
 package storm
 
 import (
+	"github.com/asdine/storm/index"
 	"github.com/boltdb/bolt"
 	"github.com/fatih/structs"
 )
@@ -35,9 +36,9 @@ func (n *Node) init(tx *bolt.Tx, info *modelInfo) error {
 	for fieldName, idxInfo := range info.Indexes {
 		switch idxInfo.Type {
 		case tagUniqueIdx:
-			_, err = NewUniqueIndex(bucket, []byte(indexPrefix+fieldName))
+			_, err = index.NewUniqueIndex(bucket, []byte(indexPrefix+fieldName))
 		case tagIdx:
-			_, err = NewListIndex(bucket, []byte(indexPrefix+fieldName))
+			_, err = index.NewListIndex(bucket, []byte(indexPrefix+fieldName))
 		default:
 			err = ErrIdxNotFound
 		}

@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/asdine/storm/index"
 	"github.com/boltdb/bolt"
 	"github.com/fatih/structs"
 )
 
 // Range returns one or more records by the specified index within the specified range
-func (n *Node) Range(fieldName string, min, max, to interface{}, options ...func(*queryOptions)) error {
+func (n *Node) Range(fieldName string, min, max, to interface{}, options ...func(*index.Options)) error {
 	ref := reflect.ValueOf(to)
 
 	if ref.Kind() != reflect.Ptr || reflect.Indirect(ref).Kind() != reflect.Slice {
@@ -45,7 +46,7 @@ func (n *Node) Range(fieldName string, min, max, to interface{}, options ...func
 		return err
 	}
 
-	opts := newQueryOptions()
+	opts := index.NewOptions()
 	for _, fn := range options {
 		fn(opts)
 	}
@@ -59,7 +60,7 @@ func (n *Node) Range(fieldName string, min, max, to interface{}, options ...func
 	})
 }
 
-func (n *Node) rnge(tx *bolt.Tx, bucketName, fieldName, tag string, ref *reflect.Value, min, max []byte, opts *queryOptions) error {
+func (n *Node) rnge(tx *bolt.Tx, bucketName, fieldName, tag string, ref *reflect.Value, min, max []byte, opts *index.Options) error {
 	bucket := n.GetBucket(tx, bucketName)
 	if bucket == nil {
 		return fmt.Errorf("bucket %s not found", bucketName)
@@ -94,6 +95,6 @@ func (n *Node) rnge(tx *bolt.Tx, bucketName, fieldName, tag string, ref *reflect
 }
 
 // Range returns one or more records by the specified index within the specified range
-func (s *DB) Range(fieldName string, min, max, to interface{}, options ...func(*queryOptions)) error {
+func (s *DB) Range(fieldName string, min, max, to interface{}, options ...func(*index.Options)) error {
 	return s.root.Range(fieldName, min, max, to, options...)
 }

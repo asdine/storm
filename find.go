@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/asdine/storm/index"
 	"github.com/boltdb/bolt"
 	"github.com/fatih/structs"
 )
 
 // Find returns one or more records by the specified index
-func (n *Node) Find(fieldName string, value interface{}, to interface{}, options ...func(q *queryOptions)) error {
+func (n *Node) Find(fieldName string, value interface{}, to interface{}, options ...func(q *index.Options)) error {
 	ref := reflect.ValueOf(to)
 
 	if ref.Kind() != reflect.Ptr || reflect.Indirect(ref).Kind() != reflect.Slice {
@@ -40,7 +41,7 @@ func (n *Node) Find(fieldName string, value interface{}, to interface{}, options
 		return err
 	}
 
-	opts := newQueryOptions()
+	opts := index.NewOptions()
 	for _, fn := range options {
 		fn(opts)
 	}
@@ -54,7 +55,7 @@ func (n *Node) Find(fieldName string, value interface{}, to interface{}, options
 	})
 }
 
-func (n *Node) find(tx *bolt.Tx, bucketName, fieldName, tag string, ref *reflect.Value, val []byte, opts *queryOptions) error {
+func (n *Node) find(tx *bolt.Tx, bucketName, fieldName, tag string, ref *reflect.Value, val []byte, opts *index.Options) error {
 	bucket := n.GetBucket(tx, bucketName)
 	if bucket == nil {
 		return fmt.Errorf("bucket %s not found", bucketName)
@@ -89,6 +90,6 @@ func (n *Node) find(tx *bolt.Tx, bucketName, fieldName, tag string, ref *reflect
 }
 
 // Find returns one or more records by the specified index
-func (s *DB) Find(fieldName string, value interface{}, to interface{}, options ...func(q *queryOptions)) error {
+func (s *DB) Find(fieldName string, value interface{}, to interface{}, options ...func(q *index.Options)) error {
 	return s.root.Find(fieldName, value, to, options...)
 }

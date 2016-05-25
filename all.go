@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/asdine/storm/index"
 	"github.com/boltdb/bolt"
 )
 
 // AllByIndex gets all the records of a bucket that are indexed in the specified index
-func (n *Node) AllByIndex(fieldName string, to interface{}, options ...func(*queryOptions)) error {
+func (n *Node) AllByIndex(fieldName string, to interface{}, options ...func(*index.Options)) error {
 	if fieldName == "" {
 		return n.All(to, options...)
 	}
@@ -36,7 +37,7 @@ func (n *Node) AllByIndex(fieldName string, to interface{}, options ...func(*que
 		return n.All(to, options...)
 	}
 
-	opts := newQueryOptions()
+	opts := index.NewOptions()
 	for _, fn := range options {
 		fn(opts)
 	}
@@ -50,7 +51,7 @@ func (n *Node) AllByIndex(fieldName string, to interface{}, options ...func(*que
 	})
 }
 
-func (n *Node) allByIndex(tx *bolt.Tx, fieldName string, info *modelInfo, ref *reflect.Value, opts *queryOptions) error {
+func (n *Node) allByIndex(tx *bolt.Tx, fieldName string, info *modelInfo, ref *reflect.Value, opts *index.Options) error {
 	bucket := n.GetBucket(tx, info.Name)
 	if bucket == nil {
 		return fmt.Errorf("bucket %s not found", info.Name)
@@ -90,7 +91,7 @@ func (n *Node) allByIndex(tx *bolt.Tx, fieldName string, info *modelInfo, ref *r
 }
 
 // All gets all the records of a bucket
-func (n *Node) All(to interface{}, options ...func(*queryOptions)) error {
+func (n *Node) All(to interface{}, options ...func(*index.Options)) error {
 	ref := reflect.ValueOf(to)
 
 	if ref.Kind() != reflect.Ptr || reflect.Indirect(ref).Kind() != reflect.Slice {
@@ -111,7 +112,7 @@ func (n *Node) All(to interface{}, options ...func(*queryOptions)) error {
 		return err
 	}
 
-	opts := newQueryOptions()
+	opts := index.NewOptions()
 	for _, fn := range options {
 		fn(opts)
 	}
@@ -125,7 +126,7 @@ func (n *Node) All(to interface{}, options ...func(*queryOptions)) error {
 	})
 }
 
-func (n *Node) all(tx *bolt.Tx, info *modelInfo, ref *reflect.Value, rtyp, typ reflect.Type, opts *queryOptions) error {
+func (n *Node) all(tx *bolt.Tx, info *modelInfo, ref *reflect.Value, rtyp, typ reflect.Type, opts *index.Options) error {
 	bucket := n.GetBucket(tx, info.Name)
 	if bucket == nil {
 		return fmt.Errorf("bucket %s not found", info.Name)
@@ -138,17 +139,17 @@ func (n *Node) all(tx *bolt.Tx, info *modelInfo, ref *reflect.Value, rtyp, typ r
 			continue
 		}
 
-		if opts != nil && opts.skip > 0 {
-			opts.skip--
+		if opts != nil && opts.Skip > 0 {
+			opts.Skip--
 			continue
 		}
 
-		if opts != nil && opts.limit == 0 {
+		if opts != nil && opts.Limit == 0 {
 			break
 		}
 
-		if opts != nil && opts.limit > 0 {
-			opts.limit--
+		if opts != nil && opts.Limit > 0 {
+			opts.Limit--
 		}
 
 		newElem := reflect.New(typ)
@@ -169,11 +170,11 @@ func (n *Node) all(tx *bolt.Tx, info *modelInfo, ref *reflect.Value, rtyp, typ r
 }
 
 // AllByIndex gets all the records of a bucket that are indexed in the specified index
-func (s *DB) AllByIndex(fieldName string, to interface{}, options ...func(*queryOptions)) error {
+func (s *DB) AllByIndex(fieldName string, to interface{}, options ...func(*index.Options)) error {
 	return s.root.AllByIndex(fieldName, to, options...)
 }
 
 // All get all the records of a bucket
-func (s *DB) All(to interface{}, options ...func(*queryOptions)) error {
+func (s *DB) All(to interface{}, options ...func(*index.Options)) error {
 	return s.root.All(to, options...)
 }

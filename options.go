@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/asdine/storm/codec"
+	"github.com/asdine/storm/index"
 	"github.com/boltdb/bolt"
 )
 
@@ -40,29 +41,16 @@ func Root(root ...string) func(*DB) error {
 	}
 }
 
-func newQueryOptions() *queryOptions {
-	return &queryOptions{
-		limit: -1,
-		skip:  0,
-	}
-}
-
-// queryOptions used to limit the customize the queries
-type queryOptions struct {
-	limit int
-	skip  int
-}
-
 // Limit sets the maximum number of records to return
-func Limit(limit int) func(q *queryOptions) {
-	return func(q *queryOptions) {
-		q.limit = limit
+func Limit(limit int) func(*index.Options) {
+	return func(opts *index.Options) {
+		opts.Limit = limit
 	}
 }
 
 // Skip sets the number of records to skip
-func Skip(offset int) func(q *queryOptions) {
-	return func(q *queryOptions) {
-		q.skip = offset
+func Skip(offset int) func(*index.Options) {
+	return func(opts *index.Options) {
+		opts.Skip = offset
 	}
 }
