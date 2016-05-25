@@ -22,13 +22,32 @@ func TestCount(t *testing.T) {
 		assert.NoError(t, err)
 	}
 
-	count, _ := db.Count(User{})
+	count, err := db.Count(&User{})
+	assert.NoError(t, err)
 	assert.Equal(t, 100, count)
 
 	w := User{Name: "John", ID: 101, Slug: fmt.Sprintf("John%d", 101), DateOfBirth: time.Now().Add(-time.Duration(101*10) * time.Minute)}
-	err := db.Save(&w)
+	err = db.Save(&w)
 	assert.NoError(t, err)
 
-	count, _ = db.Count(User{})
+	count, err = db.Count(&User{})
+	assert.NoError(t, err)
 	assert.Equal(t, 101, count)
+
+	tx, err := db.Begin(true)
+	assert.NoError(t, err)
+
+	count, err = tx.Count(&User{})
+	assert.NoError(t, err)
+	assert.Equal(t, 101, count)
+
+	w = User{Name: "John", ID: 102, Slug: fmt.Sprintf("John%d", 102), DateOfBirth: time.Now().Add(-time.Duration(101*10) * time.Minute)}
+	err = tx.Save(&w)
+	assert.NoError(t, err)
+
+	count, err = tx.Count(&User{})
+	assert.NoError(t, err)
+	assert.Equal(t, 102, count)
+
+	tx.Commit()
 }
