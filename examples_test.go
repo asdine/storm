@@ -271,6 +271,72 @@ func ExampleDB_Begin() {
 	// Amount in account 2: 11000
 }
 
+func ExampleDB_From() {
+	dir, db := prepareDB()
+	defer os.RemoveAll(dir)
+	defer db.Close()
+
+	// Create some sub buckets to partition the data.
+	privateNotes := db.From("notes", "private")
+	workNotes := db.From("notes", "work")
+
+	err := privateNotes.Save(&Note{ID: "private1", Text: "This is some private text."})
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = workNotes.Save(&Note{ID: "work1", Text: "Work related."})
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var privateNote, workNote, personalNote Note
+
+	err = privateNotes.One("ID", "work1", &workNote)
+
+	// Not found: Wrong bucket.
+	fmt.Println(err)
+
+	err = workNotes.One("ID", "work1", &workNote)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = privateNotes.One("ID", "private1", &privateNote)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println(workNote.Text)
+	fmt.Println(privateNote.Text)
+
+	// These can be nested further if needed:
+	personalNotes := privateNotes.From("personal")
+	err = personalNotes.Save(&Note{ID: "personal1", Text: "This is some very personal text."})
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = personalNotes.One("ID", "personal1", &personalNote)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println(personalNote.Text)
+
+	// Output:
+	// not found
+	// Work related.
+	// This is some private text.
+	// This is some very personal text.
+}
+
 type User struct {
 	ID        int    `storm:"id"`
 	Group     string `storm:"index"`
@@ -283,6 +349,11 @@ type User struct {
 type Account struct {
 	ID     int   `storm:"id"`
 	Amount int64 // amount in cents
+}
+
+type Note struct {
+	ID   string `storm:"id"`
+	Text string
 }
 
 func prepareDB() (string, *storm.DB) {
