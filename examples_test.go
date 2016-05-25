@@ -3,6 +3,7 @@ package storm_test
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -38,7 +39,10 @@ func ExampleDB_Save() {
 	}
 
 	err := db.Save(&user)
-	fmt.Println(err)
+
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	user2 := user
 	user2.ID = 0
@@ -48,7 +52,6 @@ func ExampleDB_Save() {
 	fmt.Println(err)
 
 	// Output:
-	// <nil>
 	// already exists
 }
 
@@ -60,14 +63,16 @@ func ExampleDB_One() {
 	var user User
 
 	err := db.One("Email", "john@provider.com", &user)
-	fmt.Println(err)
+
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// One only works for indexed fields.
 	err = db.One("Name", "John", &user)
 	fmt.Println(err)
 
 	// Output:
-	// <nil>
 	// not found
 }
 
@@ -79,11 +84,13 @@ func ExampleDB_Find() {
 	var users []User
 	err := db.Find("Group", "staff", &users)
 
-	fmt.Println(err)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	fmt.Println("Found", len(users))
 
 	// Output:
-	// <nil>
 	// Found 3
 }
 
@@ -95,11 +102,13 @@ func ExampleDB_All() {
 	var users []User
 	err := db.All(&users)
 
-	fmt.Println(err)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	fmt.Println("Found", len(users))
 
 	// Output:
-	// <nil>
 	// Found 3
 }
 
@@ -111,11 +120,13 @@ func ExampleDB_AllByIndex() {
 	var users []User
 	err := db.AllByIndex("CreatedAt", &users)
 
-	fmt.Println(err)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	fmt.Println("Found", len(users))
 
 	// Output:
-	// <nil>
 	// Found 3
 }
 
@@ -127,11 +138,13 @@ func ExampleDB_Range() {
 	var users []User
 	err := db.Range("Age", 21, 22, &users)
 
-	fmt.Println(err)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	fmt.Println("Found", len(users))
 
 	// Output:
-	// <nil>
 	// Found 2
 }
 
@@ -143,11 +156,13 @@ func ExampleLimit() {
 	var users []User
 	err := db.All(&users, storm.Limit(2))
 
-	fmt.Println(err)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	fmt.Println("Found", len(users))
 
 	// Output:
-	// <nil>
 	// Found 2
 }
 
@@ -159,11 +174,13 @@ func ExampleSkip() {
 	var users []User
 	err := db.All(&users, storm.Skip(1))
 
-	fmt.Println(err)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	fmt.Println("Found", len(users))
 
 	// Output:
-	// <nil>
 	// Found 2
 }
 
@@ -175,12 +192,15 @@ func ExampleDB_Remove() {
 	var user User
 
 	err := db.One("ID", 1, &user)
-	fmt.Println(err)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	err = db.Remove(user)
 	fmt.Println(err)
 
 	// Output:
-	// <nil>
 	// <nil>
 }
 
