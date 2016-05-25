@@ -204,6 +204,73 @@ func ExampleDB_Remove() {
 	// <nil>
 }
 
+func ExampleDB_Begin() {
+	dir, db := prepareDB()
+	defer os.RemoveAll(dir)
+	defer db.Close()
+
+	// both start out with a balance of 10000 cents
+	var account1, account2 Account
+
+	tx, err := db.Begin(true)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = tx.One("ID", 1, &account1)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = tx.One("ID", 2, &account2)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	account1.Amount -= 1000
+	account2.Amount += 1000
+
+	err = tx.Save(account1)
+
+	if err != nil {
+		tx.Rollback()
+		log.Fatal(err)
+	}
+
+	err = tx.Save(account2)
+
+	if err != nil {
+		tx.Rollback()
+		log.Fatal(err)
+	}
+
+	tx.Commit()
+
+	var account1Reloaded, account2Reloaded Account
+
+	err = db.One("ID", 1, &account1Reloaded)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = db.One("ID", 2, &account2Reloaded)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("Amount in account 1:", account1Reloaded.Amount)
+	fmt.Println("Amount in account 2:", account2Reloaded.Amount)
+
+	// Output:
+	// Amount in account 1: 9000
+	// Amount in account 2: 11000
+}
+
 type User struct {
 	ID        int    `storm:"id"`
 	Group     string `storm:"index"`
@@ -211,6 +278,11 @@ type User struct {
 	Name      string
 	Age       int       `storm:"index"`
 	CreatedAt time.Time `storm:"index"`
+}
+
+type Account struct {
+	ID     int   `storm:"id"`
+	Amount int64 // amount in cents
 }
 
 func prepareDB() (string, *storm.DB) {
@@ -229,7 +301,17 @@ func prepareDB() (string, *storm.DB) {
 		err := db.Save(&user)
 
 		if err != nil {
-			panic(err)
+			log.Fatal(err)
+		}
+	}
+
+	for i := int64(0); i < 10; i++ {
+		account := Account{Amount: 10000}
+
+		err := db.Save(&account)
+
+		if err != nil {
+			log.Fatal(err)
 		}
 	}
 
