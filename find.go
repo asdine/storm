@@ -6,7 +6,6 @@ import (
 
 	"github.com/asdine/storm/index"
 	"github.com/boltdb/bolt"
-	"github.com/fatih/structs"
 )
 
 // Find returns one or more records by the specified index
@@ -18,20 +17,18 @@ func (n *Node) Find(fieldName string, value interface{}, to interface{}, options
 	}
 
 	typ := reflect.Indirect(ref).Type().Elem()
-	newElem := reflect.New(typ)
 
-	d := structs.New(newElem.Interface())
-	bucketName := d.Name()
+	bucketName := typ.Name()
 	if bucketName == "" {
 		return ErrNoName
 	}
 
-	field, ok := d.FieldOk(fieldName)
+	field, ok := typ.FieldByName(fieldName)
 	if !ok {
 		return fmt.Errorf("field %s not found", fieldName)
 	}
 
-	tag := field.Tag("storm")
+	tag := field.Tag.Get("storm")
 	if tag == "" {
 		return fmt.Errorf("index %s not found", fieldName)
 	}

@@ -3,15 +3,10 @@ package storm
 import (
 	"github.com/asdine/storm/index"
 	"github.com/boltdb/bolt"
-	"github.com/fatih/structs"
 )
 
 // Init creates the indexes and buckets for a given structure
 func (n *Node) Init(data interface{}) error {
-	if !structs.IsStruct(data) {
-		return ErrBadType
-	}
-
 	info, err := extract(data)
 	if err != nil {
 		return err

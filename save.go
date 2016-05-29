@@ -4,15 +4,10 @@ import (
 	"reflect"
 
 	"github.com/boltdb/bolt"
-	"github.com/fatih/structs"
 )
 
 // Save a structure
 func (n *Node) Save(data interface{}) error {
-	if !structs.IsStruct(data) {
-		return ErrBadType
-	}
-
 	info, err := extract(data)
 	if err != nil {
 		return err
@@ -25,7 +20,7 @@ func (n *Node) Save(data interface{}) error {
 			return ErrZeroID
 		}
 	} else {
-		id, err = toBytes(info.ID.Value, n.s.Codec)
+		id, err = toBytes(info.ID.Value.Interface(), n.s.Codec)
 		if err != nil {
 			return err
 		}
@@ -60,12 +55,9 @@ func (n *Node) save(tx *bolt.Tx, info *modelInfo, id []byte, raw []byte) error {
 		intID, _ := bucket.NextSequence()
 
 		// convert to the right integer size
-		err = info.ID.Field.Set(reflect.ValueOf(intID).Convert(info.ID.Type()).Interface())
-		if err != nil {
-			return err
-		}
+		info.ID.Value.Set(reflect.ValueOf(intID).Convert(info.ID.Type()))
 
-		id, err = toBytes(info.ID.Field.Value(), n.s.Codec)
+		id, err = toBytes(info.ID.Value.Interface(), n.s.Codec)
 		if err != nil {
 			return err
 		}
@@ -89,11 +81,11 @@ func (n *Node) save(tx *bolt.Tx, info *modelInfo, id []byte, raw []byte) error {
 			return err
 		}
 
-		if idxInfo.Field.IsZero() {
+		if idxInfo.IsZero() {
 			continue
 		}
 
-		value, err := toBytes(idxInfo.Field.Value(), n.s.Codec)
+		value, err := toBytes(idxInfo.Value.Interface(), n.s.Codec)
 		if err != nil {
 			return err
 		}

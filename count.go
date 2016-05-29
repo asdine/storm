@@ -4,15 +4,10 @@ import (
 	"fmt"
 
 	"github.com/boltdb/bolt"
-	"github.com/fatih/structs"
 )
 
 // Count counts all the records of a bucket
 func (n *Node) Count(data interface{}) (int, error) {
-	if !structs.IsStruct(data) {
-		return 0, ErrBadType
-	}
-
 	info, err := extract(data)
 	if err != nil {
 		return 0, err

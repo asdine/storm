@@ -4,21 +4,16 @@ import (
 	"fmt"
 
 	"github.com/boltdb/bolt"
-	"github.com/fatih/structs"
 )
 
 // Remove removes a structure from the associated bucket
 func (n *Node) Remove(data interface{}) error {
-	if !structs.IsStruct(data) {
-		return ErrBadType
-	}
-
 	info, err := extract(data)
 	if err != nil {
 		return err
 	}
 
-	id, err := toBytes(info.ID.Value, n.s.Codec)
+	id, err := toBytes(info.ID.Value.Interface(), n.s.Codec)
 	if err != nil {
 		return err
 	}

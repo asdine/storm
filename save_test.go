@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/asdine/storm/codec/gob"
 	"github.com/boltdb/bolt"
@@ -125,7 +126,7 @@ func TestSaveIndex(t *testing.T) {
 	name2 := "Jane"
 	name3 := "James"
 
-	for i := 0; i < 1000; i++ {
+	for i := 0; i < 100; i++ {
 		u := IndexedNameUser{ID: i + 1}
 
 		if i%2 == 0 {
@@ -140,11 +141,11 @@ func TestSaveIndex(t *testing.T) {
 	var users []IndexedNameUser
 	err = db.Find("Name", name1, &users)
 	assert.NoError(t, err)
-	assert.Len(t, users, 500)
+	assert.Len(t, users, 50)
 
 	err = db.Find("Name", name2, &users)
 	assert.NoError(t, err)
-	assert.Len(t, users, 500)
+	assert.Len(t, users, 50)
 
 	err = db.Find("Name", name3, &users)
 	assert.Error(t, err)
@@ -266,4 +267,49 @@ func TestSaveDifferentBucketRoot(t *testing.T) {
 	assert.NoError(t, err)
 	err = dbSub.One("Name", "John", &john)
 	assert.Error(t, err)
+}
+
+func TestSaveEmbedded(t *testing.T) {
+	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
+	defer os.RemoveAll(dir)
+
+	type Base struct {
+		ID int `storm:"id"`
+	}
+
+	type User struct {
+		Base      `storm:"inline"`
+		Group     string `storm:"index"`
+		Email     string `storm:"unique"`
+		Name      string
+		Age       int
+		CreatedAt time.Time `storm:"index"`
+	}
+
+	db, err := Open(filepath.Join(dir, "storm.db"), AutoIncrement())
+	assert.NoError(t, err)
+
+	user := User{
+		Group:     "staff",
+		Email:     "john@provider.com",
+		Name:      "John",
+		Age:       21,
+		CreatedAt: time.Now(),
+	}
+
+	err = db.Save(&user)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, user.ID)
+}
+
+func BenchmarkSave(b *testing.B) {
+	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
+	defer os.RemoveAll(dir)
+	db, _ := Open(filepath.Join(dir, "storm.db"), AutoIncrement())
+	defer db.Close()
+
+	w := User{Name: "John"}
+	for n := 0; n < b.N; n++ {
+		db.Save(&w)
+	}
 }

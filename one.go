@@ -5,14 +5,13 @@ import (
 	"reflect"
 
 	"github.com/boltdb/bolt"
-	"github.com/fatih/structs"
 )
 
 // One returns one record by the specified index
 func (n *Node) One(fieldName string, value interface{}, to interface{}) error {
 	ref := reflect.ValueOf(to)
 
-	if !ref.IsValid() || (ref.Kind() != reflect.Ptr && structs.IsStruct(to)) {
+	if !ref.IsValid() || (ref.Kind() != reflect.Ptr && ref.Kind() != reflect.Struct) {
 		return ErrStructPtrNeeded
 	}
 
@@ -31,11 +30,11 @@ func (n *Node) One(fieldName string, value interface{}, to interface{}) error {
 	}
 
 	if n.tx != nil {
-		return n.one(n.tx, fieldName, info, to, val, fieldName == info.ID.Field.Name())
+		return n.one(n.tx, fieldName, info, to, val, fieldName == info.ID.Field.Name)
 	}
 
 	return n.s.Bolt.View(func(tx *bolt.Tx) error {
-		return n.one(tx, fieldName, info, to, val, fieldName == info.ID.Field.Name())
+		return n.one(tx, fieldName, info, to, val, fieldName == info.ID.Field.Name)
 	})
 }
 

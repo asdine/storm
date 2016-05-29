@@ -5,7 +5,6 @@ import (
 
 	"github.com/asdine/storm/index"
 	"github.com/boltdb/bolt"
-	"github.com/fatih/structs"
 )
 
 // Storm tags
@@ -19,7 +18,14 @@ const (
 
 type indexInfo struct {
 	Type  string
-	Field *structs.Field
+	Field *reflect.StructField
+	Value *reflect.Value
+}
+
+func (i *indexInfo) IsZero() bool {
+	zero := reflect.Zero(i.Value.Type()).Interface()
+	current := i.Value.Interface()
+	return reflect.DeepEqual(current, zero)
 }
 
 // modelInfo is a structure gathering all the relevant informations about a model
@@ -30,12 +36,13 @@ type modelInfo struct {
 	data    interface{}
 }
 
-func (m *modelInfo) AddIndex(f *structs.Field, indexType string, override bool) {
-	fieldName := f.Name()
+func (m *modelInfo) AddIndex(f *reflect.StructField, v *reflect.Value, indexType string, override bool) {
+	fieldName := f.Name
 	if _, ok := m.Indexes[fieldName]; !ok || override {
 		m.Indexes[fieldName] = indexInfo{
 			Type:  indexType,
 			Field: f,
+			Value: v,
 		}
 	}
 }
@@ -52,8 +59,15 @@ func (m *modelInfo) AllByType(indexType string) []indexInfo {
 }
 
 func extract(data interface{}, mi ...*modelInfo) (*modelInfo, error) {
-	s := structs.New(data)
-	fields := s.Fields()
+	s := reflect.ValueOf(data)
+	if s.Kind() == reflect.Ptr {
+		s = s.Elem()
+	}
+	if s.Kind() != reflect.Struct {
+		return nil, ErrBadType
+	}
+
+	typ := s.Type()
 
 	var child bool
 
@@ -68,15 +82,19 @@ func extract(data interface{}, mi ...*modelInfo) (*modelInfo, error) {
 	}
 
 	if m.Name == "" {
-		m.Name = s.Name()
+		m.Name = typ.Name()
 	}
 
-	for _, f := range fields {
-		if !f.IsExported() {
+	numFields := s.NumField()
+	for i := 0; i < numFields; i++ {
+		field := typ.Field(i)
+		value := s.Field(i)
+
+		if field.PkgPath != "" {
 			continue
 		}
 
-		err := extractField(f, m, child)
+		err := extractField(&value, &field, m, child)
 		if err != nil {
 			return nil, err
 		}
@@ -84,10 +102,10 @@ func extract(data interface{}, mi ...*modelInfo) (*modelInfo, error) {
 
 	// ID field or tag detected
 	if m.ID.Field != nil {
-		if m.ID.Field.IsZero() {
+		zero := reflect.Zero(m.ID.Value.Type()).Interface()
+		current := m.ID.Value.Interface()
+		if reflect.DeepEqual(current, zero) {
 			m.ID.IsZero = true
-		} else {
-			m.ID.Value = m.ID.Field.Value()
 		}
 	}
 
@@ -106,17 +124,22 @@ func extract(data interface{}, mi ...*modelInfo) (*modelInfo, error) {
 	return m, nil
 }
 
-func extractField(f *structs.Field, m *modelInfo, isChild bool) error {
-	tag := f.Tag("storm")
+func extractField(value *reflect.Value, field *reflect.StructField, m *modelInfo, isChild bool) error {
+	tag := field.Tag.Get("storm")
 	if tag != "" {
 		switch tag {
 		case "id":
-			m.ID.Field = f
+			m.ID.Field = field
+			m.ID.Value = value
 		case tagUniqueIdx, tagIdx:
-			m.AddIndex(f, tag, !isChild)
+			m.AddIndex(field, value, tag, !isChild)
 		case tagInline:
-			if structs.IsStruct(f.Value()) {
-				_, err := extract(f.Value(), m)
+			if value.Kind() == reflect.Ptr {
+				e := value.Elem()
+				value = &e
+			}
+			if value.Kind() == reflect.Struct {
+				_, err := extract(value.Addr().Interface(), m)
 				if err != nil {
 					return err
 				}
@@ -127,8 +150,9 @@ func extractField(f *structs.Field, m *modelInfo, isChild bool) error {
 	}
 
 	// the field is named ID and no ID field has been detected before
-	if f.Name() == "ID" && m.ID.Field == nil {
-		m.ID.Field = f
+	if field.Name == "ID" && m.ID.Field == nil {
+		m.ID.Field = field
+		m.ID.Value = value
 	}
 
 	return nil
@@ -136,17 +160,17 @@ func extractField(f *structs.Field, m *modelInfo, isChild bool) error {
 
 // Prefill the most requested informations
 type identInfo struct {
-	Field  *structs.Field
+	Field  *reflect.StructField
+	Value  *reflect.Value
 	IsZero bool
-	Value  interface{}
 }
 
 func (i *identInfo) Type() reflect.Type {
-	return reflect.TypeOf(i.Field.Value())
+	return i.Value.Type()
 }
 
 func (i *identInfo) IsOfIntegerFamily() bool {
-	return i.Field != nil && i.Field.Kind() >= reflect.Int && i.Field.Kind() <= reflect.Uint64
+	return i.Value != nil && i.Value.Kind() >= reflect.Int && i.Value.Kind() <= reflect.Uint64
 }
 
 func getIndex(bucket *bolt.Bucket, idxKind string, fieldName string) (index.Index, error) {
