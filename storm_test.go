@@ -61,6 +61,19 @@ func TestNewStormWithStormOptions(t *testing.T) {
 	assert.Equal(t, dc, db2.Codec)
 }
 
+func TestBoltDB(t *testing.T) {
+	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
+	defer os.RemoveAll(dir)
+	bDB, err := bolt.Open(filepath.Join(dir, "bolt.db"), 0600, &bolt.Options{Timeout: 10 * time.Second})
+	assert.NoError(t, err)
+	// no need to close bolt.DB Storm will take of it
+	sDB, err := Open("my.db", UseDB(bDB))
+	assert.NoError(t, err)
+	defer sDB.Close()
+	err = sDB.Save(&SimpleUser{ID: 10})
+	assert.NoError(t, err)
+}
+
 type dummyCodec int
 
 func (c dummyCodec) Encode(v interface{}) ([]byte, error) {

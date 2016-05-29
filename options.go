@@ -41,6 +41,16 @@ func Root(root ...string) func(*DB) error {
 	}
 }
 
+// UseDB allow Storm to use an existing open Bolt.DB.
+// Warning: storm.DB.Close() will close the bolt.DB instance.
+func UseDB(b *bolt.DB) func(*DB) error {
+	return func(d *DB) error {
+		d.Path = b.Path()
+		d.Bolt = b
+		return nil
+	}
+}
+
 // Limit sets the maximum number of records to return
 func Limit(limit int) func(*index.Options) {
 	return func(opts *index.Options) {

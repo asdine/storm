@@ -18,7 +18,9 @@ func Open(path string, stormOptions ...func(*DB) error) (*DB, error) {
 	}
 
 	for _, option := range stormOptions {
-		option(s)
+		if err = option(s); err != nil {
+			return nil, err
+		}
 	}
 
 	if s.boltMode == 0 {
@@ -29,9 +31,12 @@ func Open(path string, stormOptions ...func(*DB) error) (*DB, error) {
 		s.boltOptions = &bolt.Options{Timeout: 1 * time.Second}
 	}
 
-	s.Bolt, err = bolt.Open(path, s.boltMode, s.boltOptions)
-	if err != nil {
-		return nil, err
+	// skip if UseDB option is used
+	if s.Bolt == nil {
+		s.Bolt, err = bolt.Open(path, s.boltMode, s.boltOptions)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	s.root = &Node{s: s, rootBucket: s.rootBucket}
