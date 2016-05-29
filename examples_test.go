@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/asdine/storm"
+	"github.com/boltdb/bolt"
 )
 
 func ExampleDB_Save() {
@@ -184,6 +185,31 @@ func ExampleSkip() {
 	// Found 2
 }
 
+func ExampleUseDB() {
+	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
+	defer os.RemoveAll(dir)
+
+	bDB, err := bolt.Open(filepath.Join(dir, "bolt.db"), 0600, &bolt.Options{Timeout: 10 * time.Second})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	db, _ := storm.Open("", storm.UseDB(bDB))
+	defer db.Close()
+
+	err = db.Save(&User{ID: 10})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var user User
+	err = db.One("ID", 10, &user)
+	fmt.Println(err)
+
+	// Output:
+	// <nil>
+}
+
 func ExampleDB_Remove() {
 	dir, db := prepareDB()
 	defer os.RemoveAll(dir)
@@ -337,6 +363,32 @@ func ExampleDB_From() {
 	// This is some very personal text.
 }
 
+func ExampleDB_Drop() {
+	dir, db := prepareDB()
+	defer os.RemoveAll(dir)
+	defer db.Close()
+
+	var user User
+
+	err := db.One("Email", "john@provider.com", &user)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = db.Drop("User")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// One only works for indexed fields.
+	err = db.One("Email", "john@provider.com", &user)
+	fmt.Println(err)
+
+	// Output:
+	// bucket User doesn't exist
+}
+
 type User struct {
 	ID        int    `storm:"id"`
 	Group     string `storm:"index"`
@@ -387,5 +439,4 @@ func prepareDB() (string, *storm.DB) {
 	}
 
 	return dir, db
-
 }

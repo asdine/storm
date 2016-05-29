@@ -5,7 +5,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/asdine/storm)](https://goreportcard.com/report/github.com/asdine/storm)
 [![Coverage](http://gocover.io/_badge/github.com/asdine/storm)](http://gocover.io/github.com/asdine/storm)
 
-Storm is simple and powerful ORM for [BoltDB](https://github.com/boltdb/bolt). The goal of this project is to provide a simple way to save any object in BoltDB and to easily retrieve it.
+Storm is a simple and powerful ORM for [BoltDB](https://github.com/boltdb/bolt). The goal of this project is to provide a simple way to save any object in BoltDB and to easily retrieve it.
 
 ## Getting Started
 
@@ -163,6 +163,12 @@ err := db.Init(&User{})
 
 Useful when starting your application
 
+### Drop a bucket
+
+```go
+err := db.Drop("User")
+```
+
 ### Transactions
 
 ```go
@@ -233,6 +239,15 @@ Storm can auto increment integer IDs so you don't have to worry about that when 
 
 ```go
 db := storm.Open("my.db", storm.AutoIncrement())
+```
+
+#### Use existing Bolt connection
+
+You can use an existing connection and pass it to Storm
+
+```go
+bDB, _ := bolt.Open(filepath.Join(dir, "bolt.db"), 0600, &bolt.Options{Timeout: 10 * time.Second})
+db := storm.Open("", storm.UseDB(bDB))
 ```
 
 ## Nodes and nested buckets
@@ -331,12 +346,6 @@ db.Bolt.Update(func(tx *bolt.Tx) error {
   return nil
 })
 ```
-
-## TODO
-
-- Search
-- Reverse order
-- More indexes
 
 ## License
 

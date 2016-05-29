@@ -66,7 +66,7 @@ func TestBoltDB(t *testing.T) {
 	defer os.RemoveAll(dir)
 	bDB, err := bolt.Open(filepath.Join(dir, "bolt.db"), 0600, &bolt.Options{Timeout: 10 * time.Second})
 	assert.NoError(t, err)
-	// no need to close bolt.DB Storm will take of it
+	// no need to close bolt.DB Storm will take care of it
 	sDB, err := Open("my.db", UseDB(bDB))
 	assert.NoError(t, err)
 	defer sDB.Close()
