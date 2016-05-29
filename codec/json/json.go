@@ -1,3 +1,4 @@
+// Package json contains a codec to encode and decode entities in JSON format
 package json
 
 import (

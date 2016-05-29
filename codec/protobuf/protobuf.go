@@ -1,3 +1,4 @@
+// Package protobuf contains a codec to encode and decode entities in Protocol Buffer
 package protobuf
 
 import (
@@ -8,7 +9,7 @@ import (
 
 // More details on Protocol Buffers https://github.com/golang/protobuf
 var (
-	Codec = new(protobufCodec)
+	Codec                       = new(protobufCodec)
 	errNotProtocolBufferMessage = errors.New("value isn't a Protocol Buffers Message")
 )
 

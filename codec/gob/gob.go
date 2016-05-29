@@ -1,3 +1,4 @@
+// Package gob contains a codec to encode and decode entities in Gob format
 package gob
 
 import (

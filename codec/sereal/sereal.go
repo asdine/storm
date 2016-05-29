@@ -1,3 +1,4 @@
+// Package sereal contains a codec to encode and decode entities using Sereal
 package sereal
 
 import (
