@@ -28,6 +28,6 @@ func TestSave(t *testing.T) {
 	u2 := SimpleUser{}
 	err = db.One("Id", uint64(1), &u2)
 	assert.NoError(t, err)
-	assert.Equal(u2.Name. u1.Name)
+	assert.Equal(t, u2.Name, u1.Name)
 	
 }
