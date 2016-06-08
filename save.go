@@ -3,6 +3,7 @@ package storm
 import (
 	"reflect"
 
+	"github.com/asdine/storm/index"
 	"github.com/boltdb/bolt"
 )
 
@@ -92,6 +93,9 @@ func (n *Node) save(tx *bolt.Tx, info *modelInfo, id []byte, raw []byte) error {
 
 		err = idx.Add(value, id)
 		if err != nil {
+			if err == index.ErrAlreadyExists {
+				return ErrAlreadyExists
+			}
 			return err
 		}
 	}

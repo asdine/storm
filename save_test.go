@@ -81,7 +81,7 @@ func TestSaveUnique(t *testing.T) {
 	u2 := UniqueNameUser{ID: 11, Name: "John", age: 100}
 	err = db.Save(&u2)
 	assert.Error(t, err)
-	assert.Equal(t, ErrAlreadyExists, err)
+	assert.True(t, ErrAlreadyExists == err)
 
 	// same id
 	u3 := UniqueNameUser{ID: 10, Name: "Jake", age: 100}
