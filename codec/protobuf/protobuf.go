@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/asdine/storm/codec/gob"
 )
 
 // More details on Protocol Buffers https://github.com/golang/protobuf
@@ -18,7 +19,8 @@ type protobufCodec int
 func (c protobufCodec) Encode(v interface{}) ([]byte, error) {
 	message, ok := v.(proto.Message)
 	if !ok {
-		return nil, errNotProtocolBufferMessage
+		// toBytes() may need to encode non-protobuf type, if that occurs use gob
+		return gob.Codec.Encode(v)
 	}
 	return proto.Marshal(message)
 }
