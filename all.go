@@ -69,6 +69,9 @@ func (n *Node) allByIndex(tx *bolt.Tx, fieldName string, info *modelInfo, ref *r
 
 	list, err := idx.AllRecords(opts)
 	if err != nil {
+		if err == index.ErrNotFound {
+			return ErrNotFound
+		}
 		return err
 	}
 

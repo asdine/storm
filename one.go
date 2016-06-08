@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/asdine/storm/index"
 	"github.com/boltdb/bolt"
 )
 
@@ -53,6 +54,9 @@ func (n *Node) one(tx *bolt.Tx, fieldName string, info *modelInfo, to interface{
 
 		idx, err := getIndex(bucket, idxInfo.Type, fieldName)
 		if err != nil {
+			if err == index.ErrNotFound {
+				return ErrNotFound
+			}
 			return err
 		}
 

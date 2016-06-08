@@ -45,7 +45,7 @@ func TestOne(t *testing.T) {
 
 	err = db.One("", nil, &x)
 	assert.Error(t, err)
-	assert.Equal(t, ErrNotFound, err)
+	assert.True(t, ErrNotFound == err)
 
 	err = db.One("", "Mike", nil)
 	assert.Error(t, err)

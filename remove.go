@@ -3,6 +3,7 @@ package storm
 import (
 	"fmt"
 
+	"github.com/asdine/storm/index"
 	"github.com/boltdb/bolt"
 )
 
@@ -41,6 +42,9 @@ func (n *Node) remove(tx *bolt.Tx, info *modelInfo, id []byte) error {
 
 		err = idx.RemoveID(id)
 		if err != nil {
+			if err == index.ErrNotFound {
+				return ErrNotFound
+			}
 			return err
 		}
 	}

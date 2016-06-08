@@ -28,6 +28,10 @@ func TestAllByIndex(t *testing.T) {
 
 	var users []User
 
+	err = db.AllByIndex("Unknown field", &users)
+	assert.Error(t, err)
+	assert.True(t, ErrNotFound == err)
+
 	err = db.AllByIndex("DateOfBirth", &users)
 	assert.NoError(t, err)
 	assert.Len(t, users, 100)

@@ -65,6 +65,9 @@ func (n *Node) find(tx *bolt.Tx, bucketName, fieldName, tag string, ref *reflect
 
 	list, err := idx.All(val, opts)
 	if err != nil {
+		if err == index.ErrNotFound {
+			return ErrNotFound
+		}
 		return err
 	}
 
