@@ -27,7 +27,7 @@ var _ = math.Inf
 const _ = proto.ProtoPackageIsVersion1
 
 type SimpleUser struct {
-	Id   uint64 `protobuf:"varint,1,opt,name=id" json:"id,omitempty"`
+	Id   uint64 `protobuf:"varint,1,opt,name=id" json:"id,omitempty" storm:"id"`
 	Name string `protobuf:"bytes,2,opt,name=name" json:"name,omitempty"`
 	Age  int32  `protobuf:"varint,3,opt,name=age" json:"age,omitempty"`
 }
