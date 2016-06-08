@@ -22,7 +22,12 @@ func TestSave(t *testing.T) {
 	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
 	defer os.RemoveAll(dir)
 	db, _ := storm.Open(filepath.Join(dir, "storm.db"), storm.Codec(Codec))
-	u := SimpleUser{Id: 1, Name: "John"}
-	err := db.Save(&u)
+	u1 := SimpleUser{Id: 1, Name: "John"}
+	err := db.Save(&u1)
 	assert.NoError(t, err)
+	u2 := SimpleUser{}
+	err = db.One("Id", uint64(1), &u2)
+	assert.NoError(t, err)
+	assert.Equal(u2.Name. u1.Name)
+	
 }
