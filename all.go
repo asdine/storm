@@ -16,7 +16,7 @@ func (n *Node) AllByIndex(fieldName string, to interface{}, options ...func(*ind
 
 	ref := reflect.ValueOf(to)
 
-	if ref.Kind() != reflect.Ptr || reflect.Indirect(ref).Kind() != reflect.Slice {
+	if ref.Kind() != reflect.Ptr || ref.Elem().Kind() != reflect.Slice {
 		return ErrSlicePtrNeeded
 	}
 
@@ -28,7 +28,7 @@ func (n *Node) AllByIndex(fieldName string, to interface{}, options ...func(*ind
 
 	newElem := reflect.New(typ)
 
-	info, err := extract(newElem.Interface())
+	info, err := extract(&newElem)
 	if err != nil {
 		return err
 	}
@@ -110,7 +110,7 @@ func (n *Node) All(to interface{}, options ...func(*index.Options)) error {
 
 	newElem := reflect.New(typ)
 
-	info, err := extract(newElem.Interface())
+	info, err := extract(&newElem)
 	if err != nil {
 		return err
 	}

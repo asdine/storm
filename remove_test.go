@@ -20,6 +20,9 @@ func TestRemove(t *testing.T) {
 	err := db.Save(&u1)
 	assert.NoError(t, err)
 
+	err = db.Remove(u1)
+	assert.Equal(t, ErrStructPtrNeeded, err)
+
 	err = db.Remove(&u1)
 	assert.NoError(t, err)
 
@@ -31,7 +34,7 @@ func TestRemove(t *testing.T) {
 	assert.True(t, ErrNotFound == err)
 
 	err = db.Remove(nil)
-	assert.Equal(t, ErrBadType, err)
+	assert.Equal(t, ErrStructPtrNeeded, err)
 
 	var users []User
 	for i := 0; i < 10; i++ {

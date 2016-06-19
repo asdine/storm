@@ -12,7 +12,7 @@ import (
 func (n *Node) Range(fieldName string, min, max, to interface{}, options ...func(*index.Options)) error {
 	ref := reflect.ValueOf(to)
 
-	if ref.Kind() != reflect.Ptr || reflect.Indirect(ref).Kind() != reflect.Slice {
+	if !ref.IsValid() || ref.Kind() != reflect.Ptr || ref.Elem().Kind() != reflect.Slice {
 		return ErrSlicePtrNeeded
 	}
 

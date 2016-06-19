@@ -2,6 +2,7 @@ package storm
 
 import (
 	"fmt"
+	"reflect"
 
 	"github.com/asdine/storm/index"
 	"github.com/boltdb/bolt"
@@ -9,7 +10,13 @@ import (
 
 // Remove removes a structure from the associated bucket
 func (n *Node) Remove(data interface{}) error {
-	info, err := extract(data)
+	ref := reflect.ValueOf(data)
+
+	if !ref.IsValid() || ref.Kind() != reflect.Ptr || ref.Elem().Kind() != reflect.Struct {
+		return ErrStructPtrNeeded
+	}
+
+	info, err := extract(&ref)
 	if err != nil {
 		return err
 	}

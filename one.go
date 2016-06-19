@@ -12,7 +12,7 @@ import (
 func (n *Node) One(fieldName string, value interface{}, to interface{}) error {
 	ref := reflect.ValueOf(to)
 
-	if !ref.IsValid() || (ref.Kind() != reflect.Ptr && ref.Kind() != reflect.Struct) {
+	if !ref.IsValid() || ref.Kind() != reflect.Ptr || ref.Elem().Kind() != reflect.Struct {
 		return ErrStructPtrNeeded
 	}
 
@@ -20,7 +20,7 @@ func (n *Node) One(fieldName string, value interface{}, to interface{}) error {
 		return ErrNotFound
 	}
 
-	info, err := extract(to)
+	info, err := extract(&ref)
 	if err != nil {
 		return err
 	}

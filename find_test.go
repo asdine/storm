@@ -52,6 +52,10 @@ func TestFind(t *testing.T) {
 	assert.Error(t, err)
 	assert.EqualError(t, err, "index Group not found")
 
+	err = db.Find("Name", "John", users)
+	assert.Error(t, err)
+	assert.Equal(t, ErrSlicePtrNeeded, err)
+
 	err = db.Find("Name", "John", &users)
 	assert.NoError(t, err)
 	assert.Len(t, users, 100)

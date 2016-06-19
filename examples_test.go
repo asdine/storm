@@ -223,7 +223,7 @@ func ExampleDB_Remove() {
 		log.Fatal(err)
 	}
 
-	err = db.Remove(user)
+	err = db.Remove(&user)
 	fmt.Println(err)
 
 	// Output:
@@ -259,14 +259,14 @@ func ExampleDB_Begin() {
 	account1.Amount -= 1000
 	account2.Amount += 1000
 
-	err = tx.Save(account1)
+	err = tx.Save(&account1)
 
 	if err != nil {
 		tx.Rollback()
 		log.Fatal(err)
 	}
 
-	err = tx.Save(account2)
+	err = tx.Save(&account2)
 
 	if err != nil {
 		tx.Rollback()

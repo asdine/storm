@@ -58,10 +58,10 @@ func (m *modelInfo) AllByType(indexType string) []indexInfo {
 	return idx
 }
 
-func extract(data interface{}, mi ...*modelInfo) (*modelInfo, error) {
-	s := reflect.ValueOf(data)
+func extract(s *reflect.Value, mi ...*modelInfo) (*modelInfo, error) {
 	if s.Kind() == reflect.Ptr {
-		s = s.Elem()
+		e := s.Elem()
+		s = &e
 	}
 	if s.Kind() != reflect.Struct {
 		return nil, ErrBadType
@@ -78,7 +78,10 @@ func extract(data interface{}, mi ...*modelInfo) (*modelInfo, error) {
 	} else {
 		m = &modelInfo{}
 		m.Indexes = make(map[string]indexInfo)
-		m.data = data
+		if !s.CanAddr() {
+			return nil, ErrUnAddressable
+		}
+		m.data = s.Addr().Interface()
 	}
 
 	if m.Name == "" {
@@ -139,7 +142,8 @@ func extractField(value *reflect.Value, field *reflect.StructField, m *modelInfo
 				value = &e
 			}
 			if value.Kind() == reflect.Struct {
-				_, err := extract(value.Addr().Interface(), m)
+				a := value.Addr()
+				_, err := extract(&a, m)
 				if err != nil {
 					return err
 				}

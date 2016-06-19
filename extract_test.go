@@ -1,6 +1,7 @@
 package storm
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -8,14 +9,16 @@ import (
 
 func TestExtractNoTags(t *testing.T) {
 	s := ClassicNoTags{}
-	_, err := extract(&s)
+	r := reflect.ValueOf(&s)
+	_, err := extract(&r)
 	assert.Error(t, err)
 	assert.Equal(t, ErrNoID, err)
 }
 
 func TestExtractBadTags(t *testing.T) {
 	s := ClassicBadTags{}
-	infos, err := extract(&s)
+	r := reflect.ValueOf(&s)
+	infos, err := extract(&r)
 	assert.Error(t, err)
 	assert.Equal(t, ErrUnknownTag, err)
 	assert.Nil(t, infos)
@@ -23,7 +26,8 @@ func TestExtractBadTags(t *testing.T) {
 
 func TestExtractUniqueTags(t *testing.T) {
 	s := ClassicUnique{ID: "id"}
-	infos, err := extract(&s)
+	r := reflect.ValueOf(&s)
+	infos, err := extract(&r)
 	assert.NoError(t, err)
 	assert.NotNil(t, infos)
 	assert.NotNil(t, infos.ID)
@@ -35,7 +39,8 @@ func TestExtractUniqueTags(t *testing.T) {
 
 func TestExtractIndexTags(t *testing.T) {
 	s := ClassicIndex{ID: "id"}
-	infos, err := extract(&s)
+	r := reflect.ValueOf(&s)
+	infos, err := extract(&r)
 	assert.NoError(t, err)
 	assert.NotNil(t, infos)
 	assert.NotNil(t, infos.ID)
@@ -47,7 +52,8 @@ func TestExtractIndexTags(t *testing.T) {
 
 func TestExtractInlineWithIndex(t *testing.T) {
 	s := ClassicInline{ToEmbed: &ToEmbed{ID: "50"}}
-	infos, err := extract(&s)
+	r := reflect.ValueOf(&s)
+	infos, err := extract(&r)
 	assert.NoError(t, err)
 	assert.NotNil(t, infos)
 	assert.NotNil(t, infos.ID)

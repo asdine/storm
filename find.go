@@ -12,7 +12,7 @@ import (
 func (n *Node) Find(fieldName string, value interface{}, to interface{}, options ...func(q *index.Options)) error {
 	ref := reflect.ValueOf(to)
 
-	if ref.Kind() != reflect.Ptr || reflect.Indirect(ref).Kind() != reflect.Slice {
+	if ref.Kind() != reflect.Ptr || ref.Elem().Kind() != reflect.Slice {
 		return ErrSlicePtrNeeded
 	}
 

@@ -1,13 +1,16 @@
 package storm
 
 import (
+	"reflect"
+
 	"github.com/asdine/storm/index"
 	"github.com/boltdb/bolt"
 )
 
 // Init creates the indexes and buckets for a given structure
 func (n *Node) Init(data interface{}) error {
-	info, err := extract(data)
+	v := reflect.ValueOf(data)
+	info, err := extract(&v)
 	if err != nil {
 		return err
 	}

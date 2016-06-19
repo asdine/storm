@@ -33,7 +33,11 @@ func TestRange(t *testing.T) {
 	min := "John010"
 	max := "John020"
 	var users []User
-	err := db.Range("Slug", min, max, &users)
+
+	err := db.Range("Slug", min, max, users)
+	assert.Equal(t, ErrSlicePtrNeeded, err)
+
+	err = db.Range("Slug", min, max, &users)
 	assert.NoError(t, err)
 	assert.Len(t, users, 11)
 	assert.Equal(t, "John010", users[0].Slug)

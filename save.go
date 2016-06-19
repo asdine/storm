@@ -9,7 +9,13 @@ import (
 
 // Save a structure
 func (n *Node) Save(data interface{}) error {
-	info, err := extract(data)
+	ref := reflect.ValueOf(data)
+
+	if !ref.IsValid() || ref.Kind() != reflect.Ptr || ref.Elem().Kind() != reflect.Struct {
+		return ErrStructPtrNeeded
+	}
+
+	info, err := extract(&ref)
 	if err != nil {
 		return err
 	}
@@ -57,7 +63,6 @@ func (n *Node) save(tx *bolt.Tx, info *modelInfo, id []byte, raw []byte) error {
 
 		// convert to the right integer size
 		info.ID.Value.Set(reflect.ValueOf(intID).Convert(info.ID.Type()))
-
 		id, err = toBytes(info.ID.Value.Interface(), n.s.Codec)
 		if err != nil {
 			return err

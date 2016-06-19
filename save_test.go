@@ -153,7 +153,7 @@ func TestSaveIndex(t *testing.T) {
 
 	err = db.Save(nil)
 	assert.Error(t, err)
-	assert.Equal(t, ErrBadType, err)
+	assert.Equal(t, ErrStructPtrNeeded, err)
 }
 
 func TestSaveEmptyValues(t *testing.T) {
@@ -300,6 +300,18 @@ func TestSaveEmbedded(t *testing.T) {
 	err = db.Save(&user)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, user.ID)
+}
+
+func TestSaveByValue(t *testing.T) {
+	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
+	defer os.RemoveAll(dir)
+	db, _ := Open(filepath.Join(dir, "storm.db"), AutoIncrement())
+	defer db.Close()
+
+	w := User{Name: "John"}
+	err := db.Save(w)
+	assert.Error(t, err)
+	assert.Equal(t, ErrStructPtrNeeded, err)
 }
 
 func BenchmarkSave(b *testing.B) {

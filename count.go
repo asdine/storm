@@ -2,13 +2,20 @@ package storm
 
 import (
 	"fmt"
+	"reflect"
 
 	"github.com/boltdb/bolt"
 )
 
 // Count counts all the records of a bucket
 func (n *Node) Count(data interface{}) (int, error) {
-	info, err := extract(data)
+	ref := reflect.ValueOf(data)
+
+	if !ref.IsValid() || ref.Kind() != reflect.Ptr || ref.Elem().Kind() != reflect.Struct {
+		return 0, ErrStructPtrNeeded
+	}
+
+	info, err := extract(&ref)
 	if err != nil {
 		return 0, err
 	}
