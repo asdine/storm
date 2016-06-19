@@ -93,7 +93,7 @@ func (idx *ListIndex) RemoveID(targetID []byte) error {
 	c := idx.IndexBucket.Cursor()
 
 	for bucketName, val := c.First(); bucketName != nil; bucketName, val = c.Next() {
-		if val != nil {
+		if val != nil || bytes.Equal(bucketName, []byte("storm__ids")) {
 			continue
 		}
 
@@ -105,6 +105,20 @@ func (idx *ListIndex) RemoveID(targetID []byte) error {
 		err = uni.Remove(targetID)
 		if err != nil {
 			return err
+		}
+
+		cd := uni.IndexBucket.Cursor()
+		empty := true
+		for k, _ := cd.First(); k != nil; k, _ = cd.Next() {
+			empty = false
+			break
+		}
+
+		if empty {
+			err = idx.IndexBucket.DeleteBucket(bucketName)
+			if err != nil {
+				return err
+			}
 		}
 	}
 

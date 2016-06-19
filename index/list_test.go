@@ -1,6 +1,7 @@
 package index_test
 
 import (
+	"bytes"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -124,4 +125,61 @@ func TestListIndex(t *testing.T) {
 	})
 
 	assert.NoError(t, err)
+}
+
+func TestListIndexAddRemoveID(t *testing.T) {
+	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
+	defer os.RemoveAll(dir)
+	db, _ := storm.Open(filepath.Join(dir, "storm.db"))
+	defer db.Close()
+
+	db.Bolt.Update(func(tx *bolt.Tx) error {
+		b, err := tx.CreateBucket([]byte("test"))
+		assert.NoError(t, err)
+
+		idx, err := index.NewListIndex(b, []byte("lindex1"))
+		assert.NoError(t, err)
+
+		err = idx.Add([]byte("hello"), []byte("id1"))
+		assert.NoError(t, err)
+		assert.Equal(t, 1, countBuckets(t, idx.IndexBucket))
+
+		err = idx.Add([]byte("hello"), []byte("id2"))
+		assert.NoError(t, err)
+		assert.Equal(t, 1, countBuckets(t, idx.IndexBucket))
+
+		err = idx.Add([]byte("goodbye"), []byte("id1"))
+		assert.NoError(t, err)
+		assert.Equal(t, 2, countBuckets(t, idx.IndexBucket))
+
+		err = idx.Add([]byte("hello"), []byte("id3"))
+		assert.NoError(t, err)
+		assert.Equal(t, 2, countBuckets(t, idx.IndexBucket))
+
+		err = idx.RemoveID([]byte("id1"))
+		assert.NoError(t, err)
+		assert.Equal(t, 1, countBuckets(t, idx.IndexBucket))
+
+		err = idx.RemoveID([]byte("id2"))
+		assert.NoError(t, err)
+		assert.Equal(t, 1, countBuckets(t, idx.IndexBucket))
+
+		err = idx.RemoveID([]byte("id3"))
+		assert.NoError(t, err)
+		assert.Equal(t, 0, countBuckets(t, idx.IndexBucket))
+		return nil
+	})
+}
+
+func countBuckets(t *testing.T, bucket *bolt.Bucket) int {
+	c := bucket.Cursor()
+	count := 0
+	for bucketName, val := c.First(); bucketName != nil; bucketName, val = c.Next() {
+		if val != nil || bytes.Equal(bucketName, []byte("storm__ids")) {
+			continue
+		}
+		count++
+	}
+
+	return count
 }
