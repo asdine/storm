@@ -60,7 +60,8 @@ func (n *Node) Range(fieldName string, min, max, to interface{}, options ...func
 func (n *Node) rnge(tx *bolt.Tx, bucketName, fieldName, tag string, ref *reflect.Value, min, max []byte, opts *index.Options) error {
 	bucket := n.GetBucket(tx, bucketName)
 	if bucket == nil {
-		return fmt.Errorf("bucket %s not found", bucketName)
+		reflect.Indirect(*ref).SetLen(0)
+		return nil
 	}
 
 	idx, err := getIndex(bucket, tag, fieldName)

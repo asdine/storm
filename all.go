@@ -1,7 +1,6 @@
 package storm
 
 import (
-	"fmt"
 	"reflect"
 
 	"github.com/asdine/storm/index"
@@ -54,7 +53,7 @@ func (n *Node) AllByIndex(fieldName string, to interface{}, options ...func(*ind
 func (n *Node) allByIndex(tx *bolt.Tx, fieldName string, info *modelInfo, ref *reflect.Value, opts *index.Options) error {
 	bucket := n.GetBucket(tx, info.Name)
 	if bucket == nil {
-		return fmt.Errorf("bucket %s not found", info.Name)
+		return ErrNotFound
 	}
 
 	idxInfo, ok := info.Indexes[fieldName]
@@ -130,41 +129,40 @@ func (n *Node) All(to interface{}, options ...func(*index.Options)) error {
 }
 
 func (n *Node) all(tx *bolt.Tx, info *modelInfo, ref *reflect.Value, rtyp, typ reflect.Type, opts *index.Options) error {
-	bucket := n.GetBucket(tx, info.Name)
-	if bucket == nil {
-		return fmt.Errorf("bucket %s not found", info.Name)
-	}
-
 	results := reflect.MakeSlice(reflect.Indirect(*ref).Type(), 0, 0)
-	c := bucket.Cursor()
-	for k, v := c.First(); k != nil; k, v = c.Next() {
-		if v == nil {
-			continue
-		}
+	bucket := n.GetBucket(tx, info.Name)
 
-		if opts != nil && opts.Skip > 0 {
-			opts.Skip--
-			continue
-		}
+	if bucket != nil {
+		c := bucket.Cursor()
+		for k, v := c.First(); k != nil; k, v = c.Next() {
+			if v == nil {
+				continue
+			}
 
-		if opts != nil && opts.Limit == 0 {
-			break
-		}
+			if opts != nil && opts.Skip > 0 {
+				opts.Skip--
+				continue
+			}
 
-		if opts != nil && opts.Limit > 0 {
-			opts.Limit--
-		}
+			if opts != nil && opts.Limit == 0 {
+				break
+			}
 
-		newElem := reflect.New(typ)
-		err := n.s.Codec.Decode(v, newElem.Interface())
-		if err != nil {
-			return err
-		}
+			if opts != nil && opts.Limit > 0 {
+				opts.Limit--
+			}
 
-		if rtyp.Kind() == reflect.Ptr {
-			results = reflect.Append(results, newElem)
-		} else {
-			results = reflect.Append(results, reflect.Indirect(newElem))
+			newElem := reflect.New(typ)
+			err := n.s.Codec.Decode(v, newElem.Interface())
+			if err != nil {
+				return err
+			}
+
+			if rtyp.Kind() == reflect.Ptr {
+				results = reflect.Append(results, newElem)
+			} else {
+				results = reflect.Append(results, reflect.Indirect(newElem))
+			}
 		}
 	}
 

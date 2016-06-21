@@ -55,7 +55,7 @@ func (n *Node) Find(fieldName string, value interface{}, to interface{}, options
 func (n *Node) find(tx *bolt.Tx, bucketName, fieldName, tag string, ref *reflect.Value, val []byte, opts *index.Options) error {
 	bucket := n.GetBucket(tx, bucketName)
 	if bucket == nil {
-		return fmt.Errorf("bucket %s not found", bucketName)
+		return ErrNotFound
 	}
 
 	idx, err := getIndex(bucket, tag, fieldName)

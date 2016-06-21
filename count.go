@@ -1,7 +1,6 @@
 package storm
 
 import (
-	"fmt"
 	"reflect"
 
 	"github.com/boltdb/bolt"
@@ -33,12 +32,13 @@ func (n *Node) Count(data interface{}) (int, error) {
 }
 
 func (n *Node) count(tx *bolt.Tx, info *modelInfo, count *int) error {
+	*count = 0
+
 	bucket := n.GetBucket(tx, info.Name)
 	if bucket == nil {
-		return fmt.Errorf("bucket %s not found", info.Name)
+		return nil
 	}
 
-	*count = 0
 	c := bucket.Cursor()
 	for k, v := c.First(); k != nil; k, v = c.Next() {
 		if v == nil {
