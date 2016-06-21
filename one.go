@@ -1,7 +1,6 @@
 package storm
 
 import (
-	"fmt"
 	"reflect"
 
 	"github.com/asdine/storm/index"
@@ -42,7 +41,7 @@ func (n *Node) One(fieldName string, value interface{}, to interface{}) error {
 func (n *Node) one(tx *bolt.Tx, fieldName string, info *modelInfo, to interface{}, val []byte, skipIndex bool) error {
 	bucket := n.GetBucket(tx, info.Name)
 	if bucket == nil {
-		return fmt.Errorf("bucket %s doesn't exist", info.Name)
+		return ErrNotFound
 	}
 
 	var id []byte
