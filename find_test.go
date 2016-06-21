@@ -36,7 +36,7 @@ func TestFind(t *testing.T) {
 
 	err = db.Find("Name", "John", &notTheRightUsers)
 	assert.Error(t, err)
-	assert.EqualError(t, err, "bucket UniqueNameUser not found")
+	assert.EqualError(t, err, "not found")
 
 	users := []User{}
 

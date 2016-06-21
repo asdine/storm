@@ -18,7 +18,7 @@ func TestInit(t *testing.T) {
 	var u IndexedNameUser
 	err := db.One("Name", "John", &u)
 	assert.Error(t, err)
-	assert.EqualError(t, err, "bucket IndexedNameUser doesn't exist")
+	assert.EqualError(t, err, "not found")
 
 	err = db.Init(&u)
 	assert.NoError(t, err)

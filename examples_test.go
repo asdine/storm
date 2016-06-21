@@ -386,7 +386,7 @@ func ExampleDB_Drop() {
 	fmt.Println(err)
 
 	// Output:
-	// bucket User doesn't exist
+	// not found
 }
 
 type User struct {

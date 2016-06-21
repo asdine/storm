@@ -1,7 +1,6 @@
 package storm
 
 import (
-	"fmt"
 	"reflect"
 
 	"github.com/asdine/storm/index"
@@ -38,7 +37,7 @@ func (n *Node) Remove(data interface{}) error {
 func (n *Node) remove(tx *bolt.Tx, info *modelInfo, id []byte) error {
 	bucket := n.GetBucket(tx, info.Name)
 	if bucket == nil {
-		return fmt.Errorf("bucket %s doesn't exist", info.Name)
+		return ErrNotFound
 	}
 
 	for fieldName, idxInfo := range info.Indexes {

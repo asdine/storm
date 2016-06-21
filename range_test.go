@@ -59,8 +59,8 @@ func TestRange(t *testing.T) {
 	notTheRightUsers := []UniqueNameUser{}
 
 	err = db.Range("Name", min, max, &notTheRightUsers)
-	assert.Error(t, err)
-	assert.EqualError(t, err, "bucket UniqueNameUser not found")
+	assert.NoError(t, err)
+	assert.Equal(t, 0, len(notTheRightUsers))
 
 	users = nil
 
