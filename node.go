@@ -25,3 +25,9 @@ func (n Node) WithTransaction(tx *bolt.Tx) *Node {
 	n.tx = tx
 	return &n
 }
+
+// Bucket returns the bucket name as a slice from the root.
+// In the normal, simple case this will be empty.
+func (n *Node) Bucket() []string {
+	return n.rootBucket
+}
