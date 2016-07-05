@@ -109,3 +109,9 @@ func (s *DB) From(root ...string) *Node {
 func (s *DB) WithTransaction(tx *bolt.Tx) *Node {
 	return s.root.WithTransaction(tx)
 }
+
+// Bucket returns the root bucket name as a slice.
+// In the normal, simple case this will be empty.
+func (s *DB) Bucket() []string {
+	return s.root.Bucket()
+}
