@@ -419,7 +419,7 @@ func ExampleNode_PrefixScan() {
 		}
 	}
 
-	// There are now three years worth of notes. Let's look at 20016:
+	// There are now three years worth of notes. Let's look at 2016:
 	nodes := notes.PrefixScan("2016")
 
 	fmt.Println("Note buckets in 2016:", len(nodes))
