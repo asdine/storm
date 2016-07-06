@@ -389,6 +389,63 @@ func ExampleDB_Drop() {
 	// not found
 }
 
+func ExampleNode_PrefixScan() {
+	dir, db := prepareDB()
+	defer os.RemoveAll(dir)
+	defer db.Close()
+
+	// The PrefixScan method is available on both DB and Node.
+	// This example shows the usage on Node.
+	// The Node notes will be the top-level bucket.
+	notes := db.From("notes")
+
+	// Partition the notes in one bucket per month.
+	for i := 2014; i <= 2016; i++ {
+		for j := 1; j <= 12; j++ {
+			bucket := notes.From(fmt.Sprintf("%d%02d", i, j))
+			numNotes := 2
+
+			// Add some variation.
+			if j%3 == 0 {
+				numNotes = 3
+			}
+
+			for k := 0; k < numNotes; k++ {
+				noteID := fmt.Sprintf("%d-%d", j, k)
+				if err := bucket.Save(&Note{ID: noteID, Text: fmt.Sprintf("Note %s", noteID)}); err != nil {
+					log.Fatal(err)
+				}
+			}
+		}
+	}
+
+	// There are now three years worth of notes. Let's look at 20016:
+	nodes := notes.PrefixScan("2016")
+
+	fmt.Println("Note buckets in 2016:", len(nodes))
+
+	march := notes.PrefixScan("201603")[0]
+
+	// The two below points to the same bucket:
+	fmt.Println("Bucket", march.Bucket()[1])
+	fmt.Println("Bucket", nodes[2].Bucket()[1])
+
+	count, err := march.Count(&Note{})
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("Notes in March:", count)
+
+	// Output:
+	//Note buckets in 2016: 12
+	//Bucket 201603
+	//Bucket 201603
+	//Notes in March: 3
+
+}
+
 type User struct {
 	ID        int    `storm:"id"`
 	Group     string `storm:"index"`
