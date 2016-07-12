@@ -446,6 +446,48 @@ func ExampleNode_PrefixScan() {
 
 }
 
+func ExampleNode_RangeScan() {
+	dir, db := prepareDB()
+	defer os.RemoveAll(dir)
+	defer db.Close()
+
+	// The RangeScan method is available on both DB and Node.
+	// This example shows the usage on Node.
+	// The Node notes will be the top-level bucket.
+	notes := db.From("notes")
+
+	// Partition the notes in one bucket per month.
+	for i := 2013; i <= 2016; i++ {
+		for j := 1; j <= 12; j++ {
+			for k := 0; k < 3; k++ {
+				// Must left-pad the month so it is sortable.
+				bucket := notes.From(fmt.Sprintf("%d%02d", i, j))
+				noteID := fmt.Sprintf("%d-%d", j, k)
+				if err := bucket.Save(&Note{ID: noteID, Text: fmt.Sprintf("Note %s", noteID)}); err != nil {
+					log.Fatal(err)
+				}
+			}
+		}
+	}
+
+	// There are now four years worth of notes. Let's look at first half of 2014:
+	nodes := notes.RangeScan("201401", "201406")
+
+	fmt.Println("Note buckets in first half of 2014:", len(nodes))
+
+	notesCount, err := nodes[0].Count(&Note{})
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("Notes in bucket:", notesCount)
+
+	// Output:
+	// Note buckets in first half of 2014: 6
+	// Notes in bucket: 3
+}
+
 type User struct {
 	ID        int    `storm:"id"`
 	Group     string `storm:"index"`
