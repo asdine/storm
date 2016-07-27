@@ -7,6 +7,8 @@
 
 Storm is a simple and powerful ORM for [BoltDB](https://github.com/boltdb/bolt). The goal of this project is to provide a simple way to save any object in BoltDB and to easily retrieve it.
 
+In addition to the examples below, see also the [examples in the GoDoc](https://godoc.org/github.com/asdine/storm#pkg-examples).
+
 ## Getting Started
 
 ```bash
