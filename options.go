@@ -64,3 +64,10 @@ func Skip(offset int) func(*index.Options) {
 		opts.Skip = offset
 	}
 }
+
+// Reverse will return the results in descending order
+func Reverse() func(*index.Options) {
+	return func(opts *index.Options) {
+		opts.Reverse = true
+	}
+}

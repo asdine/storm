@@ -134,34 +134,67 @@ func (n *Node) all(tx *bolt.Tx, info *modelInfo, ref *reflect.Value, rtyp, typ r
 
 	if bucket != nil {
 		c := bucket.Cursor()
-		for k, v := c.First(); k != nil; k, v = c.Next() {
-			if v == nil {
-				continue
-			}
+		if opts.Reverse {
+			for k, v := c.Last(); k != nil; k, v = c.Prev() {
+				if v == nil {
+					continue
+				}
 
-			if opts != nil && opts.Skip > 0 {
-				opts.Skip--
-				continue
-			}
+				if opts != nil && opts.Skip > 0 {
+					opts.Skip--
+					continue
+				}
 
-			if opts != nil && opts.Limit == 0 {
-				break
-			}
+				if opts != nil && opts.Limit == 0 {
+					break
+				}
 
-			if opts != nil && opts.Limit > 0 {
-				opts.Limit--
-			}
+				if opts != nil && opts.Limit > 0 {
+					opts.Limit--
+				}
 
-			newElem := reflect.New(typ)
-			err := n.s.Codec.Decode(v, newElem.Interface())
-			if err != nil {
-				return err
-			}
+				newElem := reflect.New(typ)
+				err := n.s.Codec.Decode(v, newElem.Interface())
+				if err != nil {
+					return err
+				}
 
-			if rtyp.Kind() == reflect.Ptr {
-				results = reflect.Append(results, newElem)
-			} else {
-				results = reflect.Append(results, reflect.Indirect(newElem))
+				if rtyp.Kind() == reflect.Ptr {
+					results = reflect.Append(results, newElem)
+				} else {
+					results = reflect.Append(results, reflect.Indirect(newElem))
+				}
+			}
+		} else {
+			for k, v := c.First(); k != nil; k, v = c.Next() {
+				if v == nil {
+					continue
+				}
+
+				if opts != nil && opts.Skip > 0 {
+					opts.Skip--
+					continue
+				}
+
+				if opts != nil && opts.Limit == 0 {
+					break
+				}
+
+				if opts != nil && opts.Limit > 0 {
+					opts.Limit--
+				}
+
+				newElem := reflect.New(typ)
+				err := n.s.Codec.Decode(v, newElem.Interface())
+				if err != nil {
+					return err
+				}
+
+				if rtyp.Kind() == reflect.Ptr {
+					results = reflect.Append(results, newElem)
+				} else {
+					results = reflect.Append(results, reflect.Indirect(newElem))
+				}
 			}
 		}
 	}
