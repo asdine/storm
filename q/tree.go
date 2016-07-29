@@ -1,22 +1,55 @@
 package q
 
-type Criteria interface{}
+import (
+	"go/token"
+	"reflect"
+)
 
-type gt struct{}
-type lt struct{}
-type eq struct{}
+type Criteria interface {
+	Exec(interface{}) bool
+}
+
+type eq struct {
+	field string
+	value interface{}
+}
+
+func (c *eq) Exec(i interface{}) bool {
+	v := reflect.Indirect(reflect.ValueOf(i))
+
+	field := v.FieldByName(c.field)
+	return compare(field.Interface(), c.value, token.EQL)
+}
 
 type or struct {
-	Children []Criteria
+	children []Criteria
+}
+
+func (c *or) Exec(i interface{}) bool {
+	for _, criteria := range c.children {
+		if criteria.Exec(i) {
+			return true
+		}
+	}
+
+	return false
 }
 
 type and struct {
-	Children []Criteria
+	children []Criteria
 }
 
-func Gt(v interface{}) Criteria { return &gt{} }
-func Lt(v interface{}) Criteria { return &lt{} }
-func Eq(v interface{}) Criteria { return &eq{} }
+func (c *and) Exec(i interface{}) bool {
+	for _, criteria := range c.children {
+		if !criteria.Exec(i) {
+			return false
+		}
+	}
 
-func Or(criterias ...Criteria) Criteria  { return &or{Children: criterias} }
-func And(criterias ...Criteria) Criteria { return &and{Children: criterias} }
+	return true
+}
+
+func Eq(field string, v interface{}) Criteria { return &eq{field: field, value: v} }
+
+func Or(criterias ...Criteria) Criteria  { return &or{children: criterias} }
+func And(criterias ...Criteria) Criteria { return &and{children: criterias} }
