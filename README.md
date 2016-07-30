@@ -166,6 +166,14 @@ Useful when starting your application
 
 ### Drop a bucket
 
+Using the struct
+
+```go
+err := db.Drop(&User)
+```
+
+Using the bucket name
+
 ```go
 err := db.Drop("User")
 ```
