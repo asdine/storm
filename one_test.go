@@ -27,7 +27,7 @@ func TestOne(t *testing.T) {
 
 	for i := 0; i < 10; i++ {
 		w := IndexedNameUser{Name: "John", ID: i + 1}
-		err := db.Save(&w)
+		err = db.Save(&w)
 		assert.NoError(t, err)
 	}
 
