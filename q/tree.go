@@ -53,11 +53,23 @@ func (c *and) Exec(i interface{}) bool {
 	return true
 }
 
-func Eq(field string, v interface{}) Criteria  { return &cmp{field: field, value: v, token: token.EQL} }
-func Gt(field string, v interface{}) Criteria  { return &cmp{field: field, value: v, token: token.GTR} }
+// Eq criteria, checks if the given field is equal to the given value
+func Eq(field string, v interface{}) Criteria { return &cmp{field: field, value: v, token: token.EQL} }
+
+// Gt criteria, checks if the given field is greater than the given value
+func Gt(field string, v interface{}) Criteria { return &cmp{field: field, value: v, token: token.GTR} }
+
+// Gte criteria, checks if the given field is greater than or equal to the given value
 func Gte(field string, v interface{}) Criteria { return &cmp{field: field, value: v, token: token.GEQ} }
-func Lt(field string, v interface{}) Criteria  { return &cmp{field: field, value: v, token: token.LSS} }
+
+// Lt criteria, checks if the given field is lesser than the given value
+func Lt(field string, v interface{}) Criteria { return &cmp{field: field, value: v, token: token.LSS} }
+
+// Lte criteria, checks if the given field is lesser than or equal to the given value
 func Lte(field string, v interface{}) Criteria { return &cmp{field: field, value: v, token: token.LEQ} }
 
-func Or(criterias ...Criteria) Criteria  { return &or{children: criterias} }
+// Or criteria, checks if at least one of the given criterias matches the record
+func Or(criterias ...Criteria) Criteria { return &or{children: criterias} }
+
+// And criteria, checks if all of the given criterias matches the record
 func And(criterias ...Criteria) Criteria { return &and{children: criterias} }
