@@ -11,10 +11,11 @@ type Matcher interface {
 	Match(interface{}) bool
 }
 
-type valueMatcher interface {
-	// matchValue tests if the given reflect.Value matches.
+// A ValueMatcher is used to test against a reflect.Value.
+type ValueMatcher interface {
+	// MatchValue tests if the given reflect.Value matches.
 	// It is useful when the reflect.Value of an object already exists.
-	matchValue(*reflect.Value) bool
+	MatchValue(*reflect.Value) bool
 }
 
 type cmp struct {
@@ -25,10 +26,10 @@ type cmp struct {
 
 func (c *cmp) Match(i interface{}) bool {
 	v := reflect.Indirect(reflect.ValueOf(i))
-	return c.matchValue(&v)
+	return c.MatchValue(&v)
 }
 
-func (c *cmp) matchValue(v *reflect.Value) bool {
+func (c *cmp) MatchValue(v *reflect.Value) bool {
 	field := v.FieldByName(c.field)
 	return compare(field.Interface(), c.value, c.token)
 }
@@ -39,13 +40,13 @@ type or struct {
 
 func (c *or) Match(i interface{}) bool {
 	v := reflect.Indirect(reflect.ValueOf(i))
-	return c.matchValue(&v)
+	return c.MatchValue(&v)
 }
 
-func (c *or) matchValue(v *reflect.Value) bool {
+func (c *or) MatchValue(v *reflect.Value) bool {
 	for _, matcher := range c.children {
-		if vm, ok := matcher.(valueMatcher); ok {
-			if vm.matchValue(v) {
+		if vm, ok := matcher.(ValueMatcher); ok {
+			if vm.MatchValue(v) {
 				return true
 			}
 			continue
@@ -65,13 +66,13 @@ type and struct {
 
 func (c *and) Match(i interface{}) bool {
 	v := reflect.Indirect(reflect.ValueOf(i))
-	return c.matchValue(&v)
+	return c.MatchValue(&v)
 }
 
-func (c *and) matchValue(v *reflect.Value) bool {
+func (c *and) MatchValue(v *reflect.Value) bool {
 	for _, matcher := range c.children {
-		if vm, ok := matcher.(valueMatcher); ok {
-			if !vm.matchValue(v) {
+		if vm, ok := matcher.(ValueMatcher); ok {
+			if !vm.MatchValue(v) {
 				return false
 			}
 			continue
