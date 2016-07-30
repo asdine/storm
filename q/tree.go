@@ -10,6 +10,7 @@ import (
 type Criteria interface {
 	// Exec is used to test the criteria against a record
 	Exec(interface{}) bool
+	exec(*reflect.Value) bool
 }
 
 type cmp struct {
@@ -20,7 +21,10 @@ type cmp struct {
 
 func (c *cmp) Exec(i interface{}) bool {
 	v := reflect.Indirect(reflect.ValueOf(i))
+	return c.exec(&v)
+}
 
+func (c *cmp) exec(v *reflect.Value) bool {
 	field := v.FieldByName(c.field)
 	return compare(field.Interface(), c.value, c.token)
 }
@@ -30,8 +34,13 @@ type or struct {
 }
 
 func (c *or) Exec(i interface{}) bool {
+	v := reflect.Indirect(reflect.ValueOf(i))
+	return c.exec(&v)
+}
+
+func (c *or) exec(v *reflect.Value) bool {
 	for _, criteria := range c.children {
-		if criteria.Exec(i) {
+		if criteria.exec(v) {
 			return true
 		}
 	}
@@ -44,8 +53,13 @@ type and struct {
 }
 
 func (c *and) Exec(i interface{}) bool {
+	v := reflect.Indirect(reflect.ValueOf(i))
+	return c.exec(&v)
+}
+
+func (c *and) exec(v *reflect.Value) bool {
 	for _, criteria := range c.children {
-		if !criteria.Exec(i) {
+		if !criteria.exec(v) {
 			return false
 		}
 	}
