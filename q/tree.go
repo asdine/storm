@@ -5,15 +5,16 @@ import (
 	"reflect"
 )
 
-// A Criteria is used to test against a record to see if it matches.
-// It can be a combination of multiple other criterias.
-type Criteria interface {
+// A Matcher is used to test against a record to see if it matches.
+type Matcher interface {
 	// Match is used to test the criteria against a structure.
 	Match(interface{}) bool
+}
 
-	// MatchValue is useful when the reflect.Value of the structure already exists.
-	// It is used internally to avoid recreating a reflect.Value when executing a tree of Criteria
-	MatchValue(*reflect.Value) bool
+type valueMatcher interface {
+	// matchValue tests if the given reflect.Value matches.
+	// It is useful when the reflect.Value of an object already exists.
+	matchValue(*reflect.Value) bool
 }
 
 type cmp struct {
@@ -24,26 +25,33 @@ type cmp struct {
 
 func (c *cmp) Match(i interface{}) bool {
 	v := reflect.Indirect(reflect.ValueOf(i))
-	return c.MatchValue(&v)
+	return c.matchValue(&v)
 }
 
-func (c *cmp) MatchValue(v *reflect.Value) bool {
+func (c *cmp) matchValue(v *reflect.Value) bool {
 	field := v.FieldByName(c.field)
 	return compare(field.Interface(), c.value, c.token)
 }
 
 type or struct {
-	children []Criteria
+	children []Matcher
 }
 
 func (c *or) Match(i interface{}) bool {
 	v := reflect.Indirect(reflect.ValueOf(i))
-	return c.MatchValue(&v)
+	return c.matchValue(&v)
 }
 
-func (c *or) MatchValue(v *reflect.Value) bool {
-	for _, criteria := range c.children {
-		if criteria.MatchValue(v) {
+func (c *or) matchValue(v *reflect.Value) bool {
+	for _, matcher := range c.children {
+		if vm, ok := matcher.(valueMatcher); ok {
+			if vm.matchValue(v) {
+				return true
+			}
+			continue
+		}
+
+		if matcher.Match(v.Interface()) {
 			return true
 		}
 	}
@@ -52,17 +60,24 @@ func (c *or) MatchValue(v *reflect.Value) bool {
 }
 
 type and struct {
-	children []Criteria
+	children []Matcher
 }
 
 func (c *and) Match(i interface{}) bool {
 	v := reflect.Indirect(reflect.ValueOf(i))
-	return c.MatchValue(&v)
+	return c.matchValue(&v)
 }
 
-func (c *and) MatchValue(v *reflect.Value) bool {
-	for _, criteria := range c.children {
-		if !criteria.MatchValue(v) {
+func (c *and) matchValue(v *reflect.Value) bool {
+	for _, matcher := range c.children {
+		if vm, ok := matcher.(valueMatcher); ok {
+			if !vm.matchValue(v) {
+				return false
+			}
+			continue
+		}
+
+		if !matcher.Match(v.Interface()) {
 			return false
 		}
 	}
@@ -71,22 +86,22 @@ func (c *and) MatchValue(v *reflect.Value) bool {
 }
 
 // Eq criteria, checks if the given field is equal to the given value
-func Eq(field string, v interface{}) Criteria { return &cmp{field: field, value: v, token: token.EQL} }
+func Eq(field string, v interface{}) Matcher { return &cmp{field: field, value: v, token: token.EQL} }
 
 // Gt criteria, checks if the given field is greater than the given value
-func Gt(field string, v interface{}) Criteria { return &cmp{field: field, value: v, token: token.GTR} }
+func Gt(field string, v interface{}) Matcher { return &cmp{field: field, value: v, token: token.GTR} }
 
 // Gte criteria, checks if the given field is greater than or equal to the given value
-func Gte(field string, v interface{}) Criteria { return &cmp{field: field, value: v, token: token.GEQ} }
+func Gte(field string, v interface{}) Matcher { return &cmp{field: field, value: v, token: token.GEQ} }
 
 // Lt criteria, checks if the given field is lesser than the given value
-func Lt(field string, v interface{}) Criteria { return &cmp{field: field, value: v, token: token.LSS} }
+func Lt(field string, v interface{}) Matcher { return &cmp{field: field, value: v, token: token.LSS} }
 
 // Lte criteria, checks if the given field is lesser than or equal to the given value
-func Lte(field string, v interface{}) Criteria { return &cmp{field: field, value: v, token: token.LEQ} }
+func Lte(field string, v interface{}) Matcher { return &cmp{field: field, value: v, token: token.LEQ} }
 
 // Or criteria, checks if at least one of the given criterias matches the record
-func Or(criterias ...Criteria) Criteria { return &or{children: criterias} }
+func Or(criterias ...Matcher) Matcher { return &or{children: criterias} }
 
 // And criteria, checks if all of the given criterias matches the record
-func And(criterias ...Criteria) Criteria { return &and{children: criterias} }
+func And(criterias ...Matcher) Matcher { return &and{children: criterias} }
