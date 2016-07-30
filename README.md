@@ -3,7 +3,6 @@
 [![Build Status](https://travis-ci.org/asdine/storm.svg)](https://travis-ci.org/asdine/storm)
 [![GoDoc](https://godoc.org/github.com/asdine/storm?status.svg)](https://godoc.org/github.com/asdine/storm)
 [![Go Report Card](https://goreportcard.com/badge/github.com/asdine/storm)](https://goreportcard.com/report/github.com/asdine/storm)
-[![Coverage](http://gocover.io/_badge/github.com/asdine/storm)](http://gocover.io/github.com/asdine/storm)
 
 Storm is a simple and powerful ORM for [BoltDB](https://github.com/boltdb/bolt). The goal of this project is to provide a simple way to save any object in BoltDB and to easily retrieve it.
 
@@ -90,7 +89,7 @@ err := db.Save(&user)
 
 user.ID++
 err = db.Save(&user)
-// err == "already exists"
+// err == storm.ErrAlreadyExists
 ```
 
 That's it.
@@ -107,7 +106,7 @@ err := db.One("Email", "john@provider.com", &user)
 // err == nil
 
 err = db.One("Name", "John", &user)
-// err == "not found"
+// err == storm.ErrNotFound
 ```
 
 ### Fetch multiple objects
@@ -177,7 +176,7 @@ err := db.Drop("User")
 tx, err := db.Begin(true)
 
 accountA.Amount -= 100
-accountB.Amount += 100
+accountB.Amount += 100s
 
 err = tx.Save(accountA)
 if err != nil {
