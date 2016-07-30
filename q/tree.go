@@ -8,9 +8,12 @@ import (
 // A Criteria is used to test against a record to see if it matches.
 // It can be a combination of multiple other criterias.
 type Criteria interface {
-	// Exec is used to test the criteria against a record
+	// Exec is used to test the criteria against a structure
 	Exec(interface{}) bool
-	exec(*reflect.Value) bool
+
+	// ExecValue is useful when the reflect.Value of the structure already exists.
+	// It is used internally to avoid recreating a reflect.Value when executing a tree of Criteria
+	ExecValue(*reflect.Value) bool
 }
 
 type cmp struct {
@@ -21,10 +24,10 @@ type cmp struct {
 
 func (c *cmp) Exec(i interface{}) bool {
 	v := reflect.Indirect(reflect.ValueOf(i))
-	return c.exec(&v)
+	return c.ExecValue(&v)
 }
 
-func (c *cmp) exec(v *reflect.Value) bool {
+func (c *cmp) ExecValue(v *reflect.Value) bool {
 	field := v.FieldByName(c.field)
 	return compare(field.Interface(), c.value, c.token)
 }
@@ -35,12 +38,12 @@ type or struct {
 
 func (c *or) Exec(i interface{}) bool {
 	v := reflect.Indirect(reflect.ValueOf(i))
-	return c.exec(&v)
+	return c.ExecValue(&v)
 }
 
-func (c *or) exec(v *reflect.Value) bool {
+func (c *or) ExecValue(v *reflect.Value) bool {
 	for _, criteria := range c.children {
-		if criteria.exec(v) {
+		if criteria.ExecValue(v) {
 			return true
 		}
 	}
@@ -54,12 +57,12 @@ type and struct {
 
 func (c *and) Exec(i interface{}) bool {
 	v := reflect.Indirect(reflect.ValueOf(i))
-	return c.exec(&v)
+	return c.ExecValue(&v)
 }
 
-func (c *and) exec(v *reflect.Value) bool {
+func (c *and) ExecValue(v *reflect.Value) bool {
 	for _, criteria := range c.children {
-		if !criteria.exec(v) {
+		if !criteria.ExecValue(v) {
 			return false
 		}
 	}
