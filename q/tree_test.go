@@ -26,9 +26,10 @@ func TestCompare(t *testing.T) {
 	assert.True(t, compare("hello", "hello", token.EQL))
 	assert.True(t, compare(&User{Name: "John"}, &User{Name: "John"}, token.EQL))
 	assert.False(t, compare(&User{Name: "John"}, &User{Name: "Jack"}, token.GTR))
+	assert.True(t, compare(10, 5.0, token.GTR))
 }
 
-func TestEq(t *testing.T) {
+func TestCmp(t *testing.T) {
 	a := User{
 		Age: 10,
 	}
@@ -40,6 +41,10 @@ func TestEq(t *testing.T) {
 	q := Eq("Age", 10)
 	assert.True(t, q.Exec(&a))
 	assert.False(t, q.Exec(&b))
+
+	q = Gt("Age", 15)
+	assert.False(t, q.Exec(&a))
+	assert.True(t, q.Exec(&b))
 }
 
 func TestAnd(t *testing.T) {

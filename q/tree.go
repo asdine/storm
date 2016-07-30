@@ -5,20 +5,24 @@ import (
 	"reflect"
 )
 
+// A Criteria is used to test against a record to see if it matches.
+// It can be a combination of multiple other criterias.
 type Criteria interface {
+	// Exec is used to test the criteria against a record
 	Exec(interface{}) bool
 }
 
-type eq struct {
+type cmp struct {
 	field string
 	value interface{}
+	token token.Token
 }
 
-func (c *eq) Exec(i interface{}) bool {
+func (c *cmp) Exec(i interface{}) bool {
 	v := reflect.Indirect(reflect.ValueOf(i))
 
 	field := v.FieldByName(c.field)
-	return compare(field.Interface(), c.value, token.EQL)
+	return compare(field.Interface(), c.value, c.token)
 }
 
 type or struct {
@@ -49,7 +53,11 @@ func (c *and) Exec(i interface{}) bool {
 	return true
 }
 
-func Eq(field string, v interface{}) Criteria { return &eq{field: field, value: v} }
+func Eq(field string, v interface{}) Criteria  { return &cmp{field: field, value: v, token: token.EQL} }
+func Gt(field string, v interface{}) Criteria  { return &cmp{field: field, value: v, token: token.GTR} }
+func Gte(field string, v interface{}) Criteria { return &cmp{field: field, value: v, token: token.GEQ} }
+func Lt(field string, v interface{}) Criteria  { return &cmp{field: field, value: v, token: token.LSS} }
+func Lte(field string, v interface{}) Criteria { return &cmp{field: field, value: v, token: token.LEQ} }
 
 func Or(criterias ...Criteria) Criteria  { return &or{children: criterias} }
 func And(criterias ...Criteria) Criteria { return &and{children: criterias} }

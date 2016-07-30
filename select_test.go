@@ -21,7 +21,7 @@ func TestSelect(t *testing.T) {
 	db, _ := Open(filepath.Join(dir, "storm.db"), AutoIncrement())
 	defer db.Close()
 
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 20; i++ {
 		err := db.Save(&Score{
 			Value: i,
 		})
@@ -45,4 +45,22 @@ func TestSelect(t *testing.T) {
 	assert.Len(t, scores, 2)
 	assert.Equal(t, 5, scores[0].Value)
 	assert.Equal(t, 6, scores[1].Value)
+
+	err = db.Select(&scores,
+		q.Or(
+			q.Eq("Value", 5),
+			q.Or(
+				q.Lte("Value", 2),
+				q.Gte("Value", 18),
+			),
+		),
+	)
+	assert.NoError(t, err)
+	assert.Len(t, scores, 6)
+	assert.Equal(t, 0, scores[0].Value)
+	assert.Equal(t, 1, scores[1].Value)
+	assert.Equal(t, 2, scores[2].Value)
+	assert.Equal(t, 5, scores[3].Value)
+	assert.Equal(t, 18, scores[4].Value)
+	assert.Equal(t, 19, scores[5].Value)
 }
