@@ -57,7 +57,7 @@ func (n *Node) selector(tx *bolt.Tx, info *modelInfo, ref *reflect.Value, rtyp, 
 				return err
 			}
 
-			if tree.Exec(newElem.Interface()) {
+			if tree.Match(newElem.Interface()) {
 				if rtyp.Kind() == reflect.Ptr {
 					results = reflect.Append(results, newElem)
 				} else {

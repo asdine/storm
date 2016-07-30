@@ -39,12 +39,12 @@ func TestCmp(t *testing.T) {
 	}
 
 	q := Eq("Age", 10)
-	assert.True(t, q.Exec(&a))
-	assert.False(t, q.Exec(&b))
+	assert.True(t, q.Match(&a))
+	assert.False(t, q.Match(&b))
 
 	q = Gt("Age", 15)
-	assert.False(t, q.Exec(&a))
-	assert.True(t, q.Exec(&b))
+	assert.False(t, q.Match(&a))
+	assert.True(t, q.Match(&b))
 }
 
 func TestAnd(t *testing.T) {
@@ -62,8 +62,8 @@ func TestAnd(t *testing.T) {
 		Eq("Age", 10),
 		Eq("Name", "John"),
 	)
-	assert.True(t, q.Exec(&a))
-	assert.False(t, q.Exec(&b))
+	assert.True(t, q.Match(&a))
+	assert.False(t, q.Match(&b))
 }
 
 func TestOr(t *testing.T) {
@@ -81,8 +81,8 @@ func TestOr(t *testing.T) {
 		Eq("Age", 10),
 		Eq("Name", "Jack"),
 	)
-	assert.True(t, q.Exec(&a))
-	assert.True(t, q.Exec(&b))
+	assert.True(t, q.Match(&a))
+	assert.True(t, q.Match(&b))
 }
 
 func TestAndOr(t *testing.T) {
@@ -103,6 +103,6 @@ func TestAndOr(t *testing.T) {
 			Eq("Name", "John"),
 		),
 	)
-	assert.True(t, q.Exec(&a))
-	assert.False(t, q.Exec(&b))
+	assert.True(t, q.Match(&a))
+	assert.False(t, q.Match(&b))
 }

@@ -8,12 +8,12 @@ import (
 // A Criteria is used to test against a record to see if it matches.
 // It can be a combination of multiple other criterias.
 type Criteria interface {
-	// Exec is used to test the criteria against a structure
-	Exec(interface{}) bool
+	// Match is used to test the criteria against a structure.
+	Match(interface{}) bool
 
-	// ExecValue is useful when the reflect.Value of the structure already exists.
+	// MatchValue is useful when the reflect.Value of the structure already exists.
 	// It is used internally to avoid recreating a reflect.Value when executing a tree of Criteria
-	ExecValue(*reflect.Value) bool
+	MatchValue(*reflect.Value) bool
 }
 
 type cmp struct {
@@ -22,12 +22,12 @@ type cmp struct {
 	token token.Token
 }
 
-func (c *cmp) Exec(i interface{}) bool {
+func (c *cmp) Match(i interface{}) bool {
 	v := reflect.Indirect(reflect.ValueOf(i))
-	return c.ExecValue(&v)
+	return c.MatchValue(&v)
 }
 
-func (c *cmp) ExecValue(v *reflect.Value) bool {
+func (c *cmp) MatchValue(v *reflect.Value) bool {
 	field := v.FieldByName(c.field)
 	return compare(field.Interface(), c.value, c.token)
 }
@@ -36,14 +36,14 @@ type or struct {
 	children []Criteria
 }
 
-func (c *or) Exec(i interface{}) bool {
+func (c *or) Match(i interface{}) bool {
 	v := reflect.Indirect(reflect.ValueOf(i))
-	return c.ExecValue(&v)
+	return c.MatchValue(&v)
 }
 
-func (c *or) ExecValue(v *reflect.Value) bool {
+func (c *or) MatchValue(v *reflect.Value) bool {
 	for _, criteria := range c.children {
-		if criteria.ExecValue(v) {
+		if criteria.MatchValue(v) {
 			return true
 		}
 	}
@@ -55,14 +55,14 @@ type and struct {
 	children []Criteria
 }
 
-func (c *and) Exec(i interface{}) bool {
+func (c *and) Match(i interface{}) bool {
 	v := reflect.Indirect(reflect.ValueOf(i))
-	return c.ExecValue(&v)
+	return c.MatchValue(&v)
 }
 
-func (c *and) ExecValue(v *reflect.Value) bool {
+func (c *and) MatchValue(v *reflect.Value) bool {
 	for _, criteria := range c.children {
-		if !criteria.ExecValue(v) {
+		if !criteria.MatchValue(v) {
 			return false
 		}
 	}
