@@ -138,10 +138,10 @@ func (n *Node) all(tx *bolt.Tx, info *modelInfo, ref *reflect.Value, rtyp, typ r
 		if opts.Reverse {
 			// loop through the records in descending order
 			for k, v := c.Last(); k != nil; k, v = c.Prev() {
-				c, b := loopControl(v, opts)
-				if c {
+				cont, brk := allLoopControl(v, opts)
+				if cont {
 					continue
-				} else if b {
+				} else if brk {
 					break
 				}
 
@@ -154,10 +154,10 @@ func (n *Node) all(tx *bolt.Tx, info *modelInfo, ref *reflect.Value, rtyp, typ r
 		} else {
 			// loop through the records in ascending order
 			for k, v := c.First(); k != nil; k, v = c.Next() {
-				c, b := loopControl(v, opts)
-				if c {
+				cont, brk := allLoopControl(v, opts)
+				if cont {
 					continue
-				} else if b {
+				} else if brk {
 					break
 				}
 
@@ -174,8 +174,8 @@ func (n *Node) all(tx *bolt.Tx, info *modelInfo, ref *reflect.Value, rtyp, typ r
 	return nil
 }
 
-// loopControl determines if the loop should continue or break
-func loopControl(v []byte, opts *index.Options) (con, br bool) {
+// allLoopControl determines if the all loop should continue or break
+func allLoopControl(v []byte, opts *index.Options) (con, br bool) {
 
 	// continue on nil value
 	if v == nil {
