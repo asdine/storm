@@ -129,45 +129,95 @@ func (n *Node) All(to interface{}, options ...func(*index.Options)) error {
 }
 
 func (n *Node) all(tx *bolt.Tx, info *modelInfo, ref *reflect.Value, rtyp, typ reflect.Type, opts *index.Options) error {
+	var err error
 	results := reflect.MakeSlice(reflect.Indirect(*ref).Type(), 0, 0)
 	bucket := n.GetBucket(tx, info.Name)
 
 	if bucket != nil {
 		c := bucket.Cursor()
-		for k, v := c.First(); k != nil; k, v = c.Next() {
-			if v == nil {
-				continue
-			}
+		if opts.Reverse {
+			// loop through the records in descending order
+			for k, v := c.Last(); k != nil; k, v = c.Prev() {
+				cont, brk := allLoopControl(v, opts)
+				if cont {
+					continue
+				} else if brk {
+					break
+				}
 
-			if opts != nil && opts.Skip > 0 {
-				opts.Skip--
-				continue
-			}
+				results, err = n.result(results, v, rtyp, typ)
+				if err != nil {
+					return err
+				}
 
-			if opts != nil && opts.Limit == 0 {
-				break
 			}
+		} else {
+			// loop through the records in ascending order
+			for k, v := c.First(); k != nil; k, v = c.Next() {
+				cont, brk := allLoopControl(v, opts)
+				if cont {
+					continue
+				} else if brk {
+					break
+				}
 
-			if opts != nil && opts.Limit > 0 {
-				opts.Limit--
-			}
+				results, err = n.result(results, v, rtyp, typ)
+				if err != nil {
+					return err
+				}
 
-			newElem := reflect.New(typ)
-			err := n.s.Codec.Decode(v, newElem.Interface())
-			if err != nil {
-				return err
-			}
-
-			if rtyp.Kind() == reflect.Ptr {
-				results = reflect.Append(results, newElem)
-			} else {
-				results = reflect.Append(results, reflect.Indirect(newElem))
 			}
 		}
 	}
 
 	reflect.Indirect(*ref).Set(results)
 	return nil
+}
+
+// allLoopControl determines if the all loop should continue or break
+func allLoopControl(v []byte, opts *index.Options) (con, br bool) {
+
+	// continue on nil value
+	if v == nil {
+		return true, false
+	}
+
+	// continue on skip
+	if opts != nil && opts.Skip > 0 {
+		opts.Skip--
+		return true, false
+	}
+
+	// break on limit
+	if opts != nil && opts.Limit == 0 {
+		return false, true
+	}
+
+	// decrement limit counter
+	if opts != nil && opts.Limit > 0 {
+		opts.Limit--
+	}
+
+	return false, false
+
+}
+
+// result will determine the type and append to the results slice
+func (n *Node) result(results reflect.Value, v []byte, rtyp, typ reflect.Type) (reflect.Value, error) {
+
+	newElem := reflect.New(typ)
+
+	err := n.s.Codec.Decode(v, newElem.Interface())
+	if err != nil {
+		return results, err
+	}
+
+	if rtyp.Kind() == reflect.Ptr {
+		return reflect.Append(results, newElem), nil
+	}
+
+	return reflect.Append(results, reflect.Indirect(newElem)), nil
+
 }
 
 // AllByIndex gets all the records of a bucket that are indexed in the specified index
