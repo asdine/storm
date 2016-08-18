@@ -5,10 +5,7 @@ import "github.com/asdine/storm/q"
 // Select a list of records that match a list of matchers. Doesn't use indexes.
 func (n *Node) Select(matchers ...q.Matcher) Query {
 	tree := q.And(matchers...)
-	return &query{
-		tree: tree,
-		node: n,
-	}
+	return newQuery(n, tree)
 }
 
 // Select a list of records that match a list of matchers. Doesn't use indexes.

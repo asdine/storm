@@ -19,6 +19,15 @@ type Query interface {
 	Find(interface{}) error
 }
 
+func newQuery(n *Node, tree q.Matcher) *query {
+	return &query{
+		skip:  0,
+		limit: -1,
+		node:  n,
+		tree:  tree,
+	}
+}
+
 type query struct {
 	limit int
 	skip  int
@@ -73,12 +82,17 @@ func (q *query) query(tx *bolt.Tx, info *modelInfo, ref *reflect.Value, elemType
 
 	// we don't change state so queries can be replayed
 	skip := q.skip
+	limit := q.limit
 
 	if bucket != nil {
 		c := bucket.Cursor()
 		for k, v := c.First(); k != nil; k, v = c.Next() {
 			if v == nil {
 				continue
+			}
+
+			if limit == 0 {
+				break
 			}
 
 			newElem := reflect.New(elemType)
@@ -92,6 +106,10 @@ func (q *query) query(tx *bolt.Tx, info *modelInfo, ref *reflect.Value, elemType
 				if skip > 0 {
 					skip--
 					continue
+				}
+
+				if limit > 0 {
+					limit--
 				}
 
 				if realType.Kind() == reflect.Ptr {
