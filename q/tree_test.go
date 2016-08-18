@@ -47,6 +47,28 @@ func TestCmp(t *testing.T) {
 	assert.True(t, q.Match(&b))
 }
 
+func TestStrictEq(t *testing.T) {
+	a := User{
+		Age: 10,
+	}
+
+	type UserFloat struct {
+		Age float64
+	}
+
+	b := UserFloat{
+		Age: 10.0,
+	}
+
+	q := StrictEq("Age", 10)
+	assert.True(t, q.Match(&a))
+	assert.False(t, q.Match(&b))
+
+	q = StrictEq("Age", 10.0)
+	assert.False(t, q.Match(&a))
+	assert.True(t, q.Match(&b))
+}
+
 func TestAnd(t *testing.T) {
 	a := User{
 		Age:  10,

@@ -86,23 +86,41 @@ func (c *and) MatchValue(v *reflect.Value) bool {
 	return true
 }
 
-// Eq criteria, checks if the given field is equal to the given value
+type strictEq struct {
+	field string
+	value interface{}
+}
+
+func (s *strictEq) Match(i interface{}) bool {
+	v := reflect.Indirect(reflect.ValueOf(i))
+	return s.MatchValue(&v)
+}
+
+func (s *strictEq) MatchValue(v *reflect.Value) bool {
+	field := v.FieldByName(s.field)
+	return reflect.DeepEqual(field.Interface(), s.value)
+}
+
+// Eq matcher, checks if the given field is equal to the given value
 func Eq(field string, v interface{}) Matcher { return &cmp{field: field, value: v, token: token.EQL} }
 
-// Gt criteria, checks if the given field is greater than the given value
+// StrictEq matcher, checks if the given field is deeply equal to the given value
+func StrictEq(field string, v interface{}) Matcher { return &strictEq{field: field, value: v} }
+
+// Gt matcher, checks if the given field is greater than the given value
 func Gt(field string, v interface{}) Matcher { return &cmp{field: field, value: v, token: token.GTR} }
 
-// Gte criteria, checks if the given field is greater than or equal to the given value
+// Gte matcher, checks if the given field is greater than or equal to the given value
 func Gte(field string, v interface{}) Matcher { return &cmp{field: field, value: v, token: token.GEQ} }
 
-// Lt criteria, checks if the given field is lesser than the given value
+// Lt matcher, checks if the given field is lesser than the given value
 func Lt(field string, v interface{}) Matcher { return &cmp{field: field, value: v, token: token.LSS} }
 
-// Lte criteria, checks if the given field is lesser than or equal to the given value
+// Lte matcher, checks if the given field is lesser than or equal to the given value
 func Lte(field string, v interface{}) Matcher { return &cmp{field: field, value: v, token: token.LEQ} }
 
-// Or criteria, checks if at least one of the given criterias matches the record
-func Or(criterias ...Matcher) Matcher { return &or{children: criterias} }
+// Or matcher, checks if at least one of the given matchers matches the record
+func Or(matchers ...Matcher) Matcher { return &or{children: matchers} }
 
-// And criteria, checks if all of the given criterias matches the record
-func And(criterias ...Matcher) Matcher { return &and{children: criterias} }
+// And matcher, checks if all of the given matchers matches the record
+func And(matchers ...Matcher) Matcher { return &and{children: matchers} }
