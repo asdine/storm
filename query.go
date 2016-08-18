@@ -17,6 +17,9 @@ type Query interface {
 
 	// Find a list of matching records
 	Find(interface{}) error
+
+	// First gets the first matching record
+	First(interface{}) error
 }
 
 func newQuery(n *Node, tree q.Matcher) *query {
@@ -70,6 +73,23 @@ func (q *query) Find(to interface{}) error {
 	return nil
 }
 
+func (q *query) First(to interface{}) error {
+	sink, err := newFirstSink(to)
+	if err != nil {
+		return err
+	}
+
+	sink.skip = q.skip
+
+	if q.node.tx != nil {
+		return q.query(q.node.tx, sink)
+	}
+
+	return q.node.s.Bolt.Update(func(tx *bolt.Tx) error {
+		return q.query(tx, sink)
+	})
+}
+
 func (q *query) query(tx *bolt.Tx, sink sink) error {
 	bucket := q.node.GetBucket(tx, sink.name())
 
@@ -92,11 +112,8 @@ func (q *query) query(tx *bolt.Tx, sink sink) error {
 
 			if q.tree.Match(newElem.Interface()) {
 				stop, err := sink.add(newElem)
-				if err != nil {
+				if stop || err != nil {
 					return err
-				}
-				if stop {
-					return nil
 				}
 			}
 		}
@@ -178,3 +195,40 @@ func (l *listSink) flush() {
 		reflect.Indirect(l.ref).Set(l.results)
 	}
 }
+
+func newFirstSink(to interface{}) (*firstSink, error) {
+	ref := reflect.ValueOf(to)
+
+	if !ref.IsValid() || ref.Kind() != reflect.Ptr || ref.Elem().Kind() != reflect.Struct {
+		return nil, ErrStructPtrNeeded
+	}
+
+	return &firstSink{
+		ref: ref,
+	}, nil
+}
+
+type firstSink struct {
+	ref  reflect.Value
+	skip int
+}
+
+func (f *firstSink) elem() reflect.Value {
+	return reflect.New(reflect.Indirect(f.ref).Type())
+}
+
+func (f *firstSink) name() string {
+	return reflect.Indirect(f.ref).Type().Name()
+}
+
+func (f *firstSink) add(elem reflect.Value) (bool, error) {
+	if f.skip > 0 {
+		f.skip--
+		return false, nil
+	}
+
+	reflect.Indirect(f.ref).Set(elem.Elem())
+	return true, nil
+}
+
+func (f *firstSink) flush() {}

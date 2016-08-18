@@ -207,3 +207,29 @@ func TestSelectFindLimitSkip(t *testing.T) {
 	assert.Len(t, scores, 1)
 	assert.Equal(t, 19, scores[0].Value)
 }
+
+func TestSelectFirst(t *testing.T) {
+	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
+	defer os.RemoveAll(dir)
+	db, _ := Open(filepath.Join(dir, "storm.db"), AutoIncrement())
+	defer db.Close()
+
+	for i := 0; i < 20; i++ {
+		err := db.Save(&Score{
+			Value: i,
+		})
+		assert.NoError(t, err)
+	}
+
+	var score Score
+
+	err := db.Select(q.Or(
+		q.Eq("Value", 5),
+		q.Or(
+			q.Lte("Value", 2),
+			q.Gte("Value", 18),
+		),
+	)).Skip(2).First(&score)
+	assert.NoError(t, err)
+	assert.Equal(t, 2, score.Value)
+}
