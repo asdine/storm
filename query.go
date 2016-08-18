@@ -59,6 +59,9 @@ func (q *Query) query(tx *bolt.Tx, info *modelInfo, ref *reflect.Value, elemType
 
 	realType := reflect.Indirect(*ref).Type().Elem()
 
+	// we don't change state so queries can be replayed
+	skip := q.skip
+
 	if bucket != nil {
 		c := bucket.Cursor()
 		for k, v := c.First(); k != nil; k, v = c.Next() {
@@ -73,6 +76,12 @@ func (q *Query) query(tx *bolt.Tx, info *modelInfo, ref *reflect.Value, elemType
 			}
 
 			if q.tree.Match(newElem.Interface()) {
+
+				if skip > 0 {
+					skip--
+					continue
+				}
+
 				if realType.Kind() == reflect.Ptr {
 					results = reflect.Append(results, newElem)
 				} else {
