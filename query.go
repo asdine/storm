@@ -58,25 +58,18 @@ func (q *query) Find(to interface{}) error {
 		elemType = elemType.Elem()
 	}
 
-	newElem := reflect.New(elemType)
-
-	info, err := extract(&newElem)
-	if err != nil {
-		return err
-	}
-
 	if q.node.tx != nil {
-		return q.query(q.node.tx, info, &ref, elemType)
+		return q.query(q.node.tx, &ref, elemType)
 	}
 
 	return q.node.s.Bolt.Update(func(tx *bolt.Tx) error {
-		return q.query(tx, info, &ref, elemType)
+		return q.query(tx, &ref, elemType)
 	})
 }
 
-func (q *query) query(tx *bolt.Tx, info *modelInfo, ref *reflect.Value, elemType reflect.Type) error {
+func (q *query) query(tx *bolt.Tx, ref *reflect.Value, elemType reflect.Type) error {
 	results := reflect.MakeSlice(reflect.Indirect(*ref).Type(), 0, 0)
-	bucket := q.node.GetBucket(tx, info.Name)
+	bucket := q.node.GetBucket(tx, elemType.Name())
 
 	realType := reflect.Indirect(*ref).Type().Elem()
 
