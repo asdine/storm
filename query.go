@@ -7,24 +7,36 @@ import (
 	"github.com/boltdb/bolt"
 )
 
-type Query struct {
+// Query is the low level query engine used by Storm. It allows to operate searches through an entire bucket.
+type Query interface {
+	// Skip matching records by the given number
+	Skip(int) Query
+
+	// Limit the results by the given number
+	Limit(int) Query
+
+	// Find a list of matching records
+	Find(interface{}) error
+}
+
+type query struct {
 	limit int
 	skip  int
 	tree  q.Matcher
 	node  *Node
 }
 
-func (q *Query) Skip(nb int) *Query {
+func (q *query) Skip(nb int) Query {
 	q.skip = nb
 	return q
 }
 
-func (q *Query) Limit(nb int) *Query {
+func (q *query) Limit(nb int) Query {
 	q.limit = nb
 	return q
 }
 
-func (q *Query) Find(to interface{}) error {
+func (q *query) Find(to interface{}) error {
 	ref := reflect.ValueOf(to)
 
 	if ref.Kind() != reflect.Ptr || reflect.Indirect(ref).Kind() != reflect.Slice {
@@ -53,7 +65,7 @@ func (q *Query) Find(to interface{}) error {
 	})
 }
 
-func (q *Query) query(tx *bolt.Tx, info *modelInfo, ref *reflect.Value, elemType reflect.Type) error {
+func (q *query) query(tx *bolt.Tx, info *modelInfo, ref *reflect.Value, elemType reflect.Type) error {
 	results := reflect.MakeSlice(reflect.Indirect(*ref).Type(), 0, 0)
 	bucket := q.node.GetBucket(tx, info.Name)
 
