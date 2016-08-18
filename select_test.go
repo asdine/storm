@@ -30,31 +30,29 @@ func TestSelect(t *testing.T) {
 
 	var scores []Score
 
-	err := db.Select(&scores, q.Eq("Value", 5))
+	err := db.Select(q.Eq("Value", 5)).Find(&scores)
 	assert.NoError(t, err)
 	assert.Len(t, scores, 1)
 	assert.Equal(t, 5, scores[0].Value)
 
-	err = db.Select(&scores,
+	err = db.Select(
 		q.Or(
 			q.Eq("Value", 5),
 			q.Eq("Value", 6),
 		),
-	)
+	).Find(&scores)
 	assert.NoError(t, err)
 	assert.Len(t, scores, 2)
 	assert.Equal(t, 5, scores[0].Value)
 	assert.Equal(t, 6, scores[1].Value)
 
-	err = db.Select(&scores,
+	err = db.Select(q.Or(
+		q.Eq("Value", 5),
 		q.Or(
-			q.Eq("Value", 5),
-			q.Or(
-				q.Lte("Value", 2),
-				q.Gte("Value", 18),
-			),
+			q.Lte("Value", 2),
+			q.Gte("Value", 18),
 		),
-	)
+	)).Find(&scores)
 	assert.NoError(t, err)
 	assert.Len(t, scores, 6)
 	assert.Equal(t, 0, scores[0].Value)
