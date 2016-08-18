@@ -29,11 +29,17 @@ func TestSelectFind(t *testing.T) {
 	}
 
 	var scores []Score
+	var scoresPtr []*Score
 
 	err := db.Select(q.Eq("Value", 5)).Find(&scores)
 	assert.NoError(t, err)
 	assert.Len(t, scores, 1)
 	assert.Equal(t, 5, scores[0].Value)
+
+	err = db.Select(q.Eq("Value", 5)).Find(&scoresPtr)
+	assert.NoError(t, err)
+	assert.Len(t, scoresPtr, 1)
+	assert.Equal(t, 5, scoresPtr[0].Value)
 
 	err = db.Select(
 		q.Or(
@@ -101,6 +107,7 @@ func TestSelectFindSkip(t *testing.T) {
 	assert.Len(t, scores, 6)
 	assert.Equal(t, 0, scores[0].Value)
 
+	scores = nil
 	err = db.Select(q.Or(
 		q.Eq("Value", 5),
 		q.Or(
@@ -150,6 +157,7 @@ func TestSelectFindLimit(t *testing.T) {
 	assert.Len(t, scores, 6)
 	assert.Equal(t, 0, scores[0].Value)
 
+	scores = nil
 	err = db.Select(q.Or(
 		q.Eq("Value", 5),
 		q.Or(

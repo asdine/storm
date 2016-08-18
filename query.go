@@ -46,31 +46,19 @@ func (q *query) Limit(nb int) Query {
 }
 
 func (q *query) Find(to interface{}) error {
-	var err error
-	ref := reflect.ValueOf(to)
-
-	if ref.Kind() != reflect.Ptr || reflect.Indirect(ref).Kind() != reflect.Slice {
-		return ErrSlicePtrNeeded
+	sink, err := newListSink(to)
+	if err != nil {
+		return err
 	}
 
-	elemType := reflect.Indirect(ref).Type().Elem()
-
-	if elemType.Kind() == reflect.Ptr {
-		elemType = elemType.Elem()
-	}
-
-	sink := listSink{
-		results: reflect.MakeSlice(reflect.Indirect(ref).Type(), 0, 0),
-		isPtr:   reflect.Indirect(ref).Type().Elem().Kind() == reflect.Ptr,
-		limit:   q.limit,
-		skip:    q.skip,
-	}
+	sink.limit = q.limit
+	sink.skip = q.skip
 
 	if q.node.tx != nil {
-		err = q.query(q.node.tx, elemType, &sink)
+		err = q.query(q.node.tx, sink)
 	} else {
 		err = q.node.s.Bolt.Update(func(tx *bolt.Tx) error {
-			return q.query(tx, elemType, &sink)
+			return q.query(tx, sink)
 		})
 	}
 
@@ -78,12 +66,12 @@ func (q *query) Find(to interface{}) error {
 		return err
 	}
 
-	reflect.Indirect(ref).Set(sink.results)
+	sink.flush()
 	return nil
 }
 
-func (q *query) query(tx *bolt.Tx, elemType reflect.Type, sink sink) error {
-	bucket := q.node.GetBucket(tx, elemType.Name())
+func (q *query) query(tx *bolt.Tx, sink sink) error {
+	bucket := q.node.GetBucket(tx, sink.name())
 
 	if q.limit == 0 {
 		return nil
@@ -96,7 +84,7 @@ func (q *query) query(tx *bolt.Tx, elemType reflect.Type, sink sink) error {
 				continue
 			}
 
-			newElem := reflect.New(elemType)
+			newElem := sink.elem()
 			err := q.node.s.Codec.Decode(v, newElem.Interface())
 			if err != nil {
 				return err
@@ -118,20 +106,58 @@ func (q *query) query(tx *bolt.Tx, elemType reflect.Type, sink sink) error {
 }
 
 type sink interface {
+	elem() reflect.Value
+	name() string
 	add(elem reflect.Value) (bool, error)
+	flush()
+}
+
+func newListSink(to interface{}) (*listSink, error) {
+	ref := reflect.ValueOf(to)
+
+	if ref.Kind() != reflect.Ptr || reflect.Indirect(ref).Kind() != reflect.Slice {
+		return nil, ErrSlicePtrNeeded
+	}
+
+	sliceType := reflect.Indirect(ref).Type()
+	elemType := sliceType.Elem()
+
+	if elemType.Kind() == reflect.Ptr {
+		elemType = elemType.Elem()
+	}
+
+	return &listSink{
+		ref:      ref,
+		isPtr:    sliceType.Elem().Kind() == reflect.Ptr,
+		elemType: elemType,
+	}, nil
 }
 
 type listSink struct {
-	results reflect.Value
-	isPtr   bool
-	skip    int
-	limit   int
+	ref      reflect.Value
+	results  reflect.Value
+	elemType reflect.Type
+	isPtr    bool
+	skip     int
+	limit    int
+}
+
+func (l *listSink) elem() reflect.Value {
+	return reflect.New(l.elemType)
+}
+
+func (l *listSink) name() string {
+	return l.elemType.Name()
 }
 
 func (l *listSink) add(elem reflect.Value) (bool, error) {
 	if l.skip > 0 {
 		l.skip--
 		return false, nil
+	}
+
+	if !l.results.IsValid() {
+		l.results = reflect.MakeSlice(reflect.Indirect(l.ref).Type(), 0, 0)
 	}
 
 	if l.limit > 0 {
@@ -145,4 +171,10 @@ func (l *listSink) add(elem reflect.Value) (bool, error) {
 	}
 
 	return l.limit == 0, nil
+}
+
+func (l *listSink) flush() {
+	if l.results.IsValid() {
+		reflect.Indirect(l.ref).Set(l.results)
+	}
 }
