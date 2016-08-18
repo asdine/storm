@@ -46,6 +46,7 @@ func (q *query) Limit(nb int) Query {
 }
 
 func (q *query) Find(to interface{}) error {
+	var err error
 	ref := reflect.ValueOf(to)
 
 	if ref.Kind() != reflect.Ptr || reflect.Indirect(ref).Kind() != reflect.Slice {
@@ -58,34 +59,41 @@ func (q *query) Find(to interface{}) error {
 		elemType = elemType.Elem()
 	}
 
-	if q.node.tx != nil {
-		return q.query(q.node.tx, &ref, elemType)
+	sink := listSink{
+		results: reflect.MakeSlice(reflect.Indirect(ref).Type(), 0, 0),
+		isPtr:   reflect.Indirect(ref).Type().Elem().Kind() == reflect.Ptr,
+		limit:   q.limit,
+		skip:    q.skip,
 	}
 
-	return q.node.s.Bolt.Update(func(tx *bolt.Tx) error {
-		return q.query(tx, &ref, elemType)
-	})
+	if q.node.tx != nil {
+		err = q.query(q.node.tx, elemType, &sink)
+	} else {
+		err = q.node.s.Bolt.Update(func(tx *bolt.Tx) error {
+			return q.query(tx, elemType, &sink)
+		})
+	}
+
+	if err != nil {
+		return err
+	}
+
+	reflect.Indirect(ref).Set(sink.results)
+	return nil
 }
 
-func (q *query) query(tx *bolt.Tx, ref *reflect.Value, elemType reflect.Type) error {
-	results := reflect.MakeSlice(reflect.Indirect(*ref).Type(), 0, 0)
+func (q *query) query(tx *bolt.Tx, elemType reflect.Type, sink sink) error {
 	bucket := q.node.GetBucket(tx, elemType.Name())
 
-	realType := reflect.Indirect(*ref).Type().Elem()
-
-	// we don't change state so queries can be replayed
-	skip := q.skip
-	limit := q.limit
+	if q.limit == 0 {
+		return nil
+	}
 
 	if bucket != nil {
 		c := bucket.Cursor()
 		for k, v := c.First(); k != nil; k, v = c.Next() {
 			if v == nil {
 				continue
-			}
-
-			if limit == 0 {
-				break
 			}
 
 			newElem := reflect.New(elemType)
@@ -95,25 +103,46 @@ func (q *query) query(tx *bolt.Tx, ref *reflect.Value, elemType reflect.Type) er
 			}
 
 			if q.tree.Match(newElem.Interface()) {
-
-				if skip > 0 {
-					skip--
-					continue
+				stop, err := sink.add(newElem)
+				if err != nil {
+					return err
 				}
-
-				if limit > 0 {
-					limit--
-				}
-
-				if realType.Kind() == reflect.Ptr {
-					results = reflect.Append(results, newElem)
-				} else {
-					results = reflect.Append(results, reflect.Indirect(newElem))
+				if stop {
+					return nil
 				}
 			}
 		}
 	}
 
-	reflect.Indirect(*ref).Set(results)
 	return nil
+}
+
+type sink interface {
+	add(elem reflect.Value) (bool, error)
+}
+
+type listSink struct {
+	results reflect.Value
+	isPtr   bool
+	skip    int
+	limit   int
+}
+
+func (l *listSink) add(elem reflect.Value) (bool, error) {
+	if l.skip > 0 {
+		l.skip--
+		return false, nil
+	}
+
+	if l.limit > 0 {
+		l.limit--
+	}
+
+	if l.isPtr {
+		l.results = reflect.Append(l.results, elem)
+	} else {
+		l.results = reflect.Append(l.results, reflect.Indirect(elem))
+	}
+
+	return l.limit == 0, nil
 }
