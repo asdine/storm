@@ -17,6 +17,13 @@ func TestFind(t *testing.T) {
 
 	for i := 0; i < 100; i++ {
 		w := User{Name: "John", ID: i + 1, Slug: fmt.Sprintf("John%d", i+1)}
+
+		if i%2 == 0 {
+			w.Group = "staff"
+		} else {
+			w.Group = "normal"
+		}
+
 		err := db.Save(&w)
 		assert.NoError(t, err)
 	}
@@ -48,9 +55,15 @@ func TestFind(t *testing.T) {
 	assert.Error(t, err)
 	assert.True(t, ErrNotFound == err)
 
-	err = db.Find("Group", "John", &users)
+	err = db.Find("Group", "staff", &users)
+	assert.NoError(t, err)
+	assert.Len(t, users, 50)
+	assert.Equal(t, 1, users[0].ID)
+	assert.Equal(t, 99, users[49].ID)
+
+	err = db.Find("Group", "admin", &users)
 	assert.Error(t, err)
-	assert.EqualError(t, err, "index Group not found")
+	assert.True(t, ErrNotFound == err)
 
 	err = db.Find("Name", "John", users)
 	assert.Error(t, err)

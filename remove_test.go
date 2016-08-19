@@ -39,7 +39,7 @@ func TestRemove(t *testing.T) {
 	var users []User
 	for i := 0; i < 10; i++ {
 		user := User{Name: "John", ID: i + 1, Slug: fmt.Sprintf("John%d", i+1), DateOfBirth: time.Now().Add(-time.Duration(i*10) * time.Minute)}
-		err := db.Save(&user)
+		err = db.Save(&user)
 		assert.NoError(t, err)
 		users = append(users, user)
 	}

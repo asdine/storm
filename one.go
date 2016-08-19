@@ -1,27 +1,44 @@
 package storm
 
 import (
-	"reflect"
-
 	"github.com/asdine/storm/index"
+	"github.com/asdine/storm/q"
 	"github.com/boltdb/bolt"
 )
 
 // One returns one record by the specified index
 func (n *Node) One(fieldName string, value interface{}, to interface{}) error {
-	ref := reflect.ValueOf(to)
-
-	if !ref.IsValid() || ref.Kind() != reflect.Ptr || ref.Elem().Kind() != reflect.Struct {
-		return ErrStructPtrNeeded
+	sink, err := newFirstSink(to)
+	if err != nil {
+		return err
 	}
 
 	if fieldName == "" {
 		return ErrNotFound
 	}
 
-	info, err := extract(&ref)
+	info, err := extract(&sink.ref)
 	if err != nil {
 		return err
+	}
+
+	_, ok := info.Indexes[fieldName]
+	if !ok {
+		query := newQuery(n, q.StrictEq(fieldName, value))
+
+		if n.tx != nil {
+			err = query.query(n.tx, sink)
+		} else {
+			err = n.s.Bolt.View(func(tx *bolt.Tx) error {
+				return query.query(tx, sink)
+			})
+		}
+
+		if err != nil {
+			return err
+		}
+
+		return sink.flush()
 	}
 
 	val, err := toBytes(value, n.s.Codec)

@@ -5,8 +5,12 @@ import (
 	"time"
 
 	"github.com/asdine/storm/codec"
+	"github.com/asdine/storm/codec/gob"
 	"github.com/boltdb/bolt"
 )
+
+// Defaults to gob
+var defaultCodec = gob.Codec
 
 // Open opens a database at the given path with optional Storm options.
 func Open(path string, stormOptions ...func(*DB) error) (*DB, error) {
@@ -114,4 +118,24 @@ func (s *DB) WithTransaction(tx *bolt.Tx) *Node {
 // In the normal, simple case this will be empty.
 func (s *DB) Bucket() []string {
 	return s.root.Bucket()
+}
+
+// Close the database
+func (s *DB) Close() error {
+	return s.Bolt.Close()
+}
+
+// toBytes turns an interface into a slice of bytes
+func toBytes(key interface{}, encoder codec.EncodeDecoder) ([]byte, error) {
+	if key == nil {
+		return nil, nil
+	}
+	if k, ok := key.([]byte); ok {
+		return k, nil
+	}
+	if k, ok := key.(string); ok {
+		return []byte(k), nil
+	}
+
+	return encoder.Encode(key)
 }

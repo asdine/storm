@@ -8,6 +8,9 @@ Storm is a simple and powerful ORM for [BoltDB](https://github.com/boltdb/bolt).
 
 In addition to the examples below, see also the [examples in the GoDoc](https://godoc.org/github.com/asdine/storm#pkg-examples).
 
+**NEWS**
+*Big update: From now on, every record can be fetched even if the specified field is not indexed. Also, there is a new query system for more [advanced queries.](#advanced-queries)*
+
 ## Getting Started
 
 ```bash
@@ -96,9 +99,11 @@ That's it.
 
 `Save` creates or updates all the required indexes and buckets, checks the unique constraints and saves the object to the store.
 
-### Fetch your object
+### Simple queries
 
-Only indexed fields can be used to find a record
+Any object can be fetched, indexed or not. Storm uses indexes when available, otherwhise it uses the [query system](#advanced-queries).
+
+#### Fetch one object
 
 ```go
 var user User
@@ -106,38 +111,41 @@ err := db.One("Email", "john@provider.com", &user)
 // err == nil
 
 err = db.One("Name", "John", &user)
+// err == nil
+
+err = db.One("Name", "Jack", &user)
 // err == storm.ErrNotFound
 ```
 
-### Fetch multiple objects
+#### Fetch multiple objects
 
 ```go
 var users []User
 err := db.Find("Group", "staff", &users)
 ```
 
-### Fetch all objects
+#### Fetch all objects
 
 ```go
 var users []User
 err := db.All(&users)
 ```
 
-### Fetch all objects sorted by index
+#### Fetch all objects sorted by index
 
 ```go
 var users []User
 err := db.AllByIndex("CreatedAt", &users)
 ```
 
-### Fetch a range of objects
+#### Fetch a range of objects
 
 ```go
 var users []User
 err := db.Range("Age", 10, 21, &users)
 ```
 
-### Skip and Limit
+#### Skip and Limit
 
 ```go
 var users []User
@@ -150,13 +158,13 @@ err = db.AllByIndex("CreatedAt", &users, storm.Limit(10), storm.Skip(10))
 err = db.Range("Age", 10, 21, &users, storm.Limit(10), storm.Skip(10))
 ```
 
-### Remove an object
+#### Remove an object
 
 ```go
 err := db.Remove(&user)
 ```
 
-### Initialize buckets and indexes before saving an object
+#### Initialize buckets and indexes before saving an object
 
 ```go
 err := db.Init(&User{})
@@ -164,7 +172,7 @@ err := db.Init(&User{})
 
 Useful when starting your application
 
-### Drop a bucket
+#### Drop a bucket
 
 Using the struct
 
@@ -178,13 +186,58 @@ Using the bucket name
 err := db.Drop("User")
 ```
 
+### Advanced queries
+
+For more complex queries, you can use `Select` and the `q` package.
+
+```go
+// Find all users with an ID between 10 and 100
+err = db.Select(q.Gte("ID", 10), q.Lte("ID", 100)).Find(&users)
+
+// Nested matchers
+err = db.Select(q.Or(
+  q.Gt("ID", 50),
+  q.Lt("Age", 21),
+  q.And(
+    q.Eq("Group", "admin"),
+    q.Gte("Age", 21),
+  ),
+)).Find(&users)
+```
+
+`db.Select` takes a list of `q.Matcher`. See the [`q`](https://godoc.org/github.com/asdine/storm/q#Matcher) package for more informations.
+
+`db.Select` returns a [`Query`](https://godoc.org/github.com/asdine/storm#Query) that contains useful methods that can be chained.
+
+```go
+
+query := db.Select(q.True()).Limit(10).Skip(5).Reverse()
+
+// Find multiple records
+err = query.Find(&users)
+// or
+err = db.Select(q.True()).Limit(10).Skip(5).Reverse().Find(&users)
+
+// Find first record
+err = query.First(&user)
+// or
+err = db.Select(q.True()).Limit(10).Skip(5).Reverse().First(&user)
+
+// Remove all matching records
+err = query.Remove(&User{})
+...
+```
+
+See the [documentation](https://godoc.org/github.com/asdine/storm#Query) for a complete list of methods.
+
+
 ### Transactions
 
 ```go
 tx, err := db.Begin(true)
 
 accountA.Amount -= 100
-accountB.Amount += 100s
+accountB.Amount += 100
 
 err = tx.Save(accountA)
 if err != nil {

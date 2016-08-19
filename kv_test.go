@@ -6,11 +6,54 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/asdine/storm/codec/gob"
 	"github.com/boltdb/bolt"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestGet(t *testing.T) {
+	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
+	defer os.RemoveAll(dir)
+	db, _ := Open(filepath.Join(dir, "storm.db"))
+
+	err := db.Set("trash", 10, 100)
+	assert.NoError(t, err)
+
+	var nb int
+	err = db.Get("trash", 10, &nb)
+	assert.NoError(t, err)
+	assert.Equal(t, 100, nb)
+
+	tm := time.Now()
+	err = db.Set("logs", tm, "I'm hungry")
+	assert.NoError(t, err)
+
+	var message string
+	err = db.Get("logs", tm, &message)
+	assert.NoError(t, err)
+	assert.Equal(t, "I'm hungry", message)
+
+	var hand int
+	err = db.Get("wallet", "100 bucks", &hand)
+	assert.Equal(t, ErrNotFound, err)
+
+	err = db.Set("wallet", "10 bucks", 10)
+	assert.NoError(t, err)
+
+	err = db.Get("wallet", "100 bucks", &hand)
+	assert.Equal(t, ErrNotFound, err)
+
+	err = db.Get("logs", tm, nil)
+	assert.Equal(t, ErrPtrNeeded, err)
+
+	err = db.Get("", nil, nil)
+	assert.Equal(t, ErrPtrNeeded, err)
+
+	err = db.Get("", "100 bucks", &hand)
+	assert.Equal(t, ErrNotFound, err)
+}
 
 func TestSet(t *testing.T) {
 	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
@@ -64,4 +107,21 @@ func TestSet(t *testing.T) {
 
 	err = db.Set("b", nil, nil)
 	assert.Error(t, err)
+}
+
+func TestDelete(t *testing.T) {
+	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
+	defer os.RemoveAll(dir)
+	db, _ := Open(filepath.Join(dir, "storm.db"))
+
+	err := db.Set("files", "myfile.csv", "a,b,c,d")
+	assert.NoError(t, err)
+	err = db.Delete("files", "myfile.csv")
+	assert.NoError(t, err)
+	err = db.Delete("files", "myfile.csv")
+	assert.NoError(t, err)
+	err = db.Delete("i don't exist", "myfile.csv")
+	assert.Equal(t, ErrNotFound, err)
+	err = db.Delete("", nil)
+	assert.Equal(t, ErrNotFound, err)
 }

@@ -5,37 +5,27 @@ import (
 	"reflect"
 
 	"github.com/asdine/storm/index"
+	"github.com/asdine/storm/q"
 	"github.com/boltdb/bolt"
 )
 
 // Find returns one or more records by the specified index
 func (n *Node) Find(fieldName string, value interface{}, to interface{}, options ...func(q *index.Options)) error {
-	ref := reflect.ValueOf(to)
-
-	if ref.Kind() != reflect.Ptr || ref.Elem().Kind() != reflect.Slice {
-		return ErrSlicePtrNeeded
+	sink, err := newListSink(to)
+	if err != nil {
+		return err
 	}
 
-	typ := reflect.Indirect(ref).Type().Elem()
-
-	bucketName := typ.Name()
+	bucketName := sink.name()
 	if bucketName == "" {
 		return ErrNoName
 	}
 
+	typ := reflect.Indirect(sink.ref).Type().Elem()
+
 	field, ok := typ.FieldByName(fieldName)
 	if !ok {
 		return fmt.Errorf("field %s not found", fieldName)
-	}
-
-	tag := field.Tag.Get("storm")
-	if tag == "" {
-		return fmt.Errorf("index %s not found", fieldName)
-	}
-
-	val, err := toBytes(value, n.s.Codec)
-	if err != nil {
-		return err
 	}
 
 	opts := index.NewOptions()
@@ -43,16 +33,42 @@ func (n *Node) Find(fieldName string, value interface{}, to interface{}, options
 		fn(opts)
 	}
 
+	tag := field.Tag.Get("storm")
+	if tag == "" {
+		sink.limit = opts.Limit
+		sink.skip = opts.Skip
+		query := newQuery(n, q.StrictEq(fieldName, value))
+
+		if n.tx != nil {
+			err = query.query(n.tx, sink)
+		} else {
+			err = n.s.Bolt.View(func(tx *bolt.Tx) error {
+				return query.query(tx, sink)
+			})
+		}
+
+		if err != nil {
+			return err
+		}
+
+		return sink.flush()
+	}
+
+	val, err := toBytes(value, n.s.Codec)
+	if err != nil {
+		return err
+	}
+
 	if n.tx != nil {
-		return n.find(n.tx, bucketName, fieldName, tag, &ref, val, opts)
+		return n.find(n.tx, bucketName, fieldName, tag, sink, val, opts)
 	}
 
 	return n.s.Bolt.View(func(tx *bolt.Tx) error {
-		return n.find(tx, bucketName, fieldName, tag, &ref, val, opts)
+		return n.find(tx, bucketName, fieldName, tag, sink, val, opts)
 	})
 }
 
-func (n *Node) find(tx *bolt.Tx, bucketName, fieldName, tag string, ref *reflect.Value, val []byte, opts *index.Options) error {
+func (n *Node) find(tx *bolt.Tx, bucketName, fieldName, tag string, sink *listSink, val []byte, opts *index.Options) error {
 	bucket := n.GetBucket(tx, bucketName)
 	if bucket == nil {
 		return ErrNotFound
@@ -71,7 +87,7 @@ func (n *Node) find(tx *bolt.Tx, bucketName, fieldName, tag string, ref *reflect
 		return err
 	}
 
-	results := reflect.MakeSlice(reflect.Indirect(*ref).Type(), len(list), len(list))
+	sink.results = reflect.MakeSlice(reflect.Indirect(sink.ref).Type(), len(list), len(list))
 
 	for i := range list {
 		raw := bucket.Get(list[i])
@@ -79,14 +95,19 @@ func (n *Node) find(tx *bolt.Tx, bucketName, fieldName, tag string, ref *reflect
 			return ErrNotFound
 		}
 
-		err = n.s.Codec.Decode(raw, results.Index(i).Addr().Interface())
+		elem := sink.elem()
+		err = n.s.Codec.Decode(raw, elem.Interface())
+		if err != nil {
+			return err
+		}
+
+		_, err = sink.add(bucket, list[i], raw, elem)
 		if err != nil {
 			return err
 		}
 	}
 
-	reflect.Indirect(*ref).Set(results)
-	return nil
+	return sink.flush()
 }
 
 // Find returns one or more records by the specified index

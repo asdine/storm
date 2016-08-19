@@ -4,6 +4,7 @@ import (
 	"reflect"
 
 	"github.com/asdine/storm/index"
+	"github.com/asdine/storm/q"
 	"github.com/boltdb/bolt"
 )
 
@@ -94,22 +95,7 @@ func (n *Node) allByIndex(tx *bolt.Tx, fieldName string, info *modelInfo, ref *r
 
 // All gets all the records of a bucket
 func (n *Node) All(to interface{}, options ...func(*index.Options)) error {
-	ref := reflect.ValueOf(to)
-
-	if ref.Kind() != reflect.Ptr || reflect.Indirect(ref).Kind() != reflect.Slice {
-		return ErrSlicePtrNeeded
-	}
-
-	rtyp := reflect.Indirect(ref).Type().Elem()
-	typ := rtyp
-
-	if rtyp.Kind() == reflect.Ptr {
-		typ = typ.Elem()
-	}
-
-	newElem := reflect.New(typ)
-
-	info, err := extract(&newElem)
+	sink, err := newListSink(to)
 	if err != nil {
 		return err
 	}
@@ -119,55 +105,24 @@ func (n *Node) All(to interface{}, options ...func(*index.Options)) error {
 		fn(opts)
 	}
 
+	sink.limit = opts.Limit
+	sink.skip = opts.Skip
+
+	query := newQuery(n, q.True())
+
 	if n.tx != nil {
-		return n.all(n.tx, info, &ref, rtyp, typ, opts)
+		err = query.query(n.tx, sink)
+	} else {
+		err = n.s.Bolt.View(func(tx *bolt.Tx) error {
+			return query.query(tx, sink)
+		})
 	}
 
-	return n.s.Bolt.View(func(tx *bolt.Tx) error {
-		return n.all(tx, info, &ref, rtyp, typ, opts)
-	})
-}
-
-func (n *Node) all(tx *bolt.Tx, info *modelInfo, ref *reflect.Value, rtyp, typ reflect.Type, opts *index.Options) error {
-	results := reflect.MakeSlice(reflect.Indirect(*ref).Type(), 0, 0)
-	bucket := n.GetBucket(tx, info.Name)
-
-	if bucket != nil {
-		c := bucket.Cursor()
-		for k, v := c.First(); k != nil; k, v = c.Next() {
-			if v == nil {
-				continue
-			}
-
-			if opts != nil && opts.Skip > 0 {
-				opts.Skip--
-				continue
-			}
-
-			if opts != nil && opts.Limit == 0 {
-				break
-			}
-
-			if opts != nil && opts.Limit > 0 {
-				opts.Limit--
-			}
-
-			newElem := reflect.New(typ)
-			err := n.s.Codec.Decode(v, newElem.Interface())
-			if err != nil {
-				return err
-			}
-
-			if rtyp.Kind() == reflect.Ptr {
-				results = reflect.Append(results, newElem)
-			} else {
-				results = reflect.Append(results, reflect.Indirect(newElem))
-			}
-		}
+	if err != nil {
+		return err
 	}
 
-	reflect.Indirect(*ref).Set(results)
-	return nil
+	return sink.flush()
 }
 
 // AllByIndex gets all the records of a bucket that are indexed in the specified index
