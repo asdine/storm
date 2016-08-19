@@ -15,6 +15,9 @@ type Query interface {
 	// Limit the results by the given number
 	Limit(int) Query
 
+	// Reverse the order of the results
+	Reverse() Query
+
 	// Find a list of matching records
 	Find(interface{}) error
 
@@ -32,10 +35,11 @@ func newQuery(n *Node, tree q.Matcher) *query {
 }
 
 type query struct {
-	limit int
-	skip  int
-	tree  q.Matcher
-	node  *Node
+	limit   int
+	skip    int
+	reverse bool
+	tree    q.Matcher
+	node    *Node
 }
 
 func (q *query) Skip(nb int) Query {
@@ -45,6 +49,11 @@ func (q *query) Skip(nb int) Query {
 
 func (q *query) Limit(nb int) Query {
 	q.limit = nb
+	return q
+}
+
+func (q *query) Reverse() Query {
+	q.reverse = true
 	return q
 }
 
@@ -98,7 +107,7 @@ func (q *query) query(tx *bolt.Tx, sink sink) error {
 	}
 
 	if bucket != nil {
-		c := bucket.Cursor()
+		c := cursor{c: bucket.Cursor(), reverse: q.reverse}
 		for k, v := c.First(); k != nil; k, v = c.Next() {
 			if v == nil {
 				continue
@@ -120,6 +129,27 @@ func (q *query) query(tx *bolt.Tx, sink sink) error {
 	}
 
 	return nil
+}
+
+type cursor struct {
+	c       *bolt.Cursor
+	reverse bool
+}
+
+func (c *cursor) First() ([]byte, []byte) {
+	if c.reverse {
+		return c.c.Last()
+	}
+
+	return c.c.First()
+}
+
+func (c *cursor) Next() ([]byte, []byte) {
+	if c.reverse {
+		return c.c.Prev()
+	}
+
+	return c.c.Next()
 }
 
 type sink interface {

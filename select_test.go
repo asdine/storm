@@ -15,11 +15,11 @@ type Score struct {
 	Value int
 }
 
-func TestSelectFind(t *testing.T) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
-	defer os.RemoveAll(dir)
-	db, _ := Open(filepath.Join(dir, "storm.db"), AutoIncrement())
-	defer db.Close()
+func prepareScoreDB(t *testing.T) (*DB, func()) {
+	dir, err := ioutil.TempDir(os.TempDir(), "storm")
+	assert.NoError(t, err)
+	db, err := Open(filepath.Join(dir, "storm.db"), AutoIncrement())
+	assert.NoError(t, err)
 
 	for i := 0; i < 20; i++ {
 		err := db.Save(&Score{
@@ -27,6 +27,16 @@ func TestSelectFind(t *testing.T) {
 		})
 		assert.NoError(t, err)
 	}
+
+	return db, func() {
+		db.Close()
+		os.RemoveAll(dir)
+	}
+}
+
+func TestSelectFind(t *testing.T) {
+	db, fn := prepareScoreDB(t)
+	defer fn()
 
 	var scores []Score
 	var scoresPtr []*Score
@@ -67,20 +77,27 @@ func TestSelectFind(t *testing.T) {
 	assert.Equal(t, 5, scores[3].Value)
 	assert.Equal(t, 18, scores[4].Value)
 	assert.Equal(t, 19, scores[5].Value)
+
+	err = db.Select(q.Or(
+		q.Eq("Value", 5),
+		q.Or(
+			q.Lte("Value", 2),
+			q.Gte("Value", 18),
+		),
+	)).Reverse().Find(&scores)
+	assert.NoError(t, err)
+	assert.Len(t, scores, 6)
+	assert.Equal(t, 19, scores[0].Value)
+	assert.Equal(t, 18, scores[1].Value)
+	assert.Equal(t, 5, scores[2].Value)
+	assert.Equal(t, 2, scores[3].Value)
+	assert.Equal(t, 1, scores[4].Value)
+	assert.Equal(t, 0, scores[5].Value)
 }
 
 func TestSelectFindSkip(t *testing.T) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
-	defer os.RemoveAll(dir)
-	db, _ := Open(filepath.Join(dir, "storm.db"), AutoIncrement())
-	defer db.Close()
-
-	for i := 0; i < 20; i++ {
-		err := db.Save(&Score{
-			Value: i,
-		})
-		assert.NoError(t, err)
-	}
+	db, fn := prepareScoreDB(t)
+	defer fn()
 
 	var scores []Score
 
@@ -120,18 +137,8 @@ func TestSelectFindSkip(t *testing.T) {
 }
 
 func TestSelectFindLimit(t *testing.T) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
-	defer os.RemoveAll(dir)
-	db, _ := Open(filepath.Join(dir, "storm.db"), AutoIncrement())
-	defer db.Close()
-
-	for i := 0; i < 20; i++ {
-		err := db.Save(&Score{
-			Value: i,
-		})
-		assert.NoError(t, err)
-	}
-
+	db, fn := prepareScoreDB(t)
+	defer fn()
 	var scores []Score
 
 	err := db.Select(q.Or(
@@ -170,17 +177,8 @@ func TestSelectFindLimit(t *testing.T) {
 }
 
 func TestSelectFindLimitSkip(t *testing.T) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
-	defer os.RemoveAll(dir)
-	db, _ := Open(filepath.Join(dir, "storm.db"), AutoIncrement())
-	defer db.Close()
-
-	for i := 0; i < 20; i++ {
-		err := db.Save(&Score{
-			Value: i,
-		})
-		assert.NoError(t, err)
-	}
+	db, fn := prepareScoreDB(t)
+	defer fn()
 
 	var scores []Score
 
@@ -209,17 +207,8 @@ func TestSelectFindLimitSkip(t *testing.T) {
 }
 
 func TestSelectFirst(t *testing.T) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
-	defer os.RemoveAll(dir)
-	db, _ := Open(filepath.Join(dir, "storm.db"), AutoIncrement())
-	defer db.Close()
-
-	for i := 0; i < 20; i++ {
-		err := db.Save(&Score{
-			Value: i,
-		})
-		assert.NoError(t, err)
-	}
+	db, fn := prepareScoreDB(t)
+	defer fn()
 
 	var score Score
 
@@ -232,4 +221,14 @@ func TestSelectFirst(t *testing.T) {
 	)).Skip(2).First(&score)
 	assert.NoError(t, err)
 	assert.Equal(t, 2, score.Value)
+
+	err = db.Select(q.Or(
+		q.Eq("Value", 5),
+		q.Or(
+			q.Lte("Value", 2),
+			q.Gte("Value", 18),
+		),
+	)).Skip(1).Reverse().First(&score)
+	assert.NoError(t, err)
+	assert.Equal(t, 18, score.Value)
 }
