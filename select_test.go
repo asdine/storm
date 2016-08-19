@@ -259,3 +259,48 @@ func TestSelectRemove(t *testing.T) {
 	assert.Equal(t, 0, scores[0].Value)
 	assert.Equal(t, 1, scores[1].Value)
 }
+
+func TestSelectCount(t *testing.T) {
+	db, fn := prepareScoreDB(t)
+	defer fn()
+
+	total, err := db.Select(q.Or(
+		q.Eq("Value", 5),
+		q.Or(
+			q.Lte("Value", 2),
+			q.Gte("Value", 18),
+		),
+	)).Count(&Score{})
+	assert.NoError(t, err)
+	assert.Equal(t, 6, total)
+
+	total, err = db.Select(q.Or(
+		q.Eq("Value", 5),
+		q.Or(
+			q.Lte("Value", 2),
+			q.Gte("Value", 18),
+		),
+	)).Skip(2).Count(&Score{})
+	assert.NoError(t, err)
+	assert.Equal(t, 4, total)
+
+	total, err = db.Select(q.Or(
+		q.Eq("Value", 5),
+		q.Or(
+			q.Lte("Value", 2),
+			q.Gte("Value", 18),
+		),
+	)).Skip(2).Limit(2).Count(&Score{})
+	assert.NoError(t, err)
+	assert.Equal(t, 2, total)
+
+	total, err = db.Select(q.Or(
+		q.Eq("Value", 5),
+		q.Or(
+			q.Lte("Value", 2),
+			q.Gte("Value", 18),
+		),
+	)).Skip(5).Limit(2).Count(&Score{})
+	assert.NoError(t, err)
+	assert.Equal(t, 1, total)
+}

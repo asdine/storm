@@ -26,6 +26,9 @@ type Query interface {
 
 	// Remove all matching records
 	Remove(interface{}) error
+
+	// Count all the matching records
+	Count(interface{}) (int, error)
 }
 
 func newQuery(n *Node, tree q.Matcher) *query {
@@ -118,6 +121,26 @@ func (q *query) Remove(kind interface{}) error {
 	return q.node.s.Bolt.Update(func(tx *bolt.Tx) error {
 		return q.query(tx, sink)
 	})
+}
+
+func (q *query) Count(kind interface{}) (int, error) {
+	sink, err := newCountSink(kind)
+	if err != nil {
+		return 0, err
+	}
+
+	sink.limit = q.limit
+	sink.skip = q.skip
+
+	if q.node.tx != nil {
+		err = q.query(q.node.tx, sink)
+	} else {
+		err = q.node.s.Bolt.Update(func(tx *bolt.Tx) error {
+			return q.query(tx, sink)
+		})
+	}
+
+	return sink.counter, err
 }
 
 func (q *query) query(tx *bolt.Tx, sink sink) error {
@@ -297,10 +320,9 @@ func newRemoveSink(kind interface{}) (*removeSink, error) {
 }
 
 type removeSink struct {
-	ref      reflect.Value
-	elemType reflect.Type
-	skip     int
-	limit    int
+	ref   reflect.Value
+	skip  int
+	limit int
 }
 
 func (r *removeSink) elem() reflect.Value {
@@ -325,3 +347,46 @@ func (r *removeSink) add(bucket *bolt.Bucket, k []byte, v []byte, elem reflect.V
 }
 
 func (r *removeSink) flush() {}
+
+func newCountSink(kind interface{}) (*countSink, error) {
+	ref := reflect.ValueOf(kind)
+
+	if !ref.IsValid() || ref.Kind() != reflect.Ptr || ref.Elem().Kind() != reflect.Struct {
+		return nil, ErrStructPtrNeeded
+	}
+
+	return &countSink{
+		ref: ref,
+	}, nil
+}
+
+type countSink struct {
+	ref     reflect.Value
+	skip    int
+	limit   int
+	counter int
+}
+
+func (c *countSink) elem() reflect.Value {
+	return reflect.New(reflect.Indirect(c.ref).Type())
+}
+
+func (c *countSink) name() string {
+	return reflect.Indirect(c.ref).Type().Name()
+}
+
+func (c *countSink) add(bucket *bolt.Bucket, k []byte, v []byte, elem reflect.Value) (bool, error) {
+	if c.skip > 0 {
+		c.skip--
+		return false, nil
+	}
+
+	if c.limit > 0 {
+		c.limit--
+	}
+
+	c.counter++
+	return c.limit == 0, nil
+}
+
+func (c *countSink) flush() {}
