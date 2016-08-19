@@ -233,6 +233,10 @@ func newListSink(to interface{}) (*listSink, error) {
 		elemType = elemType.Elem()
 	}
 
+	if elemType.Name() == "" {
+		return nil, ErrNoName
+	}
+
 	return &listSink{
 		ref:      ref,
 		isPtr:    sliceType.Elem().Kind() == reflect.Ptr,

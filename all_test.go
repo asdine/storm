@@ -145,11 +145,6 @@ func TestAll(t *testing.T) {
 	assert.Equal(t, 1, users2[0].ID)
 	assert.Equal(t, 100, users2[99].ID)
 
-	var unknowns []UserWithNoID
-	err = db.All(&unknowns)
-	assert.Error(t, err)
-	assert.Equal(t, ErrNoID, err)
-
 	err = db.Save(&NestedID{
 		ToEmbed: ToEmbed{ID: "id1"},
 		Name:    "John",
