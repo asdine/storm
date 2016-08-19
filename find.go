@@ -107,8 +107,7 @@ func (n *Node) find(tx *bolt.Tx, bucketName, fieldName, tag string, sink *listSi
 		}
 	}
 
-	sink.flush()
-	return nil
+	return sink.flush()
 }
 
 // Find returns one or more records by the specified index

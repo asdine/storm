@@ -22,6 +22,7 @@ func TestRange(t *testing.T) {
 			ID:          i + 1,
 			Slug:        fmt.Sprintf("John%03d", i+1),
 			DateOfBirth: time.Now().Add(-time.Duration(i) * time.Hour),
+			Group:       fmt.Sprintf("Group%03d", i%5),
 		}
 		err := db.Save(&w)
 		assert.NoError(t, err)
@@ -82,7 +83,7 @@ func TestRange(t *testing.T) {
 	assert.Equal(t, 30, users[0].ID)
 	assert.Equal(t, 39, users[9].ID)
 
-	err = db.Range("Group", min, max, &users)
-	assert.Error(t, err)
-	assert.EqualError(t, err, "index Group not found")
+	err = db.Range("Group", "Group002", "Group004", &users)
+	assert.NoError(t, err)
+	assert.Len(t, users, 60)
 }
