@@ -231,9 +231,13 @@ type listSink struct {
 	isPtr    bool
 	skip     int
 	limit    int
+	idx      int
 }
 
 func (l *listSink) elem() reflect.Value {
+	if l.results.IsValid() && l.idx < l.results.Len() {
+		return l.results.Index(l.idx).Addr()
+	}
 	return reflect.New(l.elemType)
 }
 
@@ -255,11 +259,15 @@ func (l *listSink) add(bucket *bolt.Bucket, k []byte, v []byte, elem reflect.Val
 		l.limit--
 	}
 
-	if l.isPtr {
-		l.results = reflect.Append(l.results, elem)
-	} else {
-		l.results = reflect.Append(l.results, reflect.Indirect(elem))
+	if l.idx == l.results.Len() {
+		if l.isPtr {
+			l.results = reflect.Append(l.results, elem)
+		} else {
+			l.results = reflect.Append(l.results, reflect.Indirect(elem))
+		}
 	}
+
+	l.idx++
 
 	return l.limit == 0, nil
 }
