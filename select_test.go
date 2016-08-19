@@ -246,7 +246,7 @@ func TestSelectRemove(t *testing.T) {
 			q.Lte("Value", 2),
 			q.Gte("Value", 18),
 		),
-	)).Skip(2).Remove(&Score{})
+	)).Skip(2).Delete(&Score{})
 	assert.NoError(t, err)
 
 	var scores []Score
@@ -268,7 +268,7 @@ func TestSelectRemove(t *testing.T) {
 		assert.NoError(t, err)
 	}
 
-	err = db.Select(q.Gte("ID", 5)).Remove(&User{})
+	err = db.Select(q.Gte("ID", 5)).Delete(&User{})
 	assert.NoError(t, err)
 
 	var user User

@@ -25,8 +25,8 @@ type Query interface {
 	// First gets the first matching record
 	First(interface{}) error
 
-	// Remove all matching records
-	Remove(interface{}) error
+	// Delete all matching records
+	Delete(interface{}) error
 
 	// Count all the matching records
 	Count(interface{}) (int, error)
@@ -111,8 +111,8 @@ func (q *query) First(to interface{}) error {
 	return sink.flush()
 }
 
-func (q *query) Remove(kind interface{}) error {
-	sink, err := newRemoveSink(kind)
+func (q *query) Delete(kind interface{}) error {
+	sink, err := newDeleteSink(kind)
 	if err != nil {
 		return err
 	}
@@ -346,44 +346,44 @@ func (f *firstSink) flush() error {
 	return nil
 }
 
-func newRemoveSink(kind interface{}) (*removeSink, error) {
+func newDeleteSink(kind interface{}) (*deleteSink, error) {
 	ref := reflect.ValueOf(kind)
 
 	if !ref.IsValid() || ref.Kind() != reflect.Ptr || ref.Elem().Kind() != reflect.Struct {
 		return nil, ErrStructPtrNeeded
 	}
 
-	return &removeSink{
+	return &deleteSink{
 		ref: ref,
 	}, nil
 }
 
-type removeSink struct {
+type deleteSink struct {
 	ref     reflect.Value
 	skip    int
 	limit   int
 	removed int
 }
 
-func (r *removeSink) elem() reflect.Value {
-	return reflect.New(reflect.Indirect(r.ref).Type())
+func (d *deleteSink) elem() reflect.Value {
+	return reflect.New(reflect.Indirect(d.ref).Type())
 }
 
-func (r *removeSink) name() string {
-	return reflect.Indirect(r.ref).Type().Name()
+func (d *deleteSink) name() string {
+	return reflect.Indirect(d.ref).Type().Name()
 }
 
-func (r *removeSink) add(bucket *bolt.Bucket, k []byte, v []byte, elem reflect.Value) (bool, error) {
-	if r.skip > 0 {
-		r.skip--
+func (d *deleteSink) add(bucket *bolt.Bucket, k []byte, v []byte, elem reflect.Value) (bool, error) {
+	if d.skip > 0 {
+		d.skip--
 		return false, nil
 	}
 
-	if r.limit > 0 {
-		r.limit--
+	if d.limit > 0 {
+		d.limit--
 	}
 
-	info, err := extract(&r.ref)
+	info, err := extract(&d.ref)
 	if err != nil {
 		return false, err
 	}
@@ -403,12 +403,12 @@ func (r *removeSink) add(bucket *bolt.Bucket, k []byte, v []byte, elem reflect.V
 		}
 	}
 
-	r.removed++
-	return r.limit == 0, bucket.Delete(k)
+	d.removed++
+	return d.limit == 0, bucket.Delete(k)
 }
 
-func (r *removeSink) flush() error {
-	if r.removed == 0 {
+func (d *deleteSink) flush() error {
+	if d.removed == 0 {
 		return ErrNotFound
 	}
 

@@ -223,8 +223,8 @@ err = query.First(&user)
 // or
 err = db.Select(q.True()).Limit(10).Skip(5).Reverse().First(&user)
 
-// Remove all matching records
-err = query.Remove(&User{})
+// Delete all matching records
+err = query.Delete(&User{})
 ...
 ```
 
