@@ -3,6 +3,7 @@ package storm
 import (
 	"reflect"
 
+	"github.com/asdine/storm/index"
 	"github.com/asdine/storm/q"
 	"github.com/boltdb/bolt"
 )
@@ -376,6 +377,26 @@ func (r *removeSink) add(bucket *bolt.Bucket, k []byte, v []byte, elem reflect.V
 
 	if r.limit > 0 {
 		r.limit--
+	}
+
+	info, err := extract(&r.ref)
+	if err != nil {
+		return false, err
+	}
+
+	for fieldName, idxInfo := range info.Indexes {
+		idx, err := getIndex(bucket, idxInfo.Type, fieldName)
+		if err != nil {
+			return false, err
+		}
+
+		err = idx.RemoveID(k)
+		if err != nil {
+			if err == index.ErrNotFound {
+				return false, ErrNotFound
+			}
+			return false, err
+		}
 	}
 
 	r.removed++

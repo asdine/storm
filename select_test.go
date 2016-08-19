@@ -1,6 +1,7 @@
 package storm
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -260,6 +261,23 @@ func TestSelectRemove(t *testing.T) {
 	assert.Len(t, scores, 2)
 	assert.Equal(t, 0, scores[0].Value)
 	assert.Equal(t, 1, scores[1].Value)
+
+	for i := 0; i < 10; i++ {
+		w := User{ID: i + 1, Name: fmt.Sprintf("John%d", i+1)}
+		err = db.Save(&w)
+		assert.NoError(t, err)
+	}
+
+	err = db.Select(q.Gte("ID", 5)).Remove(&User{})
+	assert.NoError(t, err)
+
+	var user User
+	err = db.One("Name", "John6", &user)
+	assert.Error(t, err)
+	assert.Equal(t, ErrNotFound, err)
+
+	err = db.One("Name", "John4", &user)
+	assert.NoError(t, err)
 }
 
 func TestSelectCount(t *testing.T) {
