@@ -26,7 +26,7 @@ func TestOne(t *testing.T) {
 	assert.Equal(t, u, v)
 
 	for i := 0; i < 10; i++ {
-		w := IndexedNameUser{Name: "John", ID: i + 1}
+		w := IndexedNameUser{Name: "John", ID: i + 1, Group: "staff"}
 		err = db.Save(&w)
 		assert.NoError(t, err)
 	}
@@ -54,6 +54,14 @@ func TestOne(t *testing.T) {
 	err = db.One("", nil, nil)
 	assert.Error(t, err)
 	assert.Equal(t, ErrStructPtrNeeded, err)
+
+	err = db.One("Group", "staff", &x)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, x.ID)
+
+	err = db.One("Group", "admin", &x)
+	assert.Error(t, err)
+	assert.Equal(t, ErrNotFound, err)
 
 	y := UniqueNameUser{Name: "Jake", ID: 200}
 	err = db.Save(&y)

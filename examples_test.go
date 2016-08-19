@@ -69,8 +69,14 @@ func ExampleDB_One() {
 		log.Fatal(err)
 	}
 
-	// One only works for indexed fields.
+	// also works on unindexed fields
 	err = db.One("Name", "John", &user)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = db.One("Name", "Jack", &user)
 	fmt.Println(err)
 
 	// Output:
