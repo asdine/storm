@@ -5,6 +5,7 @@ import (
 	"reflect"
 
 	"github.com/asdine/storm/index"
+	"github.com/asdine/storm/q"
 	"github.com/boltdb/bolt"
 )
 
@@ -27,19 +28,35 @@ func (n *Node) Find(fieldName string, value interface{}, to interface{}, options
 		return fmt.Errorf("field %s not found", fieldName)
 	}
 
+	opts := index.NewOptions()
+	for _, fn := range options {
+		fn(opts)
+	}
+
 	tag := field.Tag.Get("storm")
 	if tag == "" {
-		return fmt.Errorf("index %s not found", fieldName)
+		sink.limit = opts.Limit
+		sink.skip = opts.Skip
+		query := newQuery(n, q.StrictEq(fieldName, value))
+
+		if n.tx != nil {
+			err = query.query(n.tx, sink)
+		} else {
+			err = n.s.Bolt.View(func(tx *bolt.Tx) error {
+				return query.query(tx, sink)
+			})
+		}
+
+		if err != nil {
+			return err
+		}
+
+		return sink.flush()
 	}
 
 	val, err := toBytes(value, n.s.Codec)
 	if err != nil {
 		return err
-	}
-
-	opts := index.NewOptions()
-	for _, fn := range options {
-		fn(opts)
 	}
 
 	if n.tx != nil {

@@ -84,8 +84,7 @@ func (q *query) Find(to interface{}) error {
 		return err
 	}
 
-	sink.flush()
-	return nil
+	return sink.flush()
 }
 
 func (q *query) First(to interface{}) error {
@@ -97,12 +96,18 @@ func (q *query) First(to interface{}) error {
 	sink.skip = q.skip
 
 	if q.node.tx != nil {
-		return q.query(q.node.tx, sink)
+		err = q.query(q.node.tx, sink)
+	} else {
+		err = q.node.s.Bolt.Update(func(tx *bolt.Tx) error {
+			return q.query(tx, sink)
+		})
 	}
 
-	return q.node.s.Bolt.Update(func(tx *bolt.Tx) error {
-		return q.query(tx, sink)
-	})
+	if err != nil {
+		return err
+	}
+
+	return sink.flush()
 }
 
 func (q *query) Remove(kind interface{}) error {
@@ -115,12 +120,18 @@ func (q *query) Remove(kind interface{}) error {
 	sink.skip = q.skip
 
 	if q.node.tx != nil {
-		return q.query(q.node.tx, sink)
+		err = q.query(q.node.tx, sink)
+	} else {
+		err = q.node.s.Bolt.Update(func(tx *bolt.Tx) error {
+			return q.query(tx, sink)
+		})
 	}
 
-	return q.node.s.Bolt.Update(func(tx *bolt.Tx) error {
-		return q.query(tx, sink)
-	})
+	if err != nil {
+		return err
+	}
+
+	return sink.flush()
 }
 
 func (q *query) Count(kind interface{}) (int, error) {
@@ -140,7 +151,11 @@ func (q *query) Count(kind interface{}) (int, error) {
 		})
 	}
 
-	return sink.counter, err
+	if err != nil {
+		return 0, err
+	}
+
+	return sink.counter, sink.flush()
 }
 
 func (q *query) query(tx *bolt.Tx, sink sink) error {
@@ -200,7 +215,7 @@ type sink interface {
 	elem() reflect.Value
 	name() string
 	add(bucket *bolt.Bucket, k []byte, v []byte, elem reflect.Value) (bool, error)
-	flush()
+	flush() error
 }
 
 func newListSink(to interface{}) (*listSink, error) {
@@ -272,10 +287,13 @@ func (l *listSink) add(bucket *bolt.Bucket, k []byte, v []byte, elem reflect.Val
 	return l.limit == 0, nil
 }
 
-func (l *listSink) flush() {
-	if l.results.IsValid() {
+func (l *listSink) flush() error {
+	if l.results.IsValid() && l.results.Len() > 0 {
 		reflect.Indirect(l.ref).Set(l.results)
+		return nil
 	}
+
+	return ErrNotFound
 }
 
 func newFirstSink(to interface{}) (*firstSink, error) {
@@ -291,8 +309,9 @@ func newFirstSink(to interface{}) (*firstSink, error) {
 }
 
 type firstSink struct {
-	ref  reflect.Value
-	skip int
+	ref   reflect.Value
+	skip  int
+	found bool
 }
 
 func (f *firstSink) elem() reflect.Value {
@@ -310,10 +329,17 @@ func (f *firstSink) add(bucket *bolt.Bucket, k []byte, v []byte, elem reflect.Va
 	}
 
 	reflect.Indirect(f.ref).Set(elem.Elem())
+	f.found = true
 	return true, nil
 }
 
-func (f *firstSink) flush() {}
+func (f *firstSink) flush() error {
+	if !f.found {
+		return ErrNotFound
+	}
+
+	return nil
+}
 
 func newRemoveSink(kind interface{}) (*removeSink, error) {
 	ref := reflect.ValueOf(kind)
@@ -328,9 +354,10 @@ func newRemoveSink(kind interface{}) (*removeSink, error) {
 }
 
 type removeSink struct {
-	ref   reflect.Value
-	skip  int
-	limit int
+	ref     reflect.Value
+	skip    int
+	limit   int
+	removed int
 }
 
 func (r *removeSink) elem() reflect.Value {
@@ -351,10 +378,17 @@ func (r *removeSink) add(bucket *bolt.Bucket, k []byte, v []byte, elem reflect.V
 		r.limit--
 	}
 
+	r.removed++
 	return r.limit == 0, bucket.Delete(k)
 }
 
-func (r *removeSink) flush() {}
+func (r *removeSink) flush() error {
+	if r.removed == 0 {
+		return ErrNotFound
+	}
+
+	return nil
+}
 
 func newCountSink(kind interface{}) (*countSink, error) {
 	ref := reflect.ValueOf(kind)
@@ -397,4 +431,10 @@ func (c *countSink) add(bucket *bolt.Bucket, k []byte, v []byte, elem reflect.Va
 	return c.limit == 0, nil
 }
 
-func (c *countSink) flush() {}
+func (c *countSink) flush() error {
+	if c.counter == 0 {
+		return ErrNotFound
+	}
+
+	return nil
+}

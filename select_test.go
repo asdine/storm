@@ -132,7 +132,8 @@ func TestSelectFindSkip(t *testing.T) {
 			q.Gte("Value", 18),
 		),
 	)).Skip(1000).Find(&scores)
-	assert.NoError(t, err)
+	assert.Error(t, err)
+	assert.True(t, ErrNotFound == err)
 	assert.Len(t, scores, 0)
 }
 
@@ -172,7 +173,8 @@ func TestSelectFindLimit(t *testing.T) {
 			q.Gte("Value", 18),
 		),
 	)).Limit(0).Find(&scores)
-	assert.NoError(t, err)
+	assert.Error(t, err)
+	assert.True(t, ErrNotFound == err)
 	assert.Len(t, scores, 0)
 }
 
