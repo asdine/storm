@@ -23,6 +23,9 @@ type Query interface {
 
 	// First gets the first matching record
 	First(interface{}) error
+
+	// Remove all matching records
+	Remove(interface{}) error
 }
 
 func newQuery(n *Node, tree q.Matcher) *query {
@@ -99,6 +102,24 @@ func (q *query) First(to interface{}) error {
 	})
 }
 
+func (q *query) Remove(kind interface{}) error {
+	sink, err := newRemoveSink(kind)
+	if err != nil {
+		return err
+	}
+
+	sink.limit = q.limit
+	sink.skip = q.skip
+
+	if q.node.tx != nil {
+		return q.query(q.node.tx, sink)
+	}
+
+	return q.node.s.Bolt.Update(func(tx *bolt.Tx) error {
+		return q.query(tx, sink)
+	})
+}
+
 func (q *query) query(tx *bolt.Tx, sink sink) error {
 	bucket := q.node.GetBucket(tx, sink.name())
 
@@ -120,7 +141,7 @@ func (q *query) query(tx *bolt.Tx, sink sink) error {
 			}
 
 			if q.tree.Match(newElem.Interface()) {
-				stop, err := sink.add(newElem)
+				stop, err := sink.add(bucket, k, v, newElem)
 				if stop || err != nil {
 					return err
 				}
@@ -155,7 +176,7 @@ func (c *cursor) Next() ([]byte, []byte) {
 type sink interface {
 	elem() reflect.Value
 	name() string
-	add(elem reflect.Value) (bool, error)
+	add(bucket *bolt.Bucket, k []byte, v []byte, elem reflect.Value) (bool, error)
 	flush()
 }
 
@@ -197,7 +218,7 @@ func (l *listSink) name() string {
 	return l.elemType.Name()
 }
 
-func (l *listSink) add(elem reflect.Value) (bool, error) {
+func (l *listSink) add(bucket *bolt.Bucket, k []byte, v []byte, elem reflect.Value) (bool, error) {
 	if l.skip > 0 {
 		l.skip--
 		return false, nil
@@ -251,7 +272,7 @@ func (f *firstSink) name() string {
 	return reflect.Indirect(f.ref).Type().Name()
 }
 
-func (f *firstSink) add(elem reflect.Value) (bool, error) {
+func (f *firstSink) add(bucket *bolt.Bucket, k []byte, v []byte, elem reflect.Value) (bool, error) {
 	if f.skip > 0 {
 		f.skip--
 		return false, nil
@@ -262,3 +283,45 @@ func (f *firstSink) add(elem reflect.Value) (bool, error) {
 }
 
 func (f *firstSink) flush() {}
+
+func newRemoveSink(kind interface{}) (*removeSink, error) {
+	ref := reflect.ValueOf(kind)
+
+	if !ref.IsValid() || ref.Kind() != reflect.Ptr || ref.Elem().Kind() != reflect.Struct {
+		return nil, ErrStructPtrNeeded
+	}
+
+	return &removeSink{
+		ref: ref,
+	}, nil
+}
+
+type removeSink struct {
+	ref      reflect.Value
+	elemType reflect.Type
+	skip     int
+	limit    int
+}
+
+func (r *removeSink) elem() reflect.Value {
+	return reflect.New(reflect.Indirect(r.ref).Type())
+}
+
+func (r *removeSink) name() string {
+	return reflect.Indirect(r.ref).Type().Name()
+}
+
+func (r *removeSink) add(bucket *bolt.Bucket, k []byte, v []byte, elem reflect.Value) (bool, error) {
+	if r.skip > 0 {
+		r.skip--
+		return false, nil
+	}
+
+	if r.limit > 0 {
+		r.limit--
+	}
+
+	return r.limit == 0, bucket.Delete(k)
+}
+
+func (r *removeSink) flush() {}

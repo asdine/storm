@@ -232,3 +232,30 @@ func TestSelectFirst(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 18, score.Value)
 }
+
+func TestSelectRemove(t *testing.T) {
+	db, fn := prepareScoreDB(t)
+	defer fn()
+
+	err := db.Select(q.Or(
+		q.Eq("Value", 5),
+		q.Or(
+			q.Lte("Value", 2),
+			q.Gte("Value", 18),
+		),
+	)).Skip(2).Remove(&Score{})
+	assert.NoError(t, err)
+
+	var scores []Score
+	err = db.Select(q.Or(
+		q.Eq("Value", 5),
+		q.Or(
+			q.Lte("Value", 2),
+			q.Gte("Value", 18),
+		),
+	)).Find(&scores)
+	assert.NoError(t, err)
+	assert.Len(t, scores, 2)
+	assert.Equal(t, 0, scores[0].Value)
+	assert.Equal(t, 1, scores[1].Value)
+}
