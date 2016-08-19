@@ -34,6 +34,16 @@ func (c *cmp) MatchValue(v *reflect.Value) bool {
 	return compare(field.Interface(), c.value, c.token)
 }
 
+type trueMatcher struct{}
+
+func (*trueMatcher) Match(i interface{}) bool {
+	return true
+}
+
+func (*trueMatcher) MatchValue(v *reflect.Value) bool {
+	return true
+}
+
 type or struct {
 	children []Matcher
 }
@@ -118,6 +128,9 @@ func Lt(field string, v interface{}) Matcher { return &cmp{field: field, value: 
 
 // Lte matcher, checks if the given field is lesser than or equal to the given value
 func Lte(field string, v interface{}) Matcher { return &cmp{field: field, value: v, token: token.LEQ} }
+
+// True matcher, always returns true
+func True() Matcher { return &trueMatcher{} }
 
 // Or matcher, checks if at least one of the given matchers matches the record
 func Or(matchers ...Matcher) Matcher { return &or{children: matchers} }
