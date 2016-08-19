@@ -54,7 +54,7 @@ func TestTransaction(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Len(t, users, 1)
 
-	err = tx.Remove(&user)
+	err = tx.DeleteStruct(&user)
 	assert.NoError(t, err)
 
 	err = tx.One("ID", 10, &user)

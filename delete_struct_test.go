@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestRemove(t *testing.T) {
+func TestDeleteStruct(t *testing.T) {
 	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
 	defer os.RemoveAll(dir)
 	db, _ := Open(filepath.Join(dir, "storm.db"))
@@ -20,20 +20,20 @@ func TestRemove(t *testing.T) {
 	err := db.Save(&u1)
 	assert.NoError(t, err)
 
-	err = db.Remove(u1)
+	err = db.DeleteStruct(u1)
 	assert.Equal(t, ErrStructPtrNeeded, err)
 
-	err = db.Remove(&u1)
+	err = db.DeleteStruct(&u1)
 	assert.NoError(t, err)
 
-	err = db.Remove(&u1)
+	err = db.DeleteStruct(&u1)
 	assert.Equal(t, ErrNotFound, err)
 
 	u2 := IndexedNameUser{}
 	err = db.Get("IndexedNameUser", 10, &u2)
 	assert.True(t, ErrNotFound == err)
 
-	err = db.Remove(nil)
+	err = db.DeleteStruct(nil)
 	assert.Equal(t, ErrStructPtrNeeded, err)
 
 	var users []User
@@ -44,9 +44,9 @@ func TestRemove(t *testing.T) {
 		users = append(users, user)
 	}
 
-	err = db.Remove(&users[0])
+	err = db.DeleteStruct(&users[0])
 	assert.NoError(t, err)
-	err = db.Remove(&users[1])
+	err = db.DeleteStruct(&users[1])
 	assert.NoError(t, err)
 
 	users = nil

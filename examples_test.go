@@ -216,7 +216,7 @@ func ExampleUseDB() {
 	// <nil>
 }
 
-func ExampleDB_Remove() {
+func ExampleDB_DeleteStruct() {
 	dir, db := prepareDB()
 	defer os.RemoveAll(dir)
 	defer db.Close()
@@ -229,7 +229,7 @@ func ExampleDB_Remove() {
 		log.Fatal(err)
 	}
 
-	err = db.Remove(&user)
+	err = db.DeleteStruct(&user)
 	fmt.Println(err)
 
 	// Output:

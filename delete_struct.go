@@ -7,8 +7,8 @@ import (
 	"github.com/boltdb/bolt"
 )
 
-// Remove removes a structure from the associated bucket
-func (n *Node) Remove(data interface{}) error {
+// DeleteStruct deletes a structure from the associated bucket
+func (n *Node) DeleteStruct(data interface{}) error {
 	ref := reflect.ValueOf(data)
 
 	if !ref.IsValid() || ref.Kind() != reflect.Ptr || ref.Elem().Kind() != reflect.Struct {
@@ -26,15 +26,15 @@ func (n *Node) Remove(data interface{}) error {
 	}
 
 	if n.tx != nil {
-		return n.remove(n.tx, info, id)
+		return n.deleteStruct(n.tx, info, id)
 	}
 
 	return n.s.Bolt.Update(func(tx *bolt.Tx) error {
-		return n.remove(tx, info, id)
+		return n.deleteStruct(tx, info, id)
 	})
 }
 
-func (n *Node) remove(tx *bolt.Tx, info *modelInfo, id []byte) error {
+func (n *Node) deleteStruct(tx *bolt.Tx, info *modelInfo, id []byte) error {
 	bucket := n.GetBucket(tx, info.Name)
 	if bucket == nil {
 		return ErrNotFound
@@ -63,7 +63,19 @@ func (n *Node) remove(tx *bolt.Tx, info *modelInfo, id []byte) error {
 	return bucket.Delete(id)
 }
 
-// Remove removes a structure from the associated bucket
+// Remove deletes a structure from the associated bucket
+// Deprecated: Use DeleteStruct instead.
+func (n *Node) Remove(data interface{}) error {
+	return n.DeleteStruct(data)
+}
+
+// DeleteStruct deletes a structure from the associated bucket
+func (s *DB) DeleteStruct(data interface{}) error {
+	return s.root.DeleteStruct(data)
+}
+
+// Remove deletes a structure from the associated bucket
+// Deprecated: Use DeleteStruct instead.
 func (s *DB) Remove(data interface{}) error {
-	return s.root.Remove(data)
+	return s.root.DeleteStruct(data)
 }

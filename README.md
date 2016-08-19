@@ -158,10 +158,10 @@ err = db.AllByIndex("CreatedAt", &users, storm.Limit(10), storm.Skip(10))
 err = db.Range("Age", 10, 21, &users, storm.Limit(10), storm.Skip(10))
 ```
 
-#### Remove an object
+#### Delete an object
 
 ```go
-err := db.Remove(&user)
+err := db.DeleteStruct(&user)
 ```
 
 #### Initialize buckets and indexes before saving an object
