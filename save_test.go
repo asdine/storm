@@ -1,9 +1,6 @@
 package storm
 
 import (
-	"io/ioutil"
-	"os"
-	"path/filepath"
 	"testing"
 	"time"
 
@@ -13,9 +10,8 @@ import (
 )
 
 func TestSave(t *testing.T) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
-	defer os.RemoveAll(dir)
-	db, _ := Open(filepath.Join(dir, "storm.db"))
+	db, cleanup := createDB(t)
+	defer cleanup()
 
 	err := db.Save(&SimpleUser{ID: 10, Name: "John"})
 	assert.NoError(t, err)
@@ -70,9 +66,8 @@ func TestSave(t *testing.T) {
 }
 
 func TestSaveUnique(t *testing.T) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
-	defer os.RemoveAll(dir)
-	db, _ := Open(filepath.Join(dir, "storm.db"))
+	db, cleanup := createDB(t)
+	defer cleanup()
 
 	u1 := UniqueNameUser{ID: 10, Name: "John", age: 10}
 	err := db.Save(&u1)
@@ -106,9 +101,8 @@ func TestSaveUnique(t *testing.T) {
 }
 
 func TestSaveIndex(t *testing.T) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
-	defer os.RemoveAll(dir)
-	db, _ := Open(filepath.Join(dir, "storm.db"))
+	db, cleanup := createDB(t)
+	defer cleanup()
 
 	u1 := IndexedNameUser{ID: 10, Name: "John", age: 10}
 	err := db.Save(&u1)
@@ -157,10 +151,8 @@ func TestSaveIndex(t *testing.T) {
 }
 
 func TestSaveEmptyValues(t *testing.T) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
-	defer os.RemoveAll(dir)
-	db, _ := Open(filepath.Join(dir, "storm.db"))
-	defer db.Close()
+	db, cleanup := createDB(t)
+	defer cleanup()
 
 	u := User{
 		ID: 10,
@@ -199,10 +191,8 @@ func TestSaveEmptyValues(t *testing.T) {
 }
 
 func TestSaveAutoIncrement(t *testing.T) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
-	defer os.RemoveAll(dir)
-	db, _ := Open(filepath.Join(dir, "storm.db"), AutoIncrement())
-	defer db.Close()
+	db, cleanup := createDB(t, AutoIncrement())
+	defer cleanup()
 
 	for i := 1; i < 10; i++ {
 		s := SimpleUser{Name: "John"}
@@ -236,10 +226,8 @@ func TestSaveAutoIncrement(t *testing.T) {
 }
 
 func TestSaveDifferentBucketRoot(t *testing.T) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
-	defer os.RemoveAll(dir)
-	db, _ := Open(filepath.Join(dir, "storm.db"), AutoIncrement())
-	defer db.Close()
+	db, cleanup := createDB(t)
+	defer cleanup()
 
 	assert.Len(t, db.rootBucket, 0)
 
@@ -270,8 +258,9 @@ func TestSaveDifferentBucketRoot(t *testing.T) {
 }
 
 func TestSaveEmbedded(t *testing.T) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
-	defer os.RemoveAll(dir)
+	db, cleanup := createDB(t)
+	defer cleanup()
+	AutoIncrement()(db)
 
 	type Base struct {
 		ID int `storm:"id"`
@@ -286,9 +275,6 @@ func TestSaveEmbedded(t *testing.T) {
 		CreatedAt time.Time `storm:"index"`
 	}
 
-	db, err := Open(filepath.Join(dir, "storm.db"), AutoIncrement())
-	assert.NoError(t, err)
-
 	user := User{
 		Group:     "staff",
 		Email:     "john@provider.com",
@@ -297,16 +283,14 @@ func TestSaveEmbedded(t *testing.T) {
 		CreatedAt: time.Now(),
 	}
 
-	err = db.Save(&user)
+	err := db.Save(&user)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, user.ID)
 }
 
 func TestSaveByValue(t *testing.T) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
-	defer os.RemoveAll(dir)
-	db, _ := Open(filepath.Join(dir, "storm.db"), AutoIncrement())
-	defer db.Close()
+	db, cleanup := createDB(t)
+	defer cleanup()
 
 	w := User{Name: "John"}
 	err := db.Save(w)
@@ -315,12 +299,11 @@ func TestSaveByValue(t *testing.T) {
 }
 
 func BenchmarkSave(b *testing.B) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
-	defer os.RemoveAll(dir)
-	db, _ := Open(filepath.Join(dir, "storm.db"), AutoIncrement())
-	defer db.Close()
+	db, cleanup := createDB(b)
+	defer cleanup()
 
 	w := User{Name: "John"}
+	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
 		db.Save(&w)
 	}

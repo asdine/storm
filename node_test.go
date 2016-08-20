@@ -1,9 +1,6 @@
 package storm
 
 import (
-	"io/ioutil"
-	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/boltdb/bolt"
@@ -11,25 +8,21 @@ import (
 )
 
 func TestNode(t *testing.T) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
-	defer os.RemoveAll(dir)
-	db, _ := Open(filepath.Join(dir, "storm.db"), Root("a"))
-	defer db.Close()
+	db, cleanup := createDB(t, Root("a"))
+	defer cleanup()
 
 	n1 := db.From("b", "c")
 	assert.Equal(t, db, n1.s)
 	assert.NotEqual(t, db.root, n1)
-	assert.Equal(t, db.root.rootBucket, []string{"a"})
+	assert.Equal(t, []string{"a"}, db.root.rootBucket)
 	assert.Equal(t, []string{"b", "c"}, n1.rootBucket)
 	n2 := n1.From("d", "e")
 	assert.Equal(t, []string{"b", "c", "d", "e"}, n2.rootBucket)
 }
 
 func TestNodeWithTransaction(t *testing.T) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
-	defer os.RemoveAll(dir)
-	db, _ := Open(filepath.Join(dir, "storm.db"), Root("a"))
-	defer db.Close()
+	db, cleanup := createDB(t)
+	defer cleanup()
 
 	var user User
 	db.Bolt.Update(func(tx *bolt.Tx) error {

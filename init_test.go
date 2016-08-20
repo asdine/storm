@@ -1,19 +1,14 @@
 package storm
 
 import (
-	"io/ioutil"
-	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestInit(t *testing.T) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
-	defer os.RemoveAll(dir)
-	db, _ := Open(filepath.Join(dir, "storm.db"))
-	defer db.Close()
+	db, cleanup := createDB(t)
+	defer cleanup()
 
 	var u IndexedNameUser
 	err := db.One("Name", "John", &u)

@@ -2,9 +2,6 @@ package storm
 
 import (
 	"fmt"
-	"io/ioutil"
-	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/asdine/storm/q"
@@ -17,10 +14,7 @@ type Score struct {
 }
 
 func prepareScoreDB(t *testing.T) (*DB, func()) {
-	dir, err := ioutil.TempDir(os.TempDir(), "storm")
-	assert.NoError(t, err)
-	db, err := Open(filepath.Join(dir, "storm.db"), AutoIncrement())
-	assert.NoError(t, err)
+	db, cleanup := createDB(t, AutoIncrement())
 
 	for i := 0; i < 20; i++ {
 		err := db.Save(&Score{
@@ -29,15 +23,12 @@ func prepareScoreDB(t *testing.T) (*DB, func()) {
 		assert.NoError(t, err)
 	}
 
-	return db, func() {
-		db.Close()
-		os.RemoveAll(dir)
-	}
+	return db, cleanup
 }
 
 func TestSelectFind(t *testing.T) {
-	db, fn := prepareScoreDB(t)
-	defer fn()
+	db, cleanup := prepareScoreDB(t)
+	defer cleanup()
 
 	var scores []Score
 	var scoresPtr []*Score
@@ -97,8 +88,8 @@ func TestSelectFind(t *testing.T) {
 }
 
 func TestSelectFindSkip(t *testing.T) {
-	db, fn := prepareScoreDB(t)
-	defer fn()
+	db, cleanup := prepareScoreDB(t)
+	defer cleanup()
 
 	var scores []Score
 
@@ -139,8 +130,8 @@ func TestSelectFindSkip(t *testing.T) {
 }
 
 func TestSelectFindLimit(t *testing.T) {
-	db, fn := prepareScoreDB(t)
-	defer fn()
+	db, cleanup := prepareScoreDB(t)
+	defer cleanup()
 	var scores []Score
 
 	err := db.Select(q.Or(
@@ -180,8 +171,8 @@ func TestSelectFindLimit(t *testing.T) {
 }
 
 func TestSelectFindLimitSkip(t *testing.T) {
-	db, fn := prepareScoreDB(t)
-	defer fn()
+	db, cleanup := prepareScoreDB(t)
+	defer cleanup()
 
 	var scores []Score
 
@@ -210,8 +201,8 @@ func TestSelectFindLimitSkip(t *testing.T) {
 }
 
 func TestSelectFirst(t *testing.T) {
-	db, fn := prepareScoreDB(t)
-	defer fn()
+	db, cleanup := prepareScoreDB(t)
+	defer cleanup()
 
 	var score Score
 
@@ -237,8 +228,8 @@ func TestSelectFirst(t *testing.T) {
 }
 
 func TestSelectRemove(t *testing.T) {
-	db, fn := prepareScoreDB(t)
-	defer fn()
+	db, cleanup := prepareScoreDB(t)
+	defer cleanup()
 
 	err := db.Select(q.Or(
 		q.Eq("Value", 5),
@@ -281,8 +272,8 @@ func TestSelectRemove(t *testing.T) {
 }
 
 func TestSelectCount(t *testing.T) {
-	db, fn := prepareScoreDB(t)
-	defer fn()
+	db, cleanup := prepareScoreDB(t)
+	defer cleanup()
 
 	total, err := db.Select(q.Or(
 		q.Eq("Value", 5),

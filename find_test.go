@@ -2,18 +2,14 @@ package storm
 
 import (
 	"fmt"
-	"io/ioutil"
-	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestFind(t *testing.T) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
-	defer os.RemoveAll(dir)
-	db, _ := Open(filepath.Join(dir, "storm.db"))
+	db, cleanup := createDB(t)
+	defer cleanup()
 
 	for i := 0; i < 100; i++ {
 		w := User{Name: "John", ID: i + 1, Slug: fmt.Sprintf("John%d", i+1)}

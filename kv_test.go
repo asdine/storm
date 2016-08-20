@@ -1,10 +1,7 @@
 package storm
 
 import (
-	"io/ioutil"
 	"net/mail"
-	"os"
-	"path/filepath"
 	"testing"
 	"time"
 
@@ -14,9 +11,8 @@ import (
 )
 
 func TestGet(t *testing.T) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
-	defer os.RemoveAll(dir)
-	db, _ := Open(filepath.Join(dir, "storm.db"))
+	db, cleanup := createDB(t)
+	defer cleanup()
 
 	err := db.Set("trash", 10, 100)
 	assert.NoError(t, err)
@@ -56,9 +52,8 @@ func TestGet(t *testing.T) {
 }
 
 func TestSet(t *testing.T) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
-	defer os.RemoveAll(dir)
-	db, _ := Open(filepath.Join(dir, "storm.db"))
+	db, cleanup := createDB(t)
+	defer cleanup()
 
 	err := db.Set("b1", 10, 10)
 	assert.NoError(t, err)
@@ -110,9 +105,8 @@ func TestSet(t *testing.T) {
 }
 
 func TestDelete(t *testing.T) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
-	defer os.RemoveAll(dir)
-	db, _ := Open(filepath.Join(dir, "storm.db"))
+	db, cleanup := createDB(t)
+	defer cleanup()
 
 	err := db.Set("files", "myfile.csv", "a,b,c,d")
 	assert.NoError(t, err)

@@ -11,10 +11,8 @@ import (
 )
 
 func TestOne(t *testing.T) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
-	defer os.RemoveAll(dir)
-	db, _ := Open(filepath.Join(dir, "storm.db"))
-	defer db.Close()
+	db, cleanup := createDB(t)
+	defer cleanup()
 
 	u := UniqueNameUser{Name: "John", ID: 10}
 	err := db.Save(&u)

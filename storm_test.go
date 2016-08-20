@@ -130,3 +130,23 @@ func TestToBytesWithCodec(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, `{"ID":10,"Name":"John"}`, string(b))
 }
+
+func createDB(t errorHandler, opts ...func(*DB) error) (*DB, func()) {
+	dir, err := ioutil.TempDir(os.TempDir(), "storm")
+	if err != nil {
+		t.Error(err)
+	}
+	db, err := Open(filepath.Join(dir, "storm.db"), opts...)
+	if err != nil {
+		t.Error(err)
+	}
+
+	return db, func() {
+		db.Close()
+		os.RemoveAll(dir)
+	}
+}
+
+type errorHandler interface {
+	Error(args ...interface{})
+}

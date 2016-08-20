@@ -2,9 +2,6 @@ package storm
 
 import (
 	"fmt"
-	"io/ioutil"
-	"os"
-	"path/filepath"
 	"testing"
 	"time"
 
@@ -12,9 +9,8 @@ import (
 )
 
 func TestDeleteStruct(t *testing.T) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
-	defer os.RemoveAll(dir)
-	db, _ := Open(filepath.Join(dir, "storm.db"))
+	db, cleanup := createDB(t)
+	defer cleanup()
 
 	u1 := IndexedNameUser{ID: 10, Name: "John", age: 10}
 	err := db.Save(&u1)

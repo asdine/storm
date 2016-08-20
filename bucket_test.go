@@ -1,19 +1,14 @@
 package storm
 
 import (
-	"io/ioutil"
-	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestBucket(t *testing.T) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
-	defer os.RemoveAll(dir)
-	db, _ := Open(filepath.Join(dir, "storm.db"))
-	defer db.Close()
+	db, cleanup := createDB(t)
+	defer cleanup()
 
 	// Read tx
 	readTx, err := db.Bolt.Begin(false)

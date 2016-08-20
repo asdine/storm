@@ -1,9 +1,6 @@
 package storm
 
 import (
-	"io/ioutil"
-	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/boltdb/bolt"
@@ -11,9 +8,8 @@ import (
 )
 
 func TestDropByString(t *testing.T) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
-	defer os.RemoveAll(dir)
-	db, _ := Open(filepath.Join(dir, "storm.db"))
+	db, cleanup := createDB(t)
+	defer cleanup()
 
 	n := db.From("b1", "b2", "b3")
 	err := n.Save(&SimpleUser{ID: 10, Name: "John"})
@@ -46,9 +42,8 @@ func TestDropByString(t *testing.T) {
 }
 
 func TestDropByStruct(t *testing.T) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
-	defer os.RemoveAll(dir)
-	db, _ := Open(filepath.Join(dir, "storm.db"))
+	db, cleanup := createDB(t)
+	defer cleanup()
 
 	n := db.From("b1", "b2", "b3")
 	err := n.Save(&SimpleUser{ID: 10, Name: "John"})

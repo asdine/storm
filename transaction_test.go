@@ -1,18 +1,14 @@
 package storm
 
 import (
-	"io/ioutil"
-	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestTransaction(t *testing.T) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
-	defer os.RemoveAll(dir)
-	db, _ := Open(filepath.Join(dir, "storm.db"))
+	db, cleanup := createDB(t)
+	defer cleanup()
 
 	err := db.Rollback()
 	assert.Error(t, err)
@@ -85,9 +81,8 @@ func TestTransaction(t *testing.T) {
 }
 
 func TestTransactionRollback(t *testing.T) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
-	defer os.RemoveAll(dir)
-	db, _ := Open(filepath.Join(dir, "storm.db"))
+	db, cleanup := createDB(t)
+	defer cleanup()
 
 	tx, err := db.Begin(true)
 	assert.NoError(t, err)
@@ -108,9 +103,8 @@ func TestTransactionRollback(t *testing.T) {
 }
 
 func TestTransactionNotWritable(t *testing.T) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
-	defer os.RemoveAll(dir)
-	db, _ := Open(filepath.Join(dir, "storm.db"))
+	db, cleanup := createDB(t)
+	defer cleanup()
 
 	err := db.Save(&User{ID: 10, Name: "John"})
 	assert.NoError(t, err)
