@@ -1,6 +1,7 @@
 package storm
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -111,4 +112,48 @@ func TestOneNotWritable(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 10, u.ID)
 	assert.Equal(t, "John", u.Name)
+}
+
+func BenchmarkOneWithIndex(b *testing.B) {
+	db, cleanup := createDB(b, AutoIncrement())
+	defer cleanup()
+
+	var u User
+	for i := 0; i < 100; i++ {
+		w := User{Name: fmt.Sprintf("John%d", i), Group: fmt.Sprintf("Staff%d", i)}
+		err := db.Save(&w)
+		if err != nil {
+			b.Error(err)
+		}
+	}
+
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		err := db.One("Name", "John99", &u)
+		if err != nil {
+			b.Error(err)
+		}
+	}
+}
+
+func BenchmarkOneWithoutIndex(b *testing.B) {
+	db, cleanup := createDB(b, AutoIncrement())
+	defer cleanup()
+
+	var u User
+	for i := 0; i < 100; i++ {
+		w := User{Name: "John", Group: fmt.Sprintf("Staff%d", i)}
+		err := db.Save(&w)
+		if err != nil {
+			b.Error(err)
+		}
+	}
+
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		err := db.One("Group", "Staff99", &u)
+		if err != nil {
+			b.Error(err)
+		}
+	}
 }

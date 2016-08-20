@@ -1,6 +1,9 @@
 package storm
 
 import (
+	"fmt"
+	"reflect"
+
 	"github.com/asdine/storm/index"
 	"github.com/asdine/storm/q"
 	"github.com/boltdb/bolt"
@@ -13,17 +16,24 @@ func (n *Node) One(fieldName string, value interface{}, to interface{}) error {
 		return err
 	}
 
+	bucketName := sink.name()
+	if bucketName == "" {
+		return ErrNoName
+	}
+
 	if fieldName == "" {
 		return ErrNotFound
 	}
 
-	info, err := extract(&sink.ref)
-	if err != nil {
-		return err
+	typ := reflect.Indirect(sink.ref).Type()
+
+	field, ok := typ.FieldByName(fieldName)
+	if !ok {
+		return fmt.Errorf("field %s not found", fieldName)
 	}
 
-	_, ok := info.Indexes[fieldName]
-	if !ok {
+	tag := field.Tag.Get("storm")
+	if tag == "" {
 		query := newQuery(n, q.StrictEq(fieldName, value))
 
 		if n.tx != nil {
@@ -47,28 +57,23 @@ func (n *Node) One(fieldName string, value interface{}, to interface{}) error {
 	}
 
 	if n.tx != nil {
-		return n.one(n.tx, fieldName, info, to, val, fieldName == info.ID.Field.Name)
+		return n.one(n.tx, bucketName, fieldName, tag, to, val, fieldName == "ID" || tag == "id")
 	}
 
 	return n.s.Bolt.View(func(tx *bolt.Tx) error {
-		return n.one(tx, fieldName, info, to, val, fieldName == info.ID.Field.Name)
+		return n.one(tx, bucketName, fieldName, tag, to, val, fieldName == "ID" || tag == "id")
 	})
 }
 
-func (n *Node) one(tx *bolt.Tx, fieldName string, info *modelInfo, to interface{}, val []byte, skipIndex bool) error {
-	bucket := n.GetBucket(tx, info.Name)
+func (n *Node) one(tx *bolt.Tx, bucketName, fieldName, tag string, to interface{}, val []byte, skipIndex bool) error {
+	bucket := n.GetBucket(tx, bucketName)
 	if bucket == nil {
 		return ErrNotFound
 	}
 
 	var id []byte
 	if !skipIndex {
-		idxInfo, ok := info.Indexes[fieldName]
-		if !ok {
-			return ErrNotFound
-		}
-
-		idx, err := getIndex(bucket, idxInfo.Type, fieldName)
+		idx, err := getIndex(bucket, tag, fieldName)
 		if err != nil {
 			if err == index.ErrNotFound {
 				return ErrNotFound

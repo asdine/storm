@@ -299,12 +299,15 @@ func TestSaveByValue(t *testing.T) {
 }
 
 func BenchmarkSave(b *testing.B) {
-	db, cleanup := createDB(b)
+	db, cleanup := createDB(b, AutoIncrement())
 	defer cleanup()
 
 	w := User{Name: "John"}
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		db.Save(&w)
+		err := db.Save(&w)
+		if err != nil {
+			b.Error(err)
+		}
 	}
 }

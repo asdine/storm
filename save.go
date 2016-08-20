@@ -1,6 +1,7 @@
 package storm
 
 import (
+	"bytes"
 	"reflect"
 
 	"github.com/asdine/storm/index"
@@ -43,15 +44,15 @@ func (n *Node) Save(data interface{}) error {
 	}
 
 	if n.tx != nil {
-		return n.save(n.tx, info, id, raw)
+		return n.save(n.tx, info, id, raw, data)
 	}
 
 	return n.s.Bolt.Update(func(tx *bolt.Tx) error {
-		return n.save(tx, info, id, raw)
+		return n.save(tx, info, id, raw, data)
 	})
 }
 
-func (n *Node) save(tx *bolt.Tx, info *modelInfo, id []byte, raw []byte) error {
+func (n *Node) save(tx *bolt.Tx, info *modelInfo, id []byte, raw []byte, data interface{}) error {
 	bucket, err := n.CreateBucketIfNotExists(tx, info.Name)
 	if err != nil {
 		return err
@@ -70,7 +71,7 @@ func (n *Node) save(tx *bolt.Tx, info *modelInfo, id []byte, raw []byte) error {
 	}
 
 	if n.s.autoIncrement {
-		raw, err = n.s.Codec.Encode(info.data)
+		raw, err = n.s.Codec.Encode(data)
 		if err != nil {
 			return err
 		}
@@ -82,16 +83,25 @@ func (n *Node) save(tx *bolt.Tx, info *modelInfo, id []byte, raw []byte) error {
 			return err
 		}
 
-		err = idx.RemoveID(id)
-		if err != nil {
-			return err
-		}
-
-		if idxInfo.IsZero() {
+		if idxInfo.IsZero {
+			err = idx.RemoveID(id)
+			if err != nil {
+				return err
+			}
 			continue
 		}
 
 		value, err := toBytes(idxInfo.Value.Interface(), n.s.Codec)
+		if err != nil {
+			return err
+		}
+
+		old := idx.Get(id)
+		if bytes.Compare(value, old) == 0 {
+			continue
+		}
+
+		err = idx.RemoveID(id)
 		if err != nil {
 			return err
 		}

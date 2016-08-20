@@ -17,12 +17,12 @@ const (
 )
 
 type indexInfo struct {
-	Type  string
-	Field *reflect.StructField
-	Value *reflect.Value
+	Type   string
+	Value  *reflect.Value
+	IsZero bool
 }
 
-func (i *indexInfo) IsZero() bool {
+func (i *indexInfo) isZero() bool {
 	zero := reflect.Zero(i.Value.Type()).Interface()
 	current := i.Value.Interface()
 	return reflect.DeepEqual(current, zero)
@@ -31,24 +31,25 @@ func (i *indexInfo) IsZero() bool {
 // modelInfo is a structure gathering all the relevant informations about a model
 type modelInfo struct {
 	Name    string
-	Indexes map[string]indexInfo
+	Indexes map[string]*indexInfo
 	ID      identInfo
-	data    interface{}
 }
 
 func (m *modelInfo) AddIndex(f *reflect.StructField, v *reflect.Value, indexType string, override bool) {
 	fieldName := f.Name
 	if _, ok := m.Indexes[fieldName]; !ok || override {
-		m.Indexes[fieldName] = indexInfo{
+		idx := &indexInfo{
 			Type:  indexType,
-			Field: f,
 			Value: v,
 		}
+		idx.IsZero = idx.isZero()
+		m.Indexes[fieldName] = idx
 	}
 }
 
-func (m *modelInfo) AllByType(indexType string) []indexInfo {
-	var idx []indexInfo
+// helper
+func (m *modelInfo) AllByType(indexType string) []*indexInfo {
+	var idx []*indexInfo
 	for k := range m.Indexes {
 		if m.Indexes[k].Type == indexType {
 			idx = append(idx, m.Indexes[k])
@@ -77,11 +78,7 @@ func extract(s *reflect.Value, mi ...*modelInfo) (*modelInfo, error) {
 		child = true
 	} else {
 		m = &modelInfo{}
-		m.Indexes = make(map[string]indexInfo)
-		if !s.CanAddr() {
-			return nil, ErrUnAddressable
-		}
-		m.data = s.Addr().Interface()
+		m.Indexes = make(map[string]*indexInfo)
 	}
 
 	if m.Name == "" {
@@ -104,7 +101,7 @@ func extract(s *reflect.Value, mi ...*modelInfo) (*modelInfo, error) {
 	}
 
 	// ID field or tag detected
-	if m.ID.Field != nil {
+	if m.ID.Value != nil {
 		zero := reflect.Zero(m.ID.Value.Type()).Interface()
 		current := m.ID.Value.Interface()
 		if reflect.DeepEqual(current, zero) {
@@ -116,7 +113,7 @@ func extract(s *reflect.Value, mi ...*modelInfo) (*modelInfo, error) {
 		return m, nil
 	}
 
-	if m.ID.Field == nil {
+	if m.ID.Value == nil {
 		return nil, ErrNoID
 	}
 
@@ -132,7 +129,7 @@ func extractField(value *reflect.Value, field *reflect.StructField, m *modelInfo
 	if tag != "" {
 		switch tag {
 		case "id":
-			m.ID.Field = field
+			m.ID.FieldName = field.Name
 			m.ID.Value = value
 		case tagUniqueIdx, tagIdx:
 			m.AddIndex(field, value, tag, !isChild)
@@ -154,8 +151,8 @@ func extractField(value *reflect.Value, field *reflect.StructField, m *modelInfo
 	}
 
 	// the field is named ID and no ID field has been detected before
-	if field.Name == "ID" && m.ID.Field == nil {
-		m.ID.Field = field
+	if field.Name == "ID" && m.ID.FieldName == "" {
+		m.ID.FieldName = field.Name
 		m.ID.Value = value
 	}
 
@@ -164,9 +161,9 @@ func extractField(value *reflect.Value, field *reflect.StructField, m *modelInfo
 
 // Prefill the most requested informations
 type identInfo struct {
-	Field  *reflect.StructField
-	Value  *reflect.Value
-	IsZero bool
+	FieldName string
+	Value     *reflect.Value
+	IsZero    bool
 }
 
 func (i *identInfo) Type() reflect.Type {
@@ -174,7 +171,8 @@ func (i *identInfo) Type() reflect.Type {
 }
 
 func (i *identInfo) IsOfIntegerFamily() bool {
-	return i.Value != nil && i.Value.Kind() >= reflect.Int && i.Value.Kind() <= reflect.Uint64
+	kind := i.Value.Kind()
+	return i.Value != nil && kind >= reflect.Int && kind <= reflect.Uint64
 }
 
 func getIndex(bucket *bolt.Bucket, idxKind string, fieldName string) (index.Index, error) {

@@ -33,7 +33,7 @@ func (n *Node) AllByIndex(fieldName string, to interface{}, options ...func(*ind
 		return err
 	}
 
-	if info.ID.Field.Name == fieldName {
+	if info.ID.FieldName == fieldName {
 		return n.All(to, options...)
 	}
 
