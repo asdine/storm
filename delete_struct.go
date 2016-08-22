@@ -8,7 +8,7 @@ import (
 )
 
 // DeleteStruct deletes a structure from the associated bucket
-func (n *Node) DeleteStruct(data interface{}) error {
+func (n *node) DeleteStruct(data interface{}) error {
 	ref := reflect.ValueOf(data)
 
 	if !ref.IsValid() || ref.Kind() != reflect.Ptr || ref.Elem().Kind() != reflect.Struct {
@@ -34,7 +34,7 @@ func (n *Node) DeleteStruct(data interface{}) error {
 	})
 }
 
-func (n *Node) deleteStruct(tx *bolt.Tx, info *modelInfo, id []byte) error {
+func (n *node) deleteStruct(tx *bolt.Tx, info *modelInfo, id []byte) error {
 	bucket := n.GetBucket(tx, info.Name)
 	if bucket == nil {
 		return ErrNotFound
@@ -65,7 +65,7 @@ func (n *Node) deleteStruct(tx *bolt.Tx, info *modelInfo, id []byte) error {
 
 // Remove deletes a structure from the associated bucket
 // Deprecated: Use DeleteStruct instead.
-func (n *Node) Remove(data interface{}) error {
+func (n *node) Remove(data interface{}) error {
 	return n.DeleteStruct(data)
 }
 

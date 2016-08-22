@@ -19,7 +19,9 @@ func TestTransaction(t *testing.T) {
 	tx, err := db.Begin(true)
 	assert.NoError(t, err)
 
-	assert.NotNil(t, tx.tx)
+	ntx, ok := tx.(*node)
+	assert.True(t, ok)
+	assert.NotNil(t, ntx.tx)
 
 	err = tx.Init(&SimpleUser{})
 	assert.NoError(t, err)
@@ -73,7 +75,7 @@ func TestTransaction(t *testing.T) {
 	err = tx.Commit()
 	assert.NoError(t, err)
 
-	assert.Nil(t, tx.tx)
+	assert.Nil(t, ntx.tx)
 
 	err = db.One("ID", 30, &user)
 	assert.NoError(t, err)

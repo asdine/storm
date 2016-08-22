@@ -12,12 +12,16 @@ func TestNode(t *testing.T) {
 	defer cleanup()
 
 	n1 := db.From("b", "c")
-	assert.Equal(t, db, n1.s)
+	node1, ok := n1.(*node)
+	assert.True(t, ok)
+	assert.Equal(t, db, node1.s)
 	assert.NotEqual(t, db.root, n1)
 	assert.Equal(t, []string{"a"}, db.root.rootBucket)
-	assert.Equal(t, []string{"b", "c"}, n1.rootBucket)
+	assert.Equal(t, []string{"b", "c"}, node1.rootBucket)
 	n2 := n1.From("d", "e")
-	assert.Equal(t, []string{"b", "c", "d", "e"}, n2.rootBucket)
+	node2, ok := n2.(*node)
+	assert.True(t, ok)
+	assert.Equal(t, []string{"b", "c", "d", "e"}, node2.rootBucket)
 }
 
 func TestNodeWithTransaction(t *testing.T) {

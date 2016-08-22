@@ -10,7 +10,7 @@ import (
 )
 
 // Find returns one or more records by the specified index
-func (n *Node) Find(fieldName string, value interface{}, to interface{}, options ...func(q *index.Options)) error {
+func (n *node) Find(fieldName string, value interface{}, to interface{}, options ...func(q *index.Options)) error {
 	sink, err := newListSink(to)
 	if err != nil {
 		return err
@@ -68,7 +68,7 @@ func (n *Node) Find(fieldName string, value interface{}, to interface{}, options
 	})
 }
 
-func (n *Node) find(tx *bolt.Tx, bucketName, fieldName, tag string, sink *listSink, val []byte, opts *index.Options) error {
+func (n *node) find(tx *bolt.Tx, bucketName, fieldName, tag string, sink *listSink, val []byte, opts *index.Options) error {
 	bucket := n.GetBucket(tx, bucketName)
 	if bucket == nil {
 		return ErrNotFound

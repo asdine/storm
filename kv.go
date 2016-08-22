@@ -7,7 +7,7 @@ import (
 )
 
 // Get a value from a bucket
-func (n *Node) Get(bucketName string, key interface{}, to interface{}) error {
+func (n *node) Get(bucketName string, key interface{}, to interface{}) error {
 	ref := reflect.ValueOf(to)
 
 	if !ref.IsValid() || ref.Kind() != reflect.Ptr {
@@ -28,7 +28,7 @@ func (n *Node) Get(bucketName string, key interface{}, to interface{}) error {
 	})
 }
 
-func (n *Node) get(tx *bolt.Tx, bucketName string, id []byte, to interface{}) error {
+func (n *node) get(tx *bolt.Tx, bucketName string, id []byte, to interface{}) error {
 	bucket := n.GetBucket(tx, bucketName)
 	if bucket == nil {
 		return ErrNotFound
@@ -43,7 +43,7 @@ func (n *Node) get(tx *bolt.Tx, bucketName string, id []byte, to interface{}) er
 }
 
 // Set a key/value pair into a bucket
-func (n *Node) Set(bucketName string, key interface{}, value interface{}) error {
+func (n *node) Set(bucketName string, key interface{}, value interface{}) error {
 	if key == nil {
 		return ErrNilParam
 	}
@@ -70,7 +70,7 @@ func (n *Node) Set(bucketName string, key interface{}, value interface{}) error 
 	})
 }
 
-func (n *Node) set(tx *bolt.Tx, bucketName string, id, data []byte) error {
+func (n *node) set(tx *bolt.Tx, bucketName string, id, data []byte) error {
 	bucket, err := n.CreateBucketIfNotExists(tx, bucketName)
 	if err != nil {
 		return err
@@ -79,7 +79,7 @@ func (n *Node) set(tx *bolt.Tx, bucketName string, id, data []byte) error {
 }
 
 // Delete deletes a key from a bucket
-func (n *Node) Delete(bucketName string, key interface{}) error {
+func (n *node) Delete(bucketName string, key interface{}) error {
 	id, err := toBytes(key, n.s.Codec)
 	if err != nil {
 		return err
@@ -94,7 +94,7 @@ func (n *Node) Delete(bucketName string, key interface{}) error {
 	})
 }
 
-func (n *Node) delete(tx *bolt.Tx, bucketName string, id []byte) error {
+func (n *node) delete(tx *bolt.Tx, bucketName string, id []byte) error {
 	bucket := n.GetBucket(tx, bucketName)
 	if bucket == nil {
 		return ErrNotFound

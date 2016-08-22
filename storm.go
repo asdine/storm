@@ -43,7 +43,7 @@ func Open(path string, stormOptions ...func(*DB) error) (*DB, error) {
 		}
 	}
 
-	s.root = &Node{s: s, rootBucket: s.rootBucket}
+	s.root = &node{s: s, rootBucket: s.rootBucket}
 
 	return s, nil
 }
@@ -67,7 +67,7 @@ func OpenWithOptions(path string, mode os.FileMode, boltOptions *bolt.Options, s
 		option(s)
 	}
 
-	s.root = &Node{s: s, rootBucket: s.rootBucket}
+	s.root = &node{s: s, rootBucket: s.rootBucket}
 
 	return s, nil
 }
@@ -94,7 +94,7 @@ type DB struct {
 	autoIncrement bool
 
 	// The root node that points to the root bucket.
-	root *Node
+	root *node
 
 	// The root bucket name
 	rootBucket []string
@@ -103,14 +103,14 @@ type DB struct {
 // From returns a new Storm node with a new bucket root.
 // All DB operations on the new node will be executed relative to the given
 // bucket.
-func (s *DB) From(root ...string) *Node {
+func (s *DB) From(root ...string) Node {
 	newNode := *s.root
 	newNode.rootBucket = root
 	return &newNode
 }
 
 // WithTransaction returns a New Storm node that will use the given transaction.
-func (s *DB) WithTransaction(tx *bolt.Tx) *Node {
+func (s *DB) WithTransaction(tx *bolt.Tx) Node {
 	return s.root.WithTransaction(tx)
 }
 

@@ -7,7 +7,7 @@ import (
 )
 
 // Drop a bucket
-func (n *Node) Drop(data interface{}) error {
+func (n *node) Drop(data interface{}) error {
 	var bucketName string
 
 	v := reflect.ValueOf(data)
@@ -32,7 +32,7 @@ func (n *Node) Drop(data interface{}) error {
 	return err
 }
 
-func (n *Node) drop(tx *bolt.Tx, bucketName string) error {
+func (n *node) drop(tx *bolt.Tx, bucketName string) error {
 	bucket := n.GetBucket(tx)
 	if bucket == nil {
 		return tx.DeleteBucket([]byte(bucketName))

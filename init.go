@@ -8,7 +8,7 @@ import (
 )
 
 // Init creates the indexes and buckets for a given structure
-func (n *Node) Init(data interface{}) error {
+func (n *node) Init(data interface{}) error {
 	v := reflect.ValueOf(data)
 	info, err := extract(&v)
 	if err != nil {
@@ -25,7 +25,7 @@ func (n *Node) Init(data interface{}) error {
 	return err
 }
 
-func (n *Node) init(tx *bolt.Tx, info *modelInfo) error {
+func (n *node) init(tx *bolt.Tx, info *modelInfo) error {
 	bucket, err := n.CreateBucketIfNotExists(tx, info.Name)
 	if err != nil {
 		return err

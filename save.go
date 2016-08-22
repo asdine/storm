@@ -9,7 +9,7 @@ import (
 )
 
 // Save a structure
-func (n *Node) Save(data interface{}) error {
+func (n *node) Save(data interface{}) error {
 	ref := reflect.ValueOf(data)
 
 	if !ref.IsValid() || ref.Kind() != reflect.Ptr || ref.Elem().Kind() != reflect.Struct {
@@ -52,7 +52,7 @@ func (n *Node) Save(data interface{}) error {
 	})
 }
 
-func (n *Node) save(tx *bolt.Tx, info *modelInfo, id []byte, raw []byte, data interface{}) error {
+func (n *node) save(tx *bolt.Tx, info *modelInfo, id []byte, raw []byte, data interface{}) error {
 	bucket, err := n.CreateBucketIfNotExists(tx, info.Name)
 	if err != nil {
 		return err

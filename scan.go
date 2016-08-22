@@ -7,17 +7,17 @@ import (
 )
 
 // PrefixScan scans the root buckets for keys matching the given prefix.
-func (s *DB) PrefixScan(prefix string) []*Node {
+func (s *DB) PrefixScan(prefix string) []Node {
 	return s.root.PrefixScan(prefix)
 }
 
 // PrefixScan scans the buckets in this node for keys matching the given prefix.
-func (n *Node) PrefixScan(prefix string) []*Node {
+func (n *node) PrefixScan(prefix string) []Node {
 	if n.tx != nil {
 		return n.prefixScan(n.tx, prefix)
 	}
 
-	var nodes []*Node
+	var nodes []Node
 
 	n.s.Bolt.View(func(tx *bolt.Tx) error {
 		nodes = n.prefixScan(tx, prefix)
@@ -27,11 +27,11 @@ func (n *Node) PrefixScan(prefix string) []*Node {
 	return nodes
 }
 
-func (n *Node) prefixScan(tx *bolt.Tx, prefix string) []*Node {
+func (n *node) prefixScan(tx *bolt.Tx, prefix string) []Node {
 
 	var (
 		prefixBytes = []byte(prefix)
-		nodes       []*Node
+		nodes       []Node
 		c           = n.cursor(tx)
 	)
 
@@ -43,17 +43,17 @@ func (n *Node) prefixScan(tx *bolt.Tx, prefix string) []*Node {
 }
 
 // RangeScan scans the root buckets over a range such as a sortable time range.
-func (s *DB) RangeScan(min, max string) []*Node {
+func (s *DB) RangeScan(min, max string) []Node {
 	return s.root.RangeScan(min, max)
 }
 
 // RangeScan scans the buckets in this node  over a range such as a sortable time range.
-func (n *Node) RangeScan(min, max string) []*Node {
+func (n *node) RangeScan(min, max string) []Node {
 	if n.tx != nil {
 		return n.rangeScan(n.tx, min, max)
 	}
 
-	var nodes []*Node
+	var nodes []Node
 
 	n.s.Bolt.View(func(tx *bolt.Tx) error {
 		nodes = n.rangeScan(tx, min, max)
@@ -63,11 +63,11 @@ func (n *Node) RangeScan(min, max string) []*Node {
 	return nodes
 }
 
-func (n *Node) rangeScan(tx *bolt.Tx, min, max string) []*Node {
+func (n *node) rangeScan(tx *bolt.Tx, min, max string) []Node {
 	var (
 		minBytes = []byte(min)
 		maxBytes = []byte(max)
-		nodes    []*Node
+		nodes    []Node
 		c        = n.cursor(tx)
 	)
 
@@ -79,7 +79,7 @@ func (n *Node) rangeScan(tx *bolt.Tx, min, max string) []*Node {
 
 }
 
-func (n *Node) cursor(tx *bolt.Tx) *bolt.Cursor {
+func (n *node) cursor(tx *bolt.Tx) *bolt.Cursor {
 
 	var c *bolt.Cursor
 

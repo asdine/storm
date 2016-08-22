@@ -4,7 +4,7 @@ import "github.com/boltdb/bolt"
 
 // CreateBucketIfNotExists creates the bucket below the current node if it doesn't
 // already exist.
-func (n *Node) CreateBucketIfNotExists(tx *bolt.Tx, bucket string) (*bolt.Bucket, error) {
+func (n *node) CreateBucketIfNotExists(tx *bolt.Tx, bucket string) (*bolt.Bucket, error) {
 	var b *bolt.Bucket
 	var err error
 
@@ -27,7 +27,7 @@ func (n *Node) CreateBucketIfNotExists(tx *bolt.Tx, bucket string) (*bolt.Bucket
 }
 
 // GetBucket returns the given bucket below the current node.
-func (n *Node) GetBucket(tx *bolt.Tx, children ...string) *bolt.Bucket {
+func (n *node) GetBucket(tx *bolt.Tx, children ...string) *bolt.Bucket {
 	var b *bolt.Bucket
 
 	bucketNames := append(n.rootBucket, children...)
@@ -44,4 +44,15 @@ func (n *Node) GetBucket(tx *bolt.Tx, children ...string) *bolt.Bucket {
 	}
 
 	return b
+}
+
+// CreateBucketIfNotExists creates the bucket below the current node if it doesn't
+// already exist.
+func (s *DB) CreateBucketIfNotExists(tx *bolt.Tx, bucket string) (*bolt.Bucket, error) {
+	return s.root.CreateBucketIfNotExists(tx, bucket)
+}
+
+// GetBucket returns the given bucket below the current node.
+func (s *DB) GetBucket(tx *bolt.Tx, children ...string) *bolt.Bucket {
+	return s.root.GetBucket(tx, children...)
 }

@@ -1,7 +1,7 @@
 package storm
 
 // Begin starts a new transaction.
-func (n Node) Begin(writable bool) (*Node, error) {
+func (n node) Begin(writable bool) (Node, error) {
 	var err error
 
 	n.tx, err = n.s.Bolt.Begin(writable)
@@ -13,7 +13,7 @@ func (n Node) Begin(writable bool) (*Node, error) {
 }
 
 // Rollback closes the transaction and ignores all previous updates.
-func (n *Node) Rollback() error {
+func (n *node) Rollback() error {
 	if n.tx == nil {
 		return ErrNotInTransaction
 	}
@@ -25,7 +25,7 @@ func (n *Node) Rollback() error {
 }
 
 // Commit writes all changes to disk.
-func (n *Node) Commit() error {
+func (n *node) Commit() error {
 	if n.tx == nil {
 		return ErrNotInTransaction
 	}
@@ -37,7 +37,7 @@ func (n *Node) Commit() error {
 }
 
 // Begin starts a new transaction.
-func (s *DB) Begin(writable bool) (*Node, error) {
+func (s *DB) Begin(writable bool) (Node, error) {
 	return s.root.Begin(writable)
 }
 

@@ -32,7 +32,7 @@ type Query interface {
 	Count(interface{}) (int, error)
 }
 
-func newQuery(n *Node, tree q.Matcher) *query {
+func newQuery(n *node, tree q.Matcher) *query {
 	return &query{
 		skip:  0,
 		limit: -1,
@@ -46,7 +46,7 @@ type query struct {
 	skip    int
 	reverse bool
 	tree    q.Matcher
-	node    *Node
+	node    *node
 }
 
 func (q *query) Skip(nb int) Query {

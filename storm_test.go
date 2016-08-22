@@ -28,6 +28,8 @@ func TestNewStorm(t *testing.T) {
 	db, err = Open(file)
 	defer db.Close()
 
+	assert.Implements(t, (*Node)(nil), db)
+
 	assert.NoError(t, err)
 	assert.Equal(t, file, db.Path)
 	assert.NotNil(t, db.Bolt)

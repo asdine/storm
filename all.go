@@ -9,7 +9,7 @@ import (
 )
 
 // AllByIndex gets all the records of a bucket that are indexed in the specified index
-func (n *Node) AllByIndex(fieldName string, to interface{}, options ...func(*index.Options)) error {
+func (n *node) AllByIndex(fieldName string, to interface{}, options ...func(*index.Options)) error {
 	if fieldName == "" {
 		return n.All(to, options...)
 	}
@@ -51,7 +51,7 @@ func (n *Node) AllByIndex(fieldName string, to interface{}, options ...func(*ind
 	})
 }
 
-func (n *Node) allByIndex(tx *bolt.Tx, fieldName string, info *modelInfo, ref *reflect.Value, opts *index.Options) error {
+func (n *node) allByIndex(tx *bolt.Tx, fieldName string, info *modelInfo, ref *reflect.Value, opts *index.Options) error {
 	bucket := n.GetBucket(tx, info.Name)
 	if bucket == nil {
 		return ErrNotFound
@@ -94,7 +94,7 @@ func (n *Node) allByIndex(tx *bolt.Tx, fieldName string, info *modelInfo, ref *r
 }
 
 // All gets all the records of a bucket
-func (n *Node) All(to interface{}, options ...func(*index.Options)) error {
+func (n *node) All(to interface{}, options ...func(*index.Options)) error {
 	sink, err := newListSink(to)
 	if err != nil {
 		return err

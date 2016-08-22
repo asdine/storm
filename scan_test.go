@@ -82,7 +82,7 @@ func doTestRangeScan(t *testing.T, node bucketScanner) {
 }
 
 type bucketScanner interface {
-	From(addend ...string) *Node
-	PrefixScan(prefix string) []*Node
-	RangeScan(min, max string) []*Node
+	From(addend ...string) Node
+	PrefixScan(prefix string) []Node
+	RangeScan(min, max string) []Node
 }

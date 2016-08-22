@@ -10,7 +10,7 @@ import (
 )
 
 // Range returns one or more records by the specified index within the specified range
-func (n *Node) Range(fieldName string, min, max, to interface{}, options ...func(*index.Options)) error {
+func (n *node) Range(fieldName string, min, max, to interface{}, options ...func(*index.Options)) error {
 	sink, err := newListSink(to)
 	if err != nil {
 		return err
@@ -73,7 +73,7 @@ func (n *Node) Range(fieldName string, min, max, to interface{}, options ...func
 	})
 }
 
-func (n *Node) rnge(tx *bolt.Tx, bucketName, fieldName, tag string, sink *listSink, min, max []byte, opts *index.Options) error {
+func (n *node) rnge(tx *bolt.Tx, bucketName, fieldName, tag string, sink *listSink, min, max []byte, opts *index.Options) error {
 	bucket := n.GetBucket(tx, bucketName)
 	if bucket == nil {
 		reflect.Indirect(sink.ref).SetLen(0)

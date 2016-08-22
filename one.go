@@ -10,7 +10,7 @@ import (
 )
 
 // One returns one record by the specified index
-func (n *Node) One(fieldName string, value interface{}, to interface{}) error {
+func (n *node) One(fieldName string, value interface{}, to interface{}) error {
 	sink, err := newFirstSink(to)
 	if err != nil {
 		return err
@@ -65,7 +65,7 @@ func (n *Node) One(fieldName string, value interface{}, to interface{}) error {
 	})
 }
 
-func (n *Node) one(tx *bolt.Tx, bucketName, fieldName, tag string, to interface{}, val []byte, skipIndex bool) error {
+func (n *node) one(tx *bolt.Tx, bucketName, fieldName, tag string, to interface{}, val []byte, skipIndex bool) error {
 	bucket := n.GetBucket(tx, bucketName)
 	if bucket == nil {
 		return ErrNotFound

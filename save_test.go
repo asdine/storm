@@ -231,7 +231,7 @@ func TestSaveDifferentBucketRoot(t *testing.T) {
 
 	assert.Len(t, db.rootBucket, 0)
 
-	dbSub := db.From("sub")
+	dbSub := db.From("sub").(*node)
 
 	assert.NotEqual(t, dbSub, db)
 	assert.Len(t, dbSub.rootBucket, 1)
