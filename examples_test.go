@@ -45,6 +45,8 @@ func ExampleDB_Save() {
 		log.Fatal(err)
 	}
 
+	fmt.Println(user.ID)
+
 	user2 := user
 	user2.ID = 0
 
@@ -53,6 +55,7 @@ func ExampleDB_Save() {
 	fmt.Println(err)
 
 	// Output:
+	// 1
 	// already exists
 }
 

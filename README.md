@@ -297,10 +297,22 @@ var protobufDb, _ = storm.Open("protobuf.db", storm.Codec(protobuf.Codec))
 
 #### Auto Increment
 
-Storm can auto increment integer IDs so you don't have to worry about that when saving your objects.
+Storm can auto increment integer IDs so you don't have to worry about that when saving your objects. Also, the ID is automatically inserted in your ID field.
 
 ```go
-db := storm.Open("my.db", storm.AutoIncrement())
+db, _ := storm.Open("my.db", storm.AutoIncrement())
+
+u := User{
+  Name: "John",
+}
+
+fmt.Println(u.ID)
+// 0
+
+err := db.Save(&u)
+
+fmt.Println(u.ID)
+// 1
 ```
 
 #### Use existing Bolt connection
