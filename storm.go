@@ -48,30 +48,6 @@ func Open(path string, stormOptions ...func(*DB) error) (*DB, error) {
 	return s, nil
 }
 
-// OpenWithOptions opens a database with the given boltDB options and optional Storm options.
-// Deprecated: Use storm.Open with storm.BoltOptions instead.
-func OpenWithOptions(path string, mode os.FileMode, boltOptions *bolt.Options, stormOptions ...func(*DB)) (*DB, error) {
-	db, err := bolt.Open(path, mode, boltOptions)
-
-	if err != nil {
-		return nil, err
-	}
-
-	s := &DB{
-		Path:  path,
-		Bolt:  db,
-		Codec: defaultCodec,
-	}
-
-	for _, option := range stormOptions {
-		option(s)
-	}
-
-	s.root = &node{s: s, rootBucket: s.rootBucket}
-
-	return s, nil
-}
-
 // DB is the wrapper around BoltDB. It contains an instance of BoltDB and uses it to perform all the
 // needed operations
 type DB struct {
