@@ -22,7 +22,7 @@ func TestPrefixScan(t *testing.T) {
 	doTestPrefixScan(t, nodeWithTransaction)
 }
 
-func doTestPrefixScan(t *testing.T, node bucketScanner) {
+func doTestPrefixScan(t *testing.T, node Node) {
 	for i := 1; i < 3; i++ {
 		n := node.From(fmt.Sprintf("%d%02d", 2015, i))
 		err := n.Save(&SimpleUser{ID: i, Name: "John"})
@@ -63,7 +63,7 @@ func TestRangeScan(t *testing.T) {
 	doTestRangeScan(t, nodeWithTransaction)
 }
 
-func doTestRangeScan(t *testing.T, node bucketScanner) {
+func doTestRangeScan(t *testing.T, node Node) {
 
 	for y := 2012; y <= 2016; y++ {
 		for m := 1; m <= 12; m++ {
@@ -79,10 +79,4 @@ func doTestRangeScan(t *testing.T, node bucketScanner) {
 
 	secondIn2015 := node.RangeScan("2015", "2016")[1]
 	assert.NoError(t, secondIn2015.One("ID", 2, &SimpleUser{}))
-}
-
-type bucketScanner interface {
-	From(addend ...string) Node
-	PrefixScan(prefix string) []Node
-	RangeScan(min, max string) []Node
 }
