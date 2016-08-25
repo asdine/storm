@@ -40,6 +40,12 @@ func TestRange(t *testing.T) {
 	assert.Equal(t, "John010", users[0].Slug)
 	assert.Equal(t, "John020", users[10].Slug)
 
+	err = db.Range("Slug", min, max, &users, Reverse())
+	assert.NoError(t, err)
+	assert.Len(t, users, 11)
+	assert.Equal(t, "John020", users[0].Slug)
+	assert.Equal(t, "John010", users[10].Slug)
+
 	min = "Zach010"
 	max = "Zach020"
 	users = nil
@@ -48,6 +54,12 @@ func TestRange(t *testing.T) {
 	assert.Len(t, users, 11)
 	assert.Equal(t, "Zach010", users[0].Name)
 	assert.Equal(t, "Zach020", users[10].Name)
+
+	err = db.Range("Name", min, max, &users, Reverse())
+	assert.NoError(t, err)
+	assert.Len(t, users, 11)
+	assert.Equal(t, "Zach020", users[0].Name)
+	assert.Equal(t, "Zach010", users[10].Name)
 
 	err = db.Range("Name", min, max, &User{})
 	assert.Error(t, err)
@@ -78,6 +90,12 @@ func TestRange(t *testing.T) {
 	assert.Len(t, users, 10)
 	assert.Equal(t, 30, users[0].ID)
 	assert.Equal(t, 39, users[9].ID)
+
+	err = db.Range("Slug", "John010", "John040", &users, Limit(10), Skip(20), Reverse())
+	assert.NoError(t, err)
+	assert.Len(t, users, 10)
+	assert.Equal(t, 20, users[0].ID)
+	assert.Equal(t, 11, users[9].ID)
 
 	err = db.Range("Group", "Group002", "Group004", &users)
 	assert.NoError(t, err)

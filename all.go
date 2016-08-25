@@ -109,6 +109,9 @@ func (n *node) All(to interface{}, options ...func(*index.Options)) error {
 	sink.skip = opts.Skip
 
 	query := newQuery(n, q.True())
+	if opts.Reverse {
+		query.Reverse()
+	}
 
 	if n.tx != nil {
 		err = query.query(n.tx, sink)

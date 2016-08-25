@@ -57,6 +57,12 @@ func TestFind(t *testing.T) {
 	assert.Equal(t, 1, users[0].ID)
 	assert.Equal(t, 99, users[49].ID)
 
+	err = db.Find("Group", "staff", &users, Reverse())
+	assert.NoError(t, err)
+	assert.Len(t, users, 50)
+	assert.Equal(t, 99, users[0].ID)
+	assert.Equal(t, 1, users[49].ID)
+
 	err = db.Find("Group", "admin", &users)
 	assert.Error(t, err)
 	assert.True(t, ErrNotFound == err)
@@ -70,6 +76,12 @@ func TestFind(t *testing.T) {
 	assert.Len(t, users, 100)
 	assert.Equal(t, 1, users[0].ID)
 	assert.Equal(t, 100, users[99].ID)
+
+	err = db.Find("Name", "John", &users, Reverse())
+	assert.NoError(t, err)
+	assert.Len(t, users, 100)
+	assert.Equal(t, 100, users[0].ID)
+	assert.Equal(t, 1, users[99].ID)
 
 	users = []User{}
 	err = db.Find("Slug", "John10", &users)

@@ -112,6 +112,12 @@ func TestAllByIndex(t *testing.T) {
 	assert.Len(t, users, 10)
 	assert.Equal(t, 11, users[0].ID)
 	assert.Equal(t, 20, users[9].ID)
+
+	err = db.AllByIndex("Name", &users, Limit(10), Skip(10), Reverse())
+	assert.NoError(t, err)
+	assert.Len(t, users, 10)
+	assert.Equal(t, 90, users[0].ID)
+	assert.Equal(t, 81, users[9].ID)
 }
 
 func TestAll(t *testing.T) {
@@ -131,6 +137,12 @@ func TestAll(t *testing.T) {
 	assert.Len(t, users, 100)
 	assert.Equal(t, 1, users[0].ID)
 	assert.Equal(t, 100, users[99].ID)
+
+	err = db.All(&users, Reverse())
+	assert.NoError(t, err)
+	assert.Len(t, users, 100)
+	assert.Equal(t, 100, users[0].ID)
+	assert.Equal(t, 1, users[99].ID)
 
 	var users2 []*User
 

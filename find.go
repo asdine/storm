@@ -39,6 +39,10 @@ func (n *node) Find(fieldName string, value interface{}, to interface{}, options
 		sink.skip = opts.Skip
 		query := newQuery(n, q.StrictEq(fieldName, value))
 
+		if opts.Reverse {
+			query.Reverse()
+		}
+
 		if n.tx != nil {
 			err = query.query(n.tx, sink)
 		} else {

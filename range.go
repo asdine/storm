@@ -39,6 +39,10 @@ func (n *node) Range(fieldName string, min, max, to interface{}, options ...func
 		sink.skip = opts.Skip
 		query := newQuery(n, q.And(q.Gte(fieldName, min), q.Lte(fieldName, max)))
 
+		if opts.Reverse {
+			query.Reverse()
+		}
+
 		if n.tx != nil {
 			err = query.query(n.tx, sink)
 		} else {
