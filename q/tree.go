@@ -1,3 +1,4 @@
+// Package q contains a list of Matchers used to compare struct fields with values
 package q
 
 import (

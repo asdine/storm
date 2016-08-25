@@ -1,3 +1,4 @@
+// Package index contains Index engines used to store values and their corresponding IDs
 package index
 
 // Index interface
