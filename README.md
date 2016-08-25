@@ -145,17 +145,18 @@ var users []User
 err := db.Range("Age", 10, 21, &users)
 ```
 
-#### Skip and Limit
+#### Skip, Limit and Reverse
 
 ```go
 var users []User
 err := db.Find("Group", "staff", &users, storm.Skip(10))
 err = db.Find("Group", "staff", &users, storm.Limit(10))
-err = db.Find("Group", "staff", &users, storm.Limit(10), storm.Skip(10))
+err = db.Find("Group", "staff", &users, storm.Reverse())
+err = db.Find("Group", "staff", &users, storm.Limit(10), storm.Skip(10), storm.Reverse())
 
-err = db.All(&users, storm.Limit(10), storm.Skip(10))
-err = db.AllByIndex("CreatedAt", &users, storm.Limit(10), storm.Skip(10))
-err = db.Range("Age", 10, 21, &users, storm.Limit(10), storm.Skip(10))
+err = db.All(&users, storm.Limit(10), storm.Skip(10), storm.Reverse())
+err = db.AllByIndex("CreatedAt", &users, storm.Limit(10), storm.Skip(10), storm.Reverse())
+err = db.Range("Age", 10, 21, &users, storm.Limit(10), storm.Skip(10), storm.Reverse())
 ```
 
 #### Delete an object
