@@ -68,6 +68,32 @@ func TestUniqueIndex(t *testing.T) {
 		err = idx.Add([]byte("yo"), []byte("id3"))
 		assert.NoError(t, err)
 
+		list, err := idx.AllRecords(nil)
+		assert.NoError(t, err)
+		assert.Len(t, list, 3)
+
+		opts := index.NewOptions()
+		opts.Limit = 2
+		list, err = idx.AllRecords(opts)
+		assert.NoError(t, err)
+		assert.Len(t, list, 2)
+
+		opts = index.NewOptions()
+		opts.Skip = 2
+		list, err = idx.AllRecords(opts)
+		assert.NoError(t, err)
+		assert.Len(t, list, 1)
+		assert.Equal(t, []byte("id3"), list[0])
+
+		opts = index.NewOptions()
+		opts.Skip = 2
+		opts.Limit = 1
+		opts.Reverse = true
+		list, err = idx.AllRecords(opts)
+		assert.NoError(t, err)
+		assert.Len(t, list, 1)
+		assert.Equal(t, []byte("id1"), list[0])
+
 		err = idx.RemoveID([]byte("id2"))
 		assert.NoError(t, err)
 
@@ -116,6 +142,7 @@ func TestUniqueIndexRange(t *testing.T) {
 		list, err := idx.Range(min, max, nil)
 		assert.Len(t, list, 3)
 		assert.NoError(t, err)
+		assertEncodedIntListEqual(t, []int{3, 4, 5}, list)
 
 		min, _ = gob.Codec.Encode(11)
 		max, _ = gob.Codec.Encode(20)
@@ -142,11 +169,34 @@ func TestUniqueIndexRange(t *testing.T) {
 		list, err = idx.Range(min, max, opts)
 		assert.Len(t, list, 3)
 		assert.NoError(t, err)
+		assertEncodedIntListEqual(t, []int{5, 6, 7}, list)
 
+		opts = index.NewOptions()
 		opts.Limit = 2
 		list, err = idx.Range(min, max, opts)
 		assert.Len(t, list, 2)
 		assert.NoError(t, err)
+		assertEncodedIntListEqual(t, []int{3, 4}, list)
+
+		opts = index.NewOptions()
+		opts.Reverse = true
+		opts.Skip = 2
+		opts.Limit = 2
+		list, err = idx.Range(min, max, opts)
+		assert.Len(t, list, 2)
+		assert.NoError(t, err)
+		assertEncodedIntListEqual(t, []int{5, 4}, list)
 		return nil
 	})
+}
+
+func assertEncodedIntListEqual(t *testing.T, expected []int, actual [][]byte) {
+	ints := make([]int, len(actual))
+
+	for i, e := range actual {
+		err := gob.Codec.Decode(e, &ints[i])
+		assert.NoError(t, err)
+	}
+
+	assert.Equal(t, expected, ints)
 }

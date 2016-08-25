@@ -3,6 +3,7 @@ package index
 import (
 	"bytes"
 
+	"github.com/asdine/storm/internal"
 	"github.com/boltdb/bolt"
 )
 
@@ -147,7 +148,7 @@ func (idx *ListIndex) All(value []byte, opts *Options) ([][]byte, error) {
 func (idx *ListIndex) AllRecords(opts *Options) ([][]byte, error) {
 	var list [][]byte
 
-	c := idx.IndexBucket.Cursor()
+	c := internal.Cursor{C: idx.IndexBucket.Cursor(), Reverse: opts != nil && opts.Reverse}
 
 	for bucketName, val := c.First(); bucketName != nil; bucketName, val = c.Next() {
 		if val != nil || bytes.Equal(bucketName, []byte("storm__ids")) {
@@ -173,9 +174,14 @@ func (idx *ListIndex) AllRecords(opts *Options) ([][]byte, error) {
 func (idx *ListIndex) Range(min []byte, max []byte, opts *Options) ([][]byte, error) {
 	var list [][]byte
 
-	c := idx.IndexBucket.Cursor()
+	c := internal.RangeCursor{
+		C:       idx.IndexBucket.Cursor(),
+		Reverse: opts != nil && opts.Reverse,
+		Min:     min,
+		Max:     max,
+	}
 
-	for bucketName, val := c.Seek(min); bucketName != nil && bytes.Compare(bucketName, max) <= 0; bucketName, val = c.Next() {
+	for bucketName, val := c.First(); c.Continue(bucketName); bucketName, val = c.Next() {
 		if val != nil || bytes.Equal(bucketName, []byte("storm__ids")) {
 			continue
 		}

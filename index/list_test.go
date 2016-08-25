@@ -110,6 +110,24 @@ func TestListIndex(t *testing.T) {
 		ids, err = idx.All([]byte("hey"), nil)
 		assert.Len(t, ids, 4)
 
+		opts := index.NewOptions()
+		opts.Limit = 1
+		ids, err = idx.All([]byte("hey"), opts)
+		assert.Len(t, ids, 1)
+
+		opts = index.NewOptions()
+		opts.Skip = 2
+		ids, err = idx.All([]byte("hey"), opts)
+		assert.Len(t, ids, 2)
+
+		opts = index.NewOptions()
+		opts.Skip = 2
+		opts.Limit = 3
+		opts.Reverse = true
+		ids, err = idx.All([]byte("hey"), opts)
+		assert.Len(t, ids, 2)
+		assert.Equal(t, []byte("id2"), ids[0])
+
 		id := idx.Get([]byte("hey"))
 		assert.Equal(t, []byte("id1"), id)
 

@@ -3,6 +3,7 @@ package index
 import (
 	"bytes"
 
+	"github.com/asdine/storm/internal"
 	"github.com/boltdb/bolt"
 )
 
@@ -88,7 +89,7 @@ func (idx *UniqueIndex) All(value []byte, opts *Options) ([][]byte, error) {
 func (idx *UniqueIndex) AllRecords(opts *Options) ([][]byte, error) {
 	var list [][]byte
 
-	c := idx.IndexBucket.Cursor()
+	c := internal.Cursor{C: idx.IndexBucket.Cursor(), Reverse: opts != nil && opts.Reverse}
 
 	for val, ident := c.First(); val != nil; val, ident = c.Next() {
 		if opts != nil && opts.Skip > 0 {
@@ -113,9 +114,14 @@ func (idx *UniqueIndex) AllRecords(opts *Options) ([][]byte, error) {
 func (idx *UniqueIndex) Range(min []byte, max []byte, opts *Options) ([][]byte, error) {
 	var list [][]byte
 
-	c := idx.IndexBucket.Cursor()
+	c := internal.RangeCursor{
+		C:       idx.IndexBucket.Cursor(),
+		Reverse: opts != nil && opts.Reverse,
+		Min:     min,
+		Max:     max,
+	}
 
-	for val, ident := c.Seek(min); val != nil && bytes.Compare(val, max) <= 0; val, ident = c.Next() {
+	for val, ident := c.First(); val != nil && c.Continue(val); val, ident = c.Next() {
 		if opts != nil && opts.Skip > 0 {
 			opts.Skip--
 			continue

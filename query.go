@@ -4,6 +4,7 @@ import (
 	"reflect"
 
 	"github.com/asdine/storm/index"
+	"github.com/asdine/storm/internal"
 	"github.com/asdine/storm/q"
 	"github.com/boltdb/bolt"
 )
@@ -167,7 +168,7 @@ func (q *query) query(tx *bolt.Tx, sink sink) error {
 	}
 
 	if bucket != nil {
-		c := cursor{c: bucket.Cursor(), reverse: q.reverse}
+		c := internal.Cursor{C: bucket.Cursor(), Reverse: q.reverse}
 		for k, v := c.First(); k != nil; k, v = c.Next() {
 			if v == nil {
 				continue
@@ -189,27 +190,6 @@ func (q *query) query(tx *bolt.Tx, sink sink) error {
 	}
 
 	return nil
-}
-
-type cursor struct {
-	c       *bolt.Cursor
-	reverse bool
-}
-
-func (c *cursor) First() ([]byte, []byte) {
-	if c.reverse {
-		return c.c.Last()
-	}
-
-	return c.c.First()
-}
-
-func (c *cursor) Next() ([]byte, []byte) {
-	if c.reverse {
-		return c.c.Prev()
-	}
-
-	return c.c.Next()
 }
 
 type sink interface {
