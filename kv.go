@@ -6,6 +6,13 @@ import (
 	"github.com/boltdb/bolt"
 )
 
+// KeyValueStore can store and fetch values by key
+type KeyValueStore interface {
+	Get(bucketName string, key interface{}, to interface{}) error
+	Set(bucketName string, key interface{}, value interface{}) error
+	Delete(bucketName string, key interface{}) error
+}
+
 // Get a value from a bucket
 func (n *node) Get(bucketName string, key interface{}, to interface{}) error {
 	ref := reflect.ValueOf(to)

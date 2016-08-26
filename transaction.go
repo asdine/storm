@@ -1,5 +1,11 @@
 package storm
 
+// Tx is a transaction
+type Tx interface {
+	Commit() error
+	Rollback() error
+}
+
 // Begin starts a new transaction.
 func (n node) Begin(writable bool) (Node, error) {
 	var err error
