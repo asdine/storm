@@ -6,6 +6,12 @@ import (
 	"github.com/boltdb/bolt"
 )
 
+// A BucketScanner scans a Node for a list of buckets
+type BucketScanner interface {
+	PrefixScan(prefix string) []Node
+	RangeScan(min, max string) []Node
+}
+
 // PrefixScan scans the root buckets for keys matching the given prefix.
 func (s *DB) PrefixScan(prefix string) []Node {
 	return s.root.PrefixScan(prefix)

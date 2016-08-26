@@ -9,6 +9,27 @@ import (
 	"github.com/boltdb/bolt"
 )
 
+// TypeStore stores user defined types in BoltDB
+type TypeStore interface {
+	Finder
+	Init(data interface{}) error
+	Save(data interface{}) error
+	Drop(data interface{}) error
+	DeleteStruct(data interface{}) error
+	Remove(data interface{}) error
+}
+
+// A Finder can fetch types from BoltDB
+type Finder interface {
+	One(fieldName string, value interface{}, to interface{}) error
+	Find(fieldName string, value interface{}, to interface{}, options ...func(q *index.Options)) error
+	AllByIndex(fieldName string, to interface{}, options ...func(*index.Options)) error
+	All(to interface{}, options ...func(*index.Options)) error
+	Select(matchers ...q.Matcher) Query
+	Range(fieldName string, min, max, to interface{}, options ...func(*index.Options)) error
+	Count(data interface{}) (int, error)
+}
+
 // Find returns one or more records by the specified index
 func (n *node) Find(fieldName string, value interface{}, to interface{}, options ...func(q *index.Options)) error {
 	sink, err := newListSink(to)
