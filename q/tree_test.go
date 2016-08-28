@@ -39,12 +39,20 @@ func TestCmp(t *testing.T) {
 	}
 
 	q := Eq("Age", 10)
-	assert.True(t, q.Match(&a))
-	assert.False(t, q.Match(&b))
+	ok, err := q.Match(&a)
+	assert.NoError(t, err)
+	assert.True(t, ok)
+	ok, err = q.Match(&b)
+	assert.NoError(t, err)
+	assert.False(t, ok)
 
 	q = Gt("Age", 15)
-	assert.False(t, q.Match(&a))
-	assert.True(t, q.Match(&b))
+	ok, err = q.Match(&a)
+	assert.NoError(t, err)
+	assert.False(t, ok)
+	ok, err = q.Match(&b)
+	assert.NoError(t, err)
+	assert.True(t, ok)
 }
 
 func TestStrictEq(t *testing.T) {
@@ -61,12 +69,20 @@ func TestStrictEq(t *testing.T) {
 	}
 
 	q := StrictEq("Age", 10)
-	assert.True(t, q.Match(&a))
-	assert.False(t, q.Match(&b))
+	ok, err := q.Match(&a)
+	assert.NoError(t, err)
+	assert.True(t, ok)
+	ok, err = q.Match(&b)
+	assert.NoError(t, err)
+	assert.False(t, ok)
 
 	q = StrictEq("Age", 10.0)
-	assert.False(t, q.Match(&a))
-	assert.True(t, q.Match(&b))
+	ok, err = q.Match(&a)
+	assert.NoError(t, err)
+	assert.False(t, ok)
+	ok, err = q.Match(&b)
+	assert.NoError(t, err)
+	assert.True(t, ok)
 }
 
 func TestAnd(t *testing.T) {
@@ -84,8 +100,12 @@ func TestAnd(t *testing.T) {
 		Eq("Age", 10),
 		Eq("Name", "John"),
 	)
-	assert.True(t, q.Match(&a))
-	assert.False(t, q.Match(&b))
+	ok, err := q.Match(&a)
+	assert.NoError(t, err)
+	assert.True(t, ok)
+	ok, err = q.Match(&b)
+	assert.NoError(t, err)
+	assert.False(t, ok)
 }
 
 func TestOr(t *testing.T) {
@@ -103,8 +123,12 @@ func TestOr(t *testing.T) {
 		Eq("Age", 10),
 		Eq("Name", "Jack"),
 	)
-	assert.True(t, q.Match(&a))
-	assert.True(t, q.Match(&b))
+	ok, err := q.Match(&a)
+	assert.NoError(t, err)
+	assert.True(t, ok)
+	ok, err = q.Match(&b)
+	assert.NoError(t, err)
+	assert.True(t, ok)
 }
 
 func TestAndOr(t *testing.T) {
@@ -125,6 +149,10 @@ func TestAndOr(t *testing.T) {
 			Eq("Name", "John"),
 		),
 	)
-	assert.True(t, q.Match(&a))
-	assert.False(t, q.Match(&b))
+	ok, err := q.Match(&a)
+	assert.NoError(t, err)
+	assert.True(t, ok)
+	ok, err = q.Match(&b)
+	assert.NoError(t, err)
+	assert.False(t, ok)
 }

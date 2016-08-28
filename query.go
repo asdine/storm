@@ -155,7 +155,11 @@ func (q *query) query(tx *bolt.Tx, sink sink) error {
 				return err
 			}
 
-			if q.tree.Match(newElem.Interface()) {
+			ok, err := q.tree.Match(newElem.Interface())
+			if err != nil {
+				return err
+			}
+			if ok {
 				stop, err := sink.add(bucket, k, v, newElem)
 				if stop || err != nil {
 					return err
