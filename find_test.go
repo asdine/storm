@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/asdine/storm/codec/gob"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestFind(t *testing.T) {
-	db, cleanup := createDB(t)
+	db, cleanup := createDB(t, Codec(gob.Codec))
 	defer cleanup()
 
 	for i := 0; i < 100; i++ {

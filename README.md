@@ -9,7 +9,7 @@ Storm is a simple and powerful ORM for [BoltDB](https://github.com/boltdb/bolt).
 In addition to the examples below, see also the [examples in the GoDoc](https://godoc.org/github.com/asdine/storm#pkg-examples).
 
 **NEWS**
-*Big update: From now on, every record can be fetched even if the specified field is not indexed. Also, there is a new query system for more [advanced queries.](#advanced-queries)*
+*Update: JSON is the new default codec and replaces Gob. To keep using gob use the [`storm.Codec` option](#provided-codecs) below*
 
 ## Getting Started
 

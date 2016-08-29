@@ -5,11 +5,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/asdine/storm/codec/gob"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestAllByIndex(t *testing.T) {
-	db, cleanup := createDB(t)
+	db, cleanup := createDB(t, Codec(gob.Codec))
 	defer cleanup()
 
 	for i := 0; i < 100; i++ {
@@ -121,7 +122,7 @@ func TestAllByIndex(t *testing.T) {
 }
 
 func TestAll(t *testing.T) {
-	db, cleanup := createDB(t)
+	db, cleanup := createDB(t, Codec(gob.Codec))
 	defer cleanup()
 
 	for i := 0; i < 100; i++ {

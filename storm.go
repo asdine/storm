@@ -5,12 +5,12 @@ import (
 	"time"
 
 	"github.com/asdine/storm/codec"
-	"github.com/asdine/storm/codec/gob"
+	"github.com/asdine/storm/codec/json"
 	"github.com/boltdb/bolt"
 )
 
 // Defaults to gob
-var defaultCodec = gob.Codec
+var defaultCodec = json.Codec
 
 // Open opens a database at the given path with optional Storm options.
 func Open(path string, stormOptions ...func(*DB) error) (*DB, error) {
