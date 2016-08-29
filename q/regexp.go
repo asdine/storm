@@ -2,7 +2,6 @@ package q
 
 import (
 	"fmt"
-	"reflect"
 	"regexp"
 	"sync"
 )
@@ -13,7 +12,7 @@ func Re(field string, re string) Matcher {
 	regexpCache.RLock()
 	if r, ok := regexpCache.m[re]; ok {
 		regexpCache.RUnlock()
-		return &regexpMatcher{field: field, r: r}
+		return NewFieldMatcher(field, &regexpMatcher{r: r})
 	}
 	regexpCache.RUnlock()
 
@@ -24,7 +23,7 @@ func Re(field string, re string) Matcher {
 	}
 	regexpCache.Unlock()
 
-	return &regexpMatcher{field: field, r: r, err: err}
+	return NewFieldMatcher(field, &regexpMatcher{r: r, err: err})
 }
 
 var regexpCache = struct {
@@ -33,23 +32,15 @@ var regexpCache = struct {
 }{m: make(map[string]*regexp.Regexp)}
 
 type regexpMatcher struct {
-	field string
-	r     *regexp.Regexp
-	err   error
+	r   *regexp.Regexp
+	err error
 }
 
-func (r *regexpMatcher) Match(i interface{}) (bool, error) {
-	v := reflect.Indirect(reflect.ValueOf(i))
-	return r.MatchValue(&v)
-}
-
-func (r *regexpMatcher) MatchValue(v *reflect.Value) (bool, error) {
+func (r *regexpMatcher) MatchField(v interface{}) (bool, error) {
 	if r.err != nil {
 		return false, r.err
 	}
-	field := v.FieldByName(r.field)
-
-	switch fieldValue := field.Interface().(type) {
+	switch fieldValue := v.(type) {
 	case string:
 		return r.r.MatchString(fieldValue), nil
 	case []byte:
