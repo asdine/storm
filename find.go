@@ -14,6 +14,8 @@ type TypeStore interface {
 	Finder
 	Init(data interface{}) error
 	Save(data interface{}) error
+	Update(data interface{}) error
+	UpdateField(data interface{}, fieldName string, value interface{}) error
 	Drop(data interface{}) error
 	DeleteStruct(data interface{}) error
 	Remove(data interface{}) error
