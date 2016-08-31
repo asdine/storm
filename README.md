@@ -165,6 +165,16 @@ err = db.Range("Age", 10, 21, &users, storm.Limit(10), storm.Skip(10), storm.Rev
 err := db.DeleteStruct(&user)
 ```
 
+#### Update an object
+
+```go
+// Update multiple fields
+err := db.Update(&User{ID: 10, Name: "Jack", Age: 45})
+
+// Update a single field
+err := db.UpdateField(&User{ID: 10}, "Age", 0)
+```
+
 #### Initialize buckets and indexes before saving an object
 
 ```go
