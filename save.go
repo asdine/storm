@@ -96,8 +96,19 @@ func (n *node) save(tx *bolt.Tx, info *modelInfo, id []byte, raw []byte, data in
 			return err
 		}
 
-		old := idx.Get(id)
-		if bytes.Compare(value, old) == 0 {
+		var found bool
+		idsSaved, err := idx.All(value, nil)
+		if err != nil {
+			return err
+		}
+		for _, idSaved := range idsSaved {
+			if bytes.Compare(idSaved, id) == 0 {
+				found = true
+				break
+			}
+		}
+
+		if found {
 			continue
 		}
 
