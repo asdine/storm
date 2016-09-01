@@ -33,7 +33,7 @@ func (n *node) One(fieldName string, value interface{}, to interface{}) error {
 	}
 
 	tag := field.Tag.Get("storm")
-	if tag == "" {
+	if tag == "" && fieldName != "ID" {
 		query := newQuery(n, q.StrictEq(fieldName, value))
 
 		if n.tx != nil {

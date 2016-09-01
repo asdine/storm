@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/boltdb/bolt"
 	"github.com/stretchr/testify/assert"
@@ -130,6 +131,37 @@ func BenchmarkOneWithIndex(b *testing.B) {
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
 		err := db.One("Name", "John99", &u)
+		if err != nil {
+			b.Error(err)
+		}
+	}
+}
+
+func BenchmarkOneByID(b *testing.B) {
+	db, cleanup := createDB(b, AutoIncrement())
+	defer cleanup()
+
+	type User struct {
+		ID          int
+		Name        string `storm:"index"`
+		age         int
+		DateOfBirth time.Time `storm:"index"`
+		Group       string
+		Slug        string `storm:"unique"`
+	}
+
+	var u User
+	for i := 0; i < 100; i++ {
+		w := User{Name: fmt.Sprintf("John%d", i), Group: fmt.Sprintf("Staff%d", i)}
+		err := db.Save(&w)
+		if err != nil {
+			b.Error(err)
+		}
+	}
+
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		err := db.One("ID", 99, &u)
 		if err != nil {
 			b.Error(err)
 		}
