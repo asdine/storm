@@ -279,7 +279,7 @@ db, err := storm.Open("my.db", storm.BoltOptions(0600, &bolt.Options{Timeout: 1 
 
 #### EncodeDecoder
 
-To store the data in BoltDB, Storm encodes it in GOB by default. If you wish to change this behavior you can pass a codec that implements [`codec.EncodeDecoder`](https://godoc.org/github.com/asdine/storm/codec#EncodeDecoder) via the [`storm.Codec`](https://godoc.org/github.com/asdine/storm#Codec) option:
+To store the data in BoltDB, Storm encodes it in JSON by default. If you wish to change this behavior you can pass a codec that implements [`codec.EncodeDecoder`](https://godoc.org/github.com/asdine/storm/codec#EncodeDecoder) via the [`storm.Codec`](https://godoc.org/github.com/asdine/storm#Codec) option:
 
 ```go
 db := storm.Open("my.db", storm.Codec(myCodec))
@@ -287,7 +287,7 @@ db := storm.Open("my.db", storm.Codec(myCodec))
 
 ##### Provided Codecs
 
-You can easily implement your own `EncodeDecoder`, but Storm comes with built-in support for [GOB](https://godoc.org/github.com/asdine/storm/codec/gob) (default), [JSON](https://godoc.org/github.com/asdine/storm/codec/json), [Sereal](https://godoc.org/github.com/asdine/storm/codec/sereal) and [Protocol Buffers](https://godoc.org/github.com/asdine/storm/codec/protobuf)
+You can easily implement your own `EncodeDecoder`, but Storm comes with built-in support for [JSON](https://godoc.org/github.com/asdine/storm/codec/json) (default), [GOB](https://godoc.org/github.com/asdine/storm/codec/gob),  [Sereal](https://godoc.org/github.com/asdine/storm/codec/sereal) and [Protocol Buffers](https://godoc.org/github.com/asdine/storm/codec/protobuf)
 
 These can be used by importing the relevant package and use that codec to configure Storm. The example below shows all three (without proper error handling):
 
