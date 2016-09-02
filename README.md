@@ -436,9 +436,7 @@ db.Bolt.Update(func(tx *bolt.Tx) error {
 
 MIT
 
-## Author
+## Credits
 
-**Asdine El Hrychy**
-
-- [Twitter](https://twitter.com/asdine_)
-- [Github](https://github.com/asdine)
+- [Asdine El Hrychy](https://github.com/asdine)
+- [Bjørn Erik Pedersen](https://github.com/bep)
