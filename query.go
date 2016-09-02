@@ -200,6 +200,7 @@ func newListSink(to interface{}) (*listSink, error) {
 		ref:      ref,
 		isPtr:    sliceType.Elem().Kind() == reflect.Ptr,
 		elemType: elemType,
+		limit:    -1,
 	}, nil
 }
 
@@ -225,6 +226,10 @@ func (l *listSink) name() string {
 }
 
 func (l *listSink) add(bucket *bolt.Bucket, k []byte, v []byte, elem reflect.Value) (bool, error) {
+	if l.limit == 0 {
+		return true, nil
+	}
+
 	if l.skip > 0 {
 		l.skip--
 		return false, nil

@@ -93,39 +93,30 @@ func (n *node) allByIndex(tx *bolt.Tx, fieldName string, info *modelInfo, ref *r
 	return nil
 }
 
-// All gets all the records of a bucket
+// All gets all the records of a bucket.
+// If there are no records it returns no error and the 'to' parameter is set to an empty slice.
 func (n *node) All(to interface{}, options ...func(*index.Options)) error {
-	sink, err := newListSink(to)
-	if err != nil {
-		return err
-	}
-
 	opts := index.NewOptions()
 	for _, fn := range options {
 		fn(opts)
 	}
 
-	sink.limit = opts.Limit
-	sink.skip = opts.Skip
-
-	query := newQuery(n, q.True())
+	query := newQuery(n, q.True()).Limit(opts.Limit).Skip(opts.Skip)
 	if opts.Reverse {
 		query.Reverse()
 	}
 
-	if n.tx != nil {
-		err = query.query(n.tx, sink)
-	} else {
-		err = n.s.Bolt.View(func(tx *bolt.Tx) error {
-			return query.query(tx, sink)
-		})
-	}
-
-	if err != nil {
+	err := query.Find(to)
+	if err != nil && err != ErrNotFound {
 		return err
 	}
 
-	return sink.flush()
+	if err == ErrNotFound {
+		ref := reflect.ValueOf(to)
+		results := reflect.MakeSlice(reflect.Indirect(ref).Type(), 0, 0)
+		reflect.Indirect(ref).Set(results)
+	}
+	return nil
 }
 
 // AllByIndex gets all the records of a bucket that are indexed in the specified index

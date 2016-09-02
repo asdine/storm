@@ -181,4 +181,8 @@ func TestAll(t *testing.T) {
 	assert.Len(t, users, 10)
 	assert.Equal(t, 11, users[0].ID)
 	assert.Equal(t, 20, users[9].ID)
+
+	err = db.All(&users, Limit(0), Skip(0))
+	assert.NoError(t, err)
+	assert.Len(t, users, 0)
 }
