@@ -4,7 +4,10 @@ import "github.com/boltdb/bolt"
 
 // Tx is a transaction
 type Tx interface {
+	// Commit writes all changes to disk.
 	Commit() error
+
+	// Rollback closes the transaction and ignores all previous updates.
 	Rollback() error
 }
 

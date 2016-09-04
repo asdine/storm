@@ -11,12 +11,28 @@ type Node interface {
 	TypeStore
 	KeyValueStore
 	BucketScanner
+	// From returns a new Storm node with a new bucket root below the current.
+	// All DB operations on the new node will be executed relative to this bucket.
 	From(addend ...string) Node
+
+	// Bucket returns the bucket name as a slice from the root.
+	// In the normal, simple case this will be empty.
 	Bucket() []string
+
+	// GetBucket returns the given bucket below the current node.
 	GetBucket(tx *bolt.Tx, children ...string) *bolt.Bucket
+
+	// CreateBucketIfNotExists creates the bucket below the current node if it doesn't
+	// already exist.
 	CreateBucketIfNotExists(tx *bolt.Tx, bucket string) (*bolt.Bucket, error)
+
+	// WithTransaction returns a New Storm node that will use the given transaction.
 	WithTransaction(tx *bolt.Tx) Node
+
+	// Begin starts a new transaction.
 	Begin(writable bool) (Node, error)
+
+	// Codec returns the EncodeDecoder used by this instance of Storm
 	Codec() codec.EncodeDecoder
 }
 
@@ -50,7 +66,7 @@ func (n *node) Bucket() []string {
 	return n.rootBucket
 }
 
-// Codec returns the EncodeDecoder used by this Node
+// Codec returns the EncodeDecoder used by this instance of Storm
 func (n *node) Codec() codec.EncodeDecoder {
 	return n.s.codec
 }

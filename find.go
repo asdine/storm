@@ -12,23 +12,51 @@ import (
 // TypeStore stores user defined types in BoltDB
 type TypeStore interface {
 	Finder
+	// Init creates the indexes and buckets for a given structure
 	Init(data interface{}) error
+
+	// Save a structure
 	Save(data interface{}) error
+
+	// Update a structure
 	Update(data interface{}) error
+
+	// UpdateField updates a single field
 	UpdateField(data interface{}, fieldName string, value interface{}) error
+
+	// Drop a bucket
 	Drop(data interface{}) error
+
+	// DeleteStruct deletes a structure from the associated bucket
 	DeleteStruct(data interface{}) error
+
+	// Remove deletes a structure from the associated bucket
+	// Deprecated: Use DeleteStruct instead.
 	Remove(data interface{}) error
 }
 
 // A Finder can fetch types from BoltDB
 type Finder interface {
+	// One returns one record by the specified index
 	One(fieldName string, value interface{}, to interface{}) error
+
+	// Find returns one or more records by the specified index
 	Find(fieldName string, value interface{}, to interface{}, options ...func(q *index.Options)) error
+
+	// AllByIndex gets all the records of a bucket that are indexed in the specified index
 	AllByIndex(fieldName string, to interface{}, options ...func(*index.Options)) error
+
+	// All gets all the records of a bucket.
+	// If there are no records it returns no error and the 'to' parameter is set to an empty slice.
 	All(to interface{}, options ...func(*index.Options)) error
+
+	// Select a list of records that match a list of matchers. Doesn't use indexes.
 	Select(matchers ...q.Matcher) Query
+
+	// Range returns one or more records by the specified index within the specified range
 	Range(fieldName string, min, max, to interface{}, options ...func(*index.Options)) error
+
+	// Count counts all the records of a bucket
 	Count(data interface{}) (int, error)
 }
 

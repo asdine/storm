@@ -8,8 +8,11 @@ import (
 
 // KeyValueStore can store and fetch values by key
 type KeyValueStore interface {
+	// Get a value from a bucket
 	Get(bucketName string, key interface{}, to interface{}) error
+	// Set a key/value pair into a bucket
 	Set(bucketName string, key interface{}, value interface{}) error
+	// Delete deletes a key from a bucket
 	Delete(bucketName string, key interface{}) error
 }
 

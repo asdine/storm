@@ -8,7 +8,9 @@ import (
 
 // A BucketScanner scans a Node for a list of buckets
 type BucketScanner interface {
+	// PrefixScan scans the root buckets for keys matching the given prefix.
 	PrefixScan(prefix string) []Node
+	// PrefixScan scans the buckets in this node for keys matching the given prefix.
 	RangeScan(min, max string) []Node
 }
 
