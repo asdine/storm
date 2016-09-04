@@ -75,7 +75,9 @@ func TestTransaction(t *testing.T) {
 	err = tx.Commit()
 	assert.NoError(t, err)
 
-	assert.Nil(t, ntx.tx)
+	err = tx.Commit()
+	assert.Error(t, err)
+	assert.Equal(t, ErrNotInTransaction, err)
 
 	err = db.One("ID", 30, &user)
 	assert.NoError(t, err)

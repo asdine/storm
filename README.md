@@ -246,23 +246,25 @@ See the [documentation](https://godoc.org/github.com/asdine/storm#Query) for a c
 
 ```go
 tx, err := db.Begin(true)
+if err != nil {
+  return err
+}
+defer tx.Rollback()
 
 accountA.Amount -= 100
 accountB.Amount += 100
 
 err = tx.Save(accountA)
 if err != nil {
-  tx.Rollback()
   return err
 }
 
 err = tx.Save(accountB)
 if err != nil {
-  tx.Rollback()
   return err
 }
 
-tx.Commit()
+return tx.Commit()
 ```
 ### Options
 

@@ -1,5 +1,7 @@
 package storm
 
+import "github.com/boltdb/bolt"
+
 // Tx is a transaction
 type Tx interface {
 	Commit() error
@@ -25,7 +27,9 @@ func (n *node) Rollback() error {
 	}
 
 	err := n.tx.Rollback()
-	n.tx = nil
+	if err == bolt.ErrTxClosed {
+		return ErrNotInTransaction
+	}
 
 	return err
 }
@@ -37,7 +41,9 @@ func (n *node) Commit() error {
 	}
 
 	err := n.tx.Commit()
-	n.tx = nil
+	if err == bolt.ErrTxClosed {
+		return ErrNotInTransaction
+	}
 
 	return err
 }

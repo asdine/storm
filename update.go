@@ -78,12 +78,11 @@ func (n *node) update(data interface{}, fn func(*reflect.Value, *reflect.Value, 
 	if err != nil {
 		return err
 	}
+	defer tx.Rollback()
 
 	ntx := tx.(*node)
-
 	err = ntx.One(info.ID.FieldName, info.ID.Value.Interface(), current.Interface())
 	if err != nil {
-		ntx.Rollback()
 		return err
 	}
 
@@ -91,19 +90,16 @@ func (n *node) update(data interface{}, fn func(*reflect.Value, *reflect.Value, 
 	cref := current.Elem()
 	err = fn(&ref, &cref, info)
 	if err != nil {
-		ntx.Rollback()
 		return err
 	}
 
 	raw, err := ntx.s.Codec.Encode(current.Interface())
 	if err != nil {
-		ntx.Rollback()
 		return err
 	}
 
 	err = ntx.save(ntx.tx, info, id, raw, nil)
 	if err != nil {
-		ntx.Rollback()
 		return err
 	}
 

@@ -252,6 +252,7 @@ func ExampleDB_Begin() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer tx.Rollback()
 
 	err = tx.One("ID", 1, &account1)
 
@@ -271,14 +272,12 @@ func ExampleDB_Begin() {
 	err = tx.Save(&account1)
 
 	if err != nil {
-		tx.Rollback()
 		log.Fatal(err)
 	}
 
 	err = tx.Save(&account2)
 
 	if err != nil {
-		tx.Rollback()
 		log.Fatal(err)
 	}
 
