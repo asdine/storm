@@ -1,6 +1,9 @@
 package storm
 
-import "github.com/boltdb/bolt"
+import (
+	"github.com/asdine/storm/codec"
+	"github.com/boltdb/bolt"
+)
 
 // A Node in Storm represents the API to a BoltDB bucket.
 type Node interface {
@@ -14,6 +17,7 @@ type Node interface {
 	CreateBucketIfNotExists(tx *bolt.Tx, bucket string) (*bolt.Bucket, error)
 	WithTransaction(tx *bolt.Tx) Node
 	Begin(writable bool) (Node, error)
+	Codec() codec.EncodeDecoder
 }
 
 // A Node in Storm represents the API to a BoltDB bucket.
@@ -44,4 +48,9 @@ func (n node) WithTransaction(tx *bolt.Tx) Node {
 // In the normal, simple case this will be empty.
 func (n *node) Bucket() []string {
 	return n.rootBucket
+}
+
+// Codec returns the EncodeDecoder used by this Node
+func (n *node) Codec() codec.EncodeDecoder {
+	return n.s.codec
 }

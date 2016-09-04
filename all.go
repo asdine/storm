@@ -83,7 +83,7 @@ func (n *node) allByIndex(tx *bolt.Tx, fieldName string, info *modelInfo, ref *r
 			return ErrNotFound
 		}
 
-		err = n.s.Codec.Decode(raw, results.Index(i).Addr().Interface())
+		err = n.s.codec.Decode(raw, results.Index(i).Addr().Interface())
 		if err != nil {
 			return err
 		}

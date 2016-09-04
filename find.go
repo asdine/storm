@@ -81,7 +81,7 @@ func (n *node) Find(fieldName string, value interface{}, to interface{}, options
 		return sink.flush()
 	}
 
-	val, err := toBytes(value, n.s.Codec)
+	val, err := toBytes(value, n.s.codec)
 	if err != nil {
 		return err
 	}
@@ -123,7 +123,7 @@ func (n *node) find(tx *bolt.Tx, bucketName, fieldName, tag string, sink *listSi
 		}
 
 		elem := sink.elem()
-		err = n.s.Codec.Decode(raw, elem.Interface())
+		err = n.s.codec.Decode(raw, elem.Interface())
 		if err != nil {
 			return err
 		}

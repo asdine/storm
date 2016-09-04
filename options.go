@@ -20,7 +20,7 @@ func BoltOptions(mode os.FileMode, options *bolt.Options) func(*DB) error {
 // Codec used to set a custom encoder and decoder. The default is GOB.
 func Codec(c codec.EncodeDecoder) func(*DB) error {
 	return func(d *DB) error {
-		d.Codec = c
+		d.codec = c
 		return nil
 	}
 }

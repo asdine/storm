@@ -58,12 +58,12 @@ func (n *node) Range(fieldName string, min, max, to interface{}, options ...func
 		return sink.flush()
 	}
 
-	mn, err := toBytes(min, n.s.Codec)
+	mn, err := toBytes(min, n.s.codec)
 	if err != nil {
 		return err
 	}
 
-	mx, err := toBytes(max, n.s.Codec)
+	mx, err := toBytes(max, n.s.codec)
 	if err != nil {
 		return err
 	}
@@ -103,7 +103,7 @@ func (n *node) rnge(tx *bolt.Tx, bucketName, fieldName, tag string, sink *listSi
 		}
 
 		elem := sink.elem()
-		err = n.s.Codec.Decode(raw, elem.Interface())
+		err = n.s.codec.Decode(raw, elem.Interface())
 		if err != nil {
 			return err
 		}

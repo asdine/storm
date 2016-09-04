@@ -51,7 +51,7 @@ func (n *node) One(fieldName string, value interface{}, to interface{}) error {
 		return sink.flush()
 	}
 
-	val, err := toBytes(value, n.s.Codec)
+	val, err := toBytes(value, n.s.codec)
 	if err != nil {
 		return err
 	}
@@ -95,7 +95,7 @@ func (n *node) one(tx *bolt.Tx, bucketName, fieldName, tag string, to interface{
 		return ErrNotFound
 	}
 
-	return n.s.Codec.Decode(raw, to)
+	return n.s.codec.Decode(raw, to)
 }
 
 // One returns one record by the specified index

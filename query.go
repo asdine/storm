@@ -150,7 +150,7 @@ func (q *query) query(tx *bolt.Tx, sink sink) error {
 			}
 
 			newElem := sink.elem()
-			err := q.node.s.Codec.Decode(v, newElem.Interface())
+			err := q.node.s.codec.Decode(v, newElem.Interface())
 			if err != nil {
 				return err
 			}

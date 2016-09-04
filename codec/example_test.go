@@ -18,10 +18,10 @@ func Example() {
 	var serealDb, _ = storm.Open("sereal.db", storm.Codec(sereal.Codec))
 	var protobufDb, _ = storm.Open("protobuf.db", storm.Codec(protobuf.Codec))
 
-	fmt.Printf("%T\n", gobDb.Codec)
-	fmt.Printf("%T\n", jsonDb.Codec)
-	fmt.Printf("%T\n", serealDb.Codec)
-	fmt.Printf("%T\n", protobufDb.Codec)
+	fmt.Printf("%T\n", gobDb.Codec())
+	fmt.Printf("%T\n", jsonDb.Codec())
+	fmt.Printf("%T\n", serealDb.Codec())
+	fmt.Printf("%T\n", protobufDb.Codec())
 
 	// Output:
 	// *gob.gobCodec

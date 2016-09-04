@@ -33,7 +33,7 @@ func TestNewStorm(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, file, db.Path)
 	assert.NotNil(t, db.Bolt)
-	assert.Equal(t, defaultCodec, db.Codec)
+	assert.Equal(t, defaultCodec, db.Codec())
 }
 
 func TestNewStormWithStormOptions(t *testing.T) {
@@ -42,7 +42,7 @@ func TestNewStormWithStormOptions(t *testing.T) {
 
 	dc := new(dummyCodec)
 	db1, _ := Open(filepath.Join(dir, "storm1.db"), BoltOptions(0660, &bolt.Options{Timeout: 10 * time.Second}), Codec(dc), AutoIncrement(), Root("a", "b"))
-	assert.Equal(t, dc, db1.Codec)
+	assert.Equal(t, dc, db1.Codec())
 	assert.True(t, db1.autoIncrement)
 	assert.Equal(t, os.FileMode(0660), db1.boltMode)
 	assert.Equal(t, 10*time.Second, db1.boltOptions.Timeout)
@@ -53,7 +53,7 @@ func TestNewStormWithStormOptions(t *testing.T) {
 	assert.NoError(t, err)
 
 	db2, _ := Open(filepath.Join(dir, "storm2.db"), Codec(dc))
-	assert.Equal(t, dc, db2.Codec)
+	assert.Equal(t, dc, db2.Codec())
 }
 
 func TestBoltDB(t *testing.T) {

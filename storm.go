@@ -18,7 +18,7 @@ func Open(path string, stormOptions ...func(*DB) error) (*DB, error) {
 
 	s := &DB{
 		Path:  path,
-		Codec: defaultCodec,
+		codec: defaultCodec,
 	}
 
 	for _, option := range stormOptions {
@@ -55,7 +55,7 @@ type DB struct {
 	Path string
 
 	// Handles encoding and decoding of objects
-	Codec codec.EncodeDecoder
+	codec codec.EncodeDecoder
 
 	// Bolt is still easily accessible
 	Bolt *bolt.DB
@@ -99,6 +99,11 @@ func (s *DB) Bucket() []string {
 // Close the database
 func (s *DB) Close() error {
 	return s.Bolt.Close()
+}
+
+// Codec returns the EncodeDecoder used by this instance of Storm
+func (s *DB) Codec() codec.EncodeDecoder {
+	return s.codec
 }
 
 // toBytes turns an interface into a slice of bytes

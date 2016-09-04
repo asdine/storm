@@ -20,7 +20,7 @@ func (n *node) DeleteStruct(data interface{}) error {
 		return err
 	}
 
-	id, err := toBytes(info.ID.Value.Interface(), n.s.Codec)
+	id, err := toBytes(info.ID.Value.Interface(), n.s.codec)
 	if err != nil {
 		return err
 	}

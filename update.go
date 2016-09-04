@@ -67,7 +67,7 @@ func (n *node) update(data interface{}, fn func(*reflect.Value, *reflect.Value, 
 		return ErrNoID
 	}
 
-	id, err := toBytes(info.ID.Value.Interface(), n.s.Codec)
+	id, err := toBytes(info.ID.Value.Interface(), n.s.codec)
 	if err != nil {
 		return err
 	}
@@ -93,7 +93,7 @@ func (n *node) update(data interface{}, fn func(*reflect.Value, *reflect.Value, 
 		return err
 	}
 
-	raw, err := ntx.s.Codec.Encode(current.Interface())
+	raw, err := ntx.s.codec.Encode(current.Interface())
 	if err != nil {
 		return err
 	}
