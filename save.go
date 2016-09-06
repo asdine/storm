@@ -70,10 +70,12 @@ func (n *node) save(tx *bolt.Tx, info *modelInfo, id []byte, raw []byte, data in
 		}
 	}
 
-	if n.s.autoIncrement {
-		raw, err = n.s.codec.Encode(data)
-		if err != nil {
-			return err
+	if data != nil {
+		if n.s.autoIncrement {
+			raw, err = n.s.codec.Encode(data)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
