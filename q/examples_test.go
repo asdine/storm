@@ -16,7 +16,7 @@ import (
 	"github.com/asdine/storm/q"
 )
 
-func Example_Re() {
+func ExampleRe() {
 	dir, db := prepareDB()
 	defer os.RemoveAll(dir)
 	defer db.Close()
