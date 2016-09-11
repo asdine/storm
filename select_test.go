@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/asdine/storm/codec/gob"
+	"github.com/asdine/storm/codec/json"
 	"github.com/asdine/storm/q"
 	"github.com/stretchr/testify/assert"
 )
@@ -317,18 +318,22 @@ func TestSelectCount(t *testing.T) {
 	assert.Equal(t, 1, total)
 }
 
-// func TestSelectRaw(t *testing.T) {
-// 	db, cleanup := createDB(t, AutoIncrement(), Codec(json.Codec))
-// 	defer cleanup()
-//
-// 	for i := 0; i < 20; i++ {
-// 		err := db.Save(&Score{
-// 			Value: i,
-// 		})
-// 		assert.NoError(t, err)
-// 	}
-//
-// 	list, err := db.Select(q.Gte("Value", 18)).Raw("Score")
-// 	assert.NoError(t, err)
-// 	assert.Len(t, list, 2)
-// }
+func TestSelectRaw(t *testing.T) {
+	db, cleanup := createDB(t, AutoIncrement(), Codec(json.Codec))
+	defer cleanup()
+
+	for i := 0; i < 20; i++ {
+		err := db.Save(&Score{
+			Value: i,
+		})
+		assert.NoError(t, err)
+	}
+
+	list, err := db.Select().Bucket("Score").Raw()
+	assert.NoError(t, err)
+	assert.Len(t, list, 20)
+
+	list, err = db.Select().Bucket("Score").Skip(18).Limit(5).Raw()
+	assert.NoError(t, err)
+	assert.Len(t, list, 2)
+}

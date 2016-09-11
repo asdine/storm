@@ -17,6 +17,9 @@ type Query interface {
 	// Reverse the order of the results
 	Reverse() Query
 
+	// Bucket specifies the bucket name
+	Bucket(string) Query
+
 	// Find a list of matching records
 	Find(interface{}) error
 
@@ -28,6 +31,9 @@ type Query interface {
 
 	// Count all the matching records
 	Count(interface{}) (int, error)
+
+	// Returns all the records without decoding them
+	Raw() ([][]byte, error)
 }
 
 func newQuery(n *node, tree q.Matcher) *query {
@@ -45,6 +51,7 @@ type query struct {
 	reverse bool
 	tree    q.Matcher
 	node    *node
+	bucket  string
 }
 
 func (q *query) Skip(nb int) Query {
@@ -59,6 +66,11 @@ func (q *query) Limit(nb int) Query {
 
 func (q *query) Reverse() Query {
 	q.reverse = true
+	return q
+}
+
+func (q *query) Bucket(bucketName string) Query {
+	q.bucket = bucketName
 	return q
 }
 
@@ -81,7 +93,6 @@ func (q *query) First(to interface{}) error {
 	}
 
 	sink.skip = q.skip
-
 	return q.runQuery(sink)
 }
 
@@ -114,6 +125,20 @@ func (q *query) Count(kind interface{}) (int, error) {
 	return sink.counter, nil
 }
 
+func (q *query) Raw() ([][]byte, error) {
+	sink := newRawSink()
+
+	sink.limit = q.limit
+	sink.skip = q.skip
+
+	err := q.runQuery(sink)
+	if err != nil {
+		return nil, err
+	}
+
+	return sink.results, nil
+}
+
 func (q *query) runQuery(sink sink) error {
 	var err error
 
@@ -133,7 +158,11 @@ func (q *query) runQuery(sink sink) error {
 }
 
 func (q *query) query(tx *bolt.Tx, sink sink) error {
-	bucket := q.node.GetBucket(tx, sink.bucket())
+	bucketName := q.bucket
+	if bucketName == "" {
+		bucketName = sink.bucket()
+	}
+	bucket := q.node.GetBucket(tx, bucketName)
 
 	if q.limit == 0 {
 		return nil
