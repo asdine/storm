@@ -11,12 +11,12 @@ import (
 
 // One returns one record by the specified index
 func (n *node) One(fieldName string, value interface{}, to interface{}) error {
-	sink, err := newFirstSink(to)
+	sink, err := newFirstSink(n, to)
 	if err != nil {
 		return err
 	}
 
-	bucketName := sink.name()
+	bucketName := sink.bucket()
 	if bucketName == "" {
 		return ErrNoName
 	}

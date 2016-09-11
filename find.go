@@ -62,12 +62,11 @@ type Finder interface {
 
 // Find returns one or more records by the specified index
 func (n *node) Find(fieldName string, value interface{}, to interface{}, options ...func(q *index.Options)) error {
-	sink, err := newListSink(to)
+	sink, err := newListSink(n, to)
 	if err != nil {
 		return err
 	}
-
-	bucketName := sink.name()
+	bucketName := sink.bucket()
 	if bucketName == "" {
 		return ErrNoName
 	}
@@ -150,13 +149,7 @@ func (n *node) find(tx *bolt.Tx, bucketName, fieldName, tag string, sink *listSi
 			return ErrNotFound
 		}
 
-		elem := sink.elem()
-		err = n.s.codec.Decode(raw, elem.Interface())
-		if err != nil {
-			return err
-		}
-
-		_, err = sink.add(bucket, list[i], raw, elem)
+		_, err = sink.filter(nil, bucket, list[i], raw)
 		if err != nil {
 			return err
 		}

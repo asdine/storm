@@ -316,3 +316,19 @@ func TestSelectCount(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 1, total)
 }
+
+// func TestSelectRaw(t *testing.T) {
+// 	db, cleanup := createDB(t, AutoIncrement(), Codec(json.Codec))
+// 	defer cleanup()
+//
+// 	for i := 0; i < 20; i++ {
+// 		err := db.Save(&Score{
+// 			Value: i,
+// 		})
+// 		assert.NoError(t, err)
+// 	}
+//
+// 	list, err := db.Select(q.Gte("Value", 18)).Raw("Score")
+// 	assert.NoError(t, err)
+// 	assert.Len(t, list, 2)
+// }
