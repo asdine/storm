@@ -34,6 +34,9 @@ type Query interface {
 
 	// Returns all the records without decoding them
 	Raw() ([][]byte, error)
+
+	// Execute the given function for each element
+	RawEach(func([]byte, []byte) error) error
 }
 
 func newQuery(n *node, tree q.Matcher) *query {
@@ -137,6 +140,16 @@ func (q *query) Raw() ([][]byte, error) {
 	}
 
 	return sink.results, nil
+}
+
+func (q *query) RawEach(fn func([]byte, []byte) error) error {
+	sink := newRawSink()
+
+	sink.limit = q.limit
+	sink.skip = q.skip
+	sink.execFn = fn
+
+	return q.runQuery(sink)
 }
 
 func (q *query) runQuery(sink sink) error {

@@ -327,6 +327,7 @@ type rawSink struct {
 	results [][]byte
 	skip    int
 	limit   int
+	execFn  func([]byte, []byte) error
 }
 
 func (r *rawSink) filter(tree q.Matcher, bucket *bolt.Bucket, k, v []byte) (bool, error) {
@@ -343,7 +344,14 @@ func (r *rawSink) filter(tree q.Matcher, bucket *bolt.Bucket, k, v []byte) (bool
 		r.limit--
 	}
 
-	r.results = append(r.results, v)
+	if r.execFn != nil {
+		err := r.execFn(k, v)
+		if err != nil {
+			return false, err
+		}
+	} else {
+		r.results = append(r.results, v)
+	}
 
 	return r.limit == 0, nil
 }

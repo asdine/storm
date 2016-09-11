@@ -336,4 +336,12 @@ func TestSelectRaw(t *testing.T) {
 	list, err = db.Select().Bucket("Score").Skip(18).Limit(5).Raw()
 	assert.NoError(t, err)
 	assert.Len(t, list, 2)
+
+	i := 0
+	err = db.Select().Bucket("Score").Skip(18).Limit(5).RawEach(func(k []byte, v []byte) error {
+		i++
+		return nil
+	})
+	assert.NoError(t, err)
+	assert.Equal(t, i, 2)
 }
