@@ -3,6 +3,8 @@ package storm
 import (
 	"testing"
 
+	"github.com/asdine/storm/codec/gob"
+	"github.com/asdine/storm/codec/json"
 	"github.com/boltdb/bolt"
 	"github.com/stretchr/testify/assert"
 )
@@ -41,5 +43,20 @@ func TestNodeWithTransaction(t *testing.T) {
 
 	err := db.One("ID", 10, &user)
 	assert.NoError(t, err)
+}
 
+func TestNodeWithCodec(t *testing.T) {
+	db, cleanup := createDB(t)
+	defer cleanup()
+
+	n := db.From("a").(*node)
+	assert.Equal(t, json.Codec, n.codec)
+	n = n.From("b", "c", "d").(*node)
+	assert.Equal(t, json.Codec, n.codec)
+	n = db.WithCodec(gob.Codec).(*node)
+	n = n.From("e").(*node)
+	assert.Equal(t, gob.Codec, n.codec)
+	o := n.From("f").WithCodec(json.Codec).(*node)
+	assert.Equal(t, gob.Codec, n.codec)
+	assert.Equal(t, json.Codec, o.codec)
 }

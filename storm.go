@@ -43,7 +43,7 @@ func Open(path string, stormOptions ...func(*DB) error) (*DB, error) {
 		}
 	}
 
-	s.root = &node{s: s, rootBucket: s.rootBucket}
+	s.root = &node{s: s, rootBucket: s.rootBucket, codec: s.codec}
 
 	return s, nil
 }
@@ -104,6 +104,13 @@ func (s *DB) Close() error {
 // Codec returns the EncodeDecoder used by this instance of Storm
 func (s *DB) Codec() codec.EncodeDecoder {
 	return s.codec
+}
+
+// WithCodec returns a New Storm Node that will use the given Codec.
+func (s *DB) WithCodec(codec codec.EncodeDecoder) Node {
+	n := s.From().(*node)
+	n.codec = codec
+	return n
 }
 
 // toBytes turns an interface into a slice of bytes

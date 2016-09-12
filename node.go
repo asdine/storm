@@ -34,6 +34,9 @@ type Node interface {
 
 	// Codec returns the EncodeDecoder used by this instance of Storm
 	Codec() codec.EncodeDecoder
+
+	// WithCodec returns a New Storm Node that will use the given Codec.
+	WithCodec(codec codec.EncodeDecoder) Node
 }
 
 // A Node in Storm represents the API to a BoltDB bucket.
@@ -45,18 +48,27 @@ type node struct {
 
 	// Transaction object. Nil if not in transaction
 	tx *bolt.Tx
+
+	// Codec of this node
+	codec codec.EncodeDecoder
 }
 
-// From returns a new Storm node with a new bucket root below the current.
+// From returns a new Storm Node with a new bucket root below the current.
 // All DB operations on the new node will be executed relative to this bucket.
 func (n node) From(addend ...string) Node {
 	n.rootBucket = append(n.rootBucket, addend...)
 	return &n
 }
 
-// WithTransaction returns a New Storm node that will use the given transaction.
+// WithTransaction returns a New Storm Node that will use the given transaction.
 func (n node) WithTransaction(tx *bolt.Tx) Node {
 	n.tx = tx
+	return &n
+}
+
+// WithCodec returns a New Storm Node that will use the given Codec.
+func (n node) WithCodec(codec codec.EncodeDecoder) Node {
+	n.codec = codec
 	return &n
 }
 
@@ -68,5 +80,5 @@ func (n *node) Bucket() []string {
 
 // Codec returns the EncodeDecoder used by this instance of Storm
 func (n *node) Codec() codec.EncodeDecoder {
-	return n.s.codec
+	return n.codec
 }
