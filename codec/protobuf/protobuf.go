@@ -30,7 +30,8 @@ func (c protobufCodec) Encode(v interface{}) ([]byte, error) {
 func (c protobufCodec) Decode(b []byte, v interface{}) error {
 	message, ok := v.(proto.Message)
 	if !ok {
-		return errNotProtocolBufferMessage
+		// toBytes() may have encoded non-protobuf type, if that occurs use json
+		return json.Codec.Decode(b, v)
 	}
 	return proto.Unmarshal(b, message)
 }

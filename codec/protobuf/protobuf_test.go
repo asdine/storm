@@ -1,10 +1,10 @@
 package protobuf
 
 import (
-	"testing"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"testing"
 
 	"github.com/asdine/storm"
 	"github.com/asdine/storm/codec/internal"
@@ -29,5 +29,16 @@ func TestSave(t *testing.T) {
 	err = db.One("Id", uint64(1), &u2)
 	assert.NoError(t, err)
 	assert.Equal(t, u2.Name, u1.Name)
-	
+}
+
+func TestGetSet(t *testing.T) {
+	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
+	defer os.RemoveAll(dir)
+	db, _ := storm.Open(filepath.Join(dir, "storm.db"), storm.Codec(Codec))
+	err := db.Set("bucket", "key", "value")
+	assert.NoError(t, err)
+	var s string
+	err = db.Get("bucket", "key", &s)
+	assert.NoError(t, err)
+	assert.Equal(t, "value", s)
 }
