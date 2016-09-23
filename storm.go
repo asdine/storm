@@ -9,7 +9,11 @@ import (
 	"github.com/boltdb/bolt"
 )
 
-// Defaults to gob
+const (
+	metadataBucket = "__storm_metadata"
+)
+
+// Defaults to json
 var defaultCodec = json.Codec
 
 // Open opens a database at the given path with optional Storm options.
@@ -35,15 +39,20 @@ func Open(path string, stormOptions ...func(*DB) error) (*DB, error) {
 		s.boltOptions = &bolt.Options{Timeout: 1 * time.Second}
 	}
 
+	s.root = &node{s: s, rootBucket: s.rootBucket, codec: s.codec}
+
 	// skip if UseDB option is used
 	if s.Bolt == nil {
 		s.Bolt, err = bolt.Open(path, s.boltMode, s.boltOptions)
 		if err != nil {
 			return nil, err
 		}
-	}
 
-	s.root = &node{s: s, rootBucket: s.rootBucket, codec: s.codec}
+		err = s.checkVersion()
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	return s, nil
 }
@@ -111,6 +120,21 @@ func (s *DB) WithCodec(codec codec.EncodeDecoder) Node {
 	n := s.From().(*node)
 	n.codec = codec
 	return n
+}
+
+func (s *DB) checkVersion() error {
+	var v string
+	err := s.Get(metadataBucket, "version", &v)
+	if err != nil && err != ErrNotFound {
+		return err
+	}
+
+	// for now, we only set the current version if it doesn't exist
+	if v == "" {
+		return s.Set(metadataBucket, "version", Version)
+	}
+
+	return nil
 }
 
 // toBytes turns an interface into a slice of bytes

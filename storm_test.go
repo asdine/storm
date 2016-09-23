@@ -34,6 +34,11 @@ func TestNewStorm(t *testing.T) {
 	assert.Equal(t, file, db.Path)
 	assert.NotNil(t, db.Bolt)
 	assert.Equal(t, defaultCodec, db.Codec())
+
+	var v string
+	err = db.Get(metadataBucket, "version", &v)
+	assert.NoError(t, err)
+	assert.Equal(t, Version, v)
 }
 
 func TestNewStormWithStormOptions(t *testing.T) {
