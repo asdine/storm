@@ -25,6 +25,14 @@ func Codec(c codec.EncodeDecoder) func(*DB) error {
 	}
 }
 
+// Batch enables the use of batch instead of update for read-write transactions.
+func Batch() func(*DB) error {
+	return func(d *DB) error {
+		d.batchMode = true
+		return nil
+	}
+}
+
 // AutoIncrement used to enable bolt.NextSequence on empty integer ids.
 func AutoIncrement() func(*DB) error {
 	return func(d *DB) error {

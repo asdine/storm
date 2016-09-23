@@ -37,6 +37,9 @@ type Node interface {
 
 	// WithCodec returns a New Storm Node that will use the given Codec.
 	WithCodec(codec codec.EncodeDecoder) Node
+
+	// WithBatch returns a new Storm Node with the batch mode enabled.
+	WithBatch(enabled bool) Node
 }
 
 // A Node in Storm represents the API to a BoltDB bucket.
@@ -51,6 +54,9 @@ type node struct {
 
 	// Codec of this node
 	codec codec.EncodeDecoder
+
+	// Enable batch mode for read-write transaction, instead of update mode
+	batchMode bool
 }
 
 // From returns a new Storm Node with a new bucket root below the current.
@@ -60,15 +66,21 @@ func (n node) From(addend ...string) Node {
 	return &n
 }
 
-// WithTransaction returns a New Storm Node that will use the given transaction.
+// WithTransaction returns a new Storm Node that will use the given transaction.
 func (n node) WithTransaction(tx *bolt.Tx) Node {
 	n.tx = tx
 	return &n
 }
 
-// WithCodec returns a New Storm Node that will use the given Codec.
+// WithCodec returns a new Storm Node that will use the given Codec.
 func (n node) WithCodec(codec codec.EncodeDecoder) Node {
 	n.codec = codec
+	return &n
+}
+
+// WithBatch returns a new Storm Node with the batch mode enabled.
+func (n node) WithBatch(enabled bool) Node {
+	n.batchMode = enabled
 	return &n
 }
 

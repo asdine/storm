@@ -61,6 +61,26 @@ func TestNewStormWithStormOptions(t *testing.T) {
 	assert.Equal(t, dc, db2.Codec())
 }
 
+func TestNewStormWithBatch(t *testing.T) {
+	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
+	defer os.RemoveAll(dir)
+
+	db1, _ := Open(filepath.Join(dir, "storm1.db"), Batch())
+	defer db1.Close()
+
+	assert.True(t, db1.root.batchMode)
+	n := db1.From().(*node)
+	assert.True(t, n.batchMode)
+	n = db1.WithBatch(true).(*node)
+	assert.True(t, n.batchMode)
+	n = db1.WithBatch(false).(*node)
+	assert.False(t, n.batchMode)
+	n = n.From().(*node)
+	assert.False(t, n.batchMode)
+	n = n.WithBatch(true).(*node)
+	assert.True(t, n.batchMode)
+}
+
 func TestBoltDB(t *testing.T) {
 	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
 	defer os.RemoveAll(dir)

@@ -39,7 +39,7 @@ func Open(path string, stormOptions ...func(*DB) error) (*DB, error) {
 		s.boltOptions = &bolt.Options{Timeout: 1 * time.Second}
 	}
 
-	s.root = &node{s: s, rootBucket: s.rootBucket, codec: s.codec}
+	s.root = &node{s: s, rootBucket: s.rootBucket, codec: s.codec, batchMode: s.batchMode}
 
 	// skip if UseDB option is used
 	if s.Bolt == nil {
@@ -83,6 +83,9 @@ type DB struct {
 
 	// The root bucket name
 	rootBucket []string
+
+	// Enable batch mode for read-write transaction, instead of update mode
+	batchMode bool
 }
 
 // From returns a new Storm node with a new bucket root.
@@ -119,6 +122,13 @@ func (s *DB) Codec() codec.EncodeDecoder {
 func (s *DB) WithCodec(codec codec.EncodeDecoder) Node {
 	n := s.From().(*node)
 	n.codec = codec
+	return n
+}
+
+// WithBatch returns a new Storm Node with the batch mode enabled.
+func (s *DB) WithBatch(enabled bool) Node {
+	n := s.From().(*node)
+	n.batchMode = enabled
 	return n
 }
 
