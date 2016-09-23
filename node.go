@@ -102,6 +102,12 @@ func (n *node) readWriteTx(fn func(tx *bolt.Tx) error) error {
 		return fn(n.tx)
 	}
 
+	if n.batchMode {
+		return n.s.Bolt.Batch(func(tx *bolt.Tx) error {
+			return fn(tx)
+		})
+	}
+
 	return n.s.Bolt.Update(func(tx *bolt.Tx) error {
 		return fn(tx)
 	})
