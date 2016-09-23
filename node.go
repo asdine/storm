@@ -94,3 +94,26 @@ func (n *node) Bucket() []string {
 func (n *node) Codec() codec.EncodeDecoder {
 	return n.codec
 }
+
+// Detects if already in transaction or runs a read write transaction.
+// Uses batch mode if enabled.
+func (n *node) readWriteTx(fn func(tx *bolt.Tx) error) error {
+	if n.tx != nil {
+		return fn(n.tx)
+	}
+
+	return n.s.Bolt.Update(func(tx *bolt.Tx) error {
+		return fn(tx)
+	})
+}
+
+// Detects if already in transaction or runs a read transaction.
+func (n *node) readTx(fn func(tx *bolt.Tx) error) error {
+	if n.tx != nil {
+		return fn(n.tx)
+	}
+
+	return n.s.Bolt.View(func(tx *bolt.Tx) error {
+		return fn(tx)
+	})
+}

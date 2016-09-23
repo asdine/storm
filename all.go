@@ -42,11 +42,7 @@ func (n *node) AllByIndex(fieldName string, to interface{}, options ...func(*ind
 		fn(opts)
 	}
 
-	if n.tx != nil {
-		return n.allByIndex(n.tx, fieldName, info, &ref, opts)
-	}
-
-	return n.s.Bolt.View(func(tx *bolt.Tx) error {
+	return n.readTx(func(tx *bolt.Tx) error {
 		return n.allByIndex(tx, fieldName, info, &ref, opts)
 	})
 }

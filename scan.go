@@ -27,7 +27,7 @@ func (n *node) PrefixScan(prefix string) []Node {
 
 	var nodes []Node
 
-	n.s.Bolt.View(func(tx *bolt.Tx) error {
+	n.readTx(func(tx *bolt.Tx) error {
 		nodes = n.prefixScan(tx, prefix)
 		return nil
 	})
@@ -63,7 +63,7 @@ func (n *node) RangeScan(min, max string) []Node {
 
 	var nodes []Node
 
-	n.s.Bolt.View(func(tx *bolt.Tx) error {
+	n.readTx(func(tx *bolt.Tx) error {
 		nodes = n.rangeScan(tx, min, max)
 		return nil
 	})

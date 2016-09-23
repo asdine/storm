@@ -43,11 +43,7 @@ func (n *node) Save(data interface{}) error {
 		}
 	}
 
-	if n.tx != nil {
-		return n.save(n.tx, info, id, raw, data)
-	}
-
-	return n.s.Bolt.Update(func(tx *bolt.Tx) error {
+	return n.readWriteTx(func(tx *bolt.Tx) error {
 		return n.save(tx, info, id, raw, data)
 	})
 }
