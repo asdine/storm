@@ -29,11 +29,7 @@ func (n *node) Get(bucketName string, key interface{}, to interface{}) error {
 		return err
 	}
 
-	if n.tx != nil {
-		return n.get(n.tx, bucketName, id, to)
-	}
-
-	return n.s.Bolt.View(func(tx *bolt.Tx) error {
+	return n.readTx(func(tx *bolt.Tx) error {
 		return n.get(tx, bucketName, id, to)
 	})
 }
@@ -71,11 +67,7 @@ func (n *node) Set(bucketName string, key interface{}, value interface{}) error 
 		}
 	}
 
-	if n.tx != nil {
-		return n.set(n.tx, bucketName, id, data)
-	}
-
-	return n.s.Bolt.Update(func(tx *bolt.Tx) error {
+	return n.readWriteTx(func(tx *bolt.Tx) error {
 		return n.set(tx, bucketName, id, data)
 	})
 }
@@ -95,11 +87,7 @@ func (n *node) Delete(bucketName string, key interface{}) error {
 		return err
 	}
 
-	if n.tx != nil {
-		return n.delete(n.tx, bucketName, id)
-	}
-
-	return n.s.Bolt.Update(func(tx *bolt.Tx) error {
+	return n.readWriteTx(func(tx *bolt.Tx) error {
 		return n.delete(tx, bucketName, id)
 	})
 }

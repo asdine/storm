@@ -25,11 +25,7 @@ func (n *node) DeleteStruct(data interface{}) error {
 		return err
 	}
 
-	if n.tx != nil {
-		return n.deleteStruct(n.tx, info, id)
-	}
-
-	return n.s.Bolt.Update(func(tx *bolt.Tx) error {
+	return n.readWriteTx(func(tx *bolt.Tx) error {
 		return n.deleteStruct(tx, info, id)
 	})
 }

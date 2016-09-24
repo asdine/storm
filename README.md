@@ -334,7 +334,15 @@ You can use an existing connection and pass it to Storm
 
 ```go
 bDB, _ := bolt.Open(filepath.Join(dir, "bolt.db"), 0600, &bolt.Options{Timeout: 10 * time.Second})
-db := storm.Open("", storm.UseDB(bDB))
+db := storm.Open("my.db", storm.UseDB(bDB))
+```
+
+#### Batch mode
+
+Batch mode can be enabled to speed up concurrent writes (see [Batch read-write transactions](https://github.com/boltdb/bolt#batch-read-write-transactions))
+
+```go
+db := storm.Open("my.db", storm.Batch())
 ```
 
 ## Nodes and nested buckets
@@ -375,6 +383,29 @@ You can even pass the entire hierarchy as arguments to `From`:
 ```go
 privateNotes := db.From("notes", "private")
 workNotes :=  db.From("notes", "work")
+```
+
+### Node options
+
+A Node can also be configured. Activating an option on a Node creates a copy, so a Node is always thread-safe.
+
+```go
+n := db.From("my-node")
+```
+
+Give a bolt.Tx transaction to the Node
+```go
+n = n.WithTransaction(tx)
+```
+
+Enable batch mode
+```go
+n = n.WithBatch(true)
+```
+
+Use a Codec
+```go
+n = n.WithCodec(gob.Codec)
 ```
 
 ## Simple Key/Value store

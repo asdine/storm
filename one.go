@@ -56,11 +56,7 @@ func (n *node) One(fieldName string, value interface{}, to interface{}) error {
 		return err
 	}
 
-	if n.tx != nil {
-		return n.one(n.tx, bucketName, fieldName, tag, to, val, fieldName == "ID" || tag == "id")
-	}
-
-	return n.s.Bolt.View(func(tx *bolt.Tx) error {
+	return n.readTx(func(tx *bolt.Tx) error {
 		return n.one(tx, bucketName, fieldName, tag, to, val, fieldName == "ID" || tag == "id")
 	})
 }

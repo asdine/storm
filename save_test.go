@@ -1,6 +1,7 @@
 package storm
 
 import (
+	"sync"
 	"testing"
 	"time"
 
@@ -296,6 +297,24 @@ func TestSaveByValue(t *testing.T) {
 	err := db.Save(w)
 	assert.Error(t, err)
 	assert.Equal(t, ErrStructPtrNeeded, err)
+}
+
+func TestSaveWithBatch(t *testing.T) {
+	db, cleanup := createDB(t, Batch())
+	defer cleanup()
+
+	var wg sync.WaitGroup
+
+	for i := 0; i < 5; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			err := db.Save(&User{ID: i + 1, Name: "John"})
+			assert.NoError(t, err)
+		}()
+	}
+
+	wg.Wait()
 }
 
 func BenchmarkSave(b *testing.B) {
