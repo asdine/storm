@@ -159,20 +159,20 @@ func toBytes(key interface{}, codec codec.MarshalUnmarshaler) ([]byte, error) {
 	case string:
 		return []byte(t), nil
 	case int:
-		return itob(int(t)), nil
+		return itob(int64(t)), nil
 	case int64:
-		return itob(int(t)), nil
+		return itob(t), nil
 	case uint:
-		return itob(int(t)), nil
+		return itob(int64(t)), nil
 	case uint64:
-		return itob(int(t)), nil
+		return itob(int64(t)), nil
 	default:
 		return codec.Marshal(key)
 	}
 }
 
-func itob(v int) []byte {
+func itob(v int64) []byte {
 	b := make([]byte, 8)
-	binary.BigEndian.PutUint64(b, uint64(v))
+	binary.PutVarint(b, v)
 	return b
 }

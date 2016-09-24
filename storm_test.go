@@ -1,6 +1,7 @@
 package storm
 
 import (
+	"encoding/binary"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -11,6 +12,7 @@ import (
 	"github.com/asdine/storm/codec/json"
 	"github.com/boltdb/bolt"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNewStorm(t *testing.T) {
@@ -124,29 +126,27 @@ func TestToBytes(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, []byte("a string"), b)
 
-	b, err = toBytes(5, nil)
-	assert.NoError(t, err)
-	assert.NotNil(t, b)
-
-	b, err = toBytes(int64(5), nil)
-	assert.NoError(t, err)
-	assert.NotNil(t, b)
-
-	b, err = toBytes(uint(5), nil)
-	assert.NoError(t, err)
-	assert.NotNil(t, b)
-
-	b, err = toBytes(uint64(5), nil)
-	assert.NoError(t, err)
-	assert.NotNil(t, b)
-
-	b, err = toBytes([]byte("Hey"), nil)
-	assert.NoError(t, err)
-	assert.Equal(t, []byte("Hey"), b)
-
 	b, err = toBytes(&SimpleUser{ID: 10, Name: "John", age: 100}, json.Codec)
 	assert.NoError(t, err)
 	assert.Equal(t, `{"ID":10,"Name":"John"}`, string(b))
+
+	tests := map[interface{}]int64{
+		-1000:        int64(-1000),
+		1000:         int64(1000),
+		uint(1000):   int64(1000),
+		uint64(1000): int64(1000),
+		int64(-1000): int64(-1000),
+		int64(1000):  int64(1000),
+	}
+
+	for v, expected := range tests {
+		b, err = toBytes(v, nil)
+		require.NoError(t, err)
+		require.NotNil(t, b)
+		actual, n := binary.Varint(b)
+		require.True(t, n > 0)
+		require.Equal(t, expected, actual)
+	}
 }
 
 func createDB(t errorHandler, opts ...func(*DB) error) (*DB, func()) {
