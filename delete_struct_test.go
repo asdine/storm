@@ -5,12 +5,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/asdine/storm/codec/gob"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestDeleteStruct(t *testing.T) {
-	db, cleanup := createDB(t, Codec(gob.Codec))
+	db, cleanup := createDB(t)
 	defer cleanup()
 
 	u1 := IndexedNameUser{ID: 10, Name: "John", age: 10}

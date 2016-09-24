@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/asdine/storm/codec/gob"
 	"github.com/asdine/storm/codec/json"
 	"github.com/asdine/storm/q"
 	"github.com/stretchr/testify/assert"
@@ -16,7 +15,7 @@ type Score struct {
 }
 
 func prepareScoreDB(t *testing.T) (*DB, func()) {
-	db, cleanup := createDB(t, AutoIncrement(), Codec(gob.Codec))
+	db, cleanup := createDB(t, AutoIncrement())
 
 	for i := 0; i < 20; i++ {
 		err := db.Save(&Score{

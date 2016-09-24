@@ -1,6 +1,8 @@
 package storm
 
 import (
+	"bytes"
+	"encoding/binary"
 	"os"
 	"time"
 
@@ -152,12 +154,27 @@ func toBytes(key interface{}, codec codec.MarshalUnmarshaler) ([]byte, error) {
 	if key == nil {
 		return nil, nil
 	}
-	if k, ok := key.([]byte); ok {
-		return k, nil
+	switch t := key.(type) {
+	case []byte:
+		return t, nil
+	case string:
+		return []byte(t), nil
+	case int:
+		return numbertob(int64(t))
+	case uint:
+		return numbertob(uint64(t))
+	case int8, int16, int32, int64, uint8, uint16, uint32, uint64:
+		return numbertob(t)
+	default:
+		return codec.Marshal(key)
 	}
-	if k, ok := key.(string); ok {
-		return []byte(k), nil
-	}
+}
 
-	return codec.Marshal(key)
+func numbertob(v interface{}) ([]byte, error) {
+	var buf bytes.Buffer
+	err := binary.Write(&buf, binary.BigEndian, v)
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
 }

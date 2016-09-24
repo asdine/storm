@@ -1,17 +1,20 @@
 package storm
 
 import (
+	"bytes"
+	"encoding/binary"
 	"io/ioutil"
+	"math"
 	"os"
 	"path/filepath"
 	"reflect"
 	"testing"
 	"time"
 
-	"github.com/asdine/storm/codec/gob"
 	"github.com/asdine/storm/codec/json"
 	"github.com/boltdb/bolt"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNewStorm(t *testing.T) {
@@ -117,35 +120,44 @@ func TestCodec(t *testing.T) {
 }
 
 func TestToBytes(t *testing.T) {
-	b, err := toBytes([]byte("a slice of bytes"), gob.Codec)
+	b, err := toBytes([]byte("a slice of bytes"), nil)
 	assert.NoError(t, err)
 	assert.Equal(t, []byte("a slice of bytes"), b)
 
-	b, err = toBytes("a string", gob.Codec)
-	assert.NoError(t, err)
-	assert.Equal(t, []byte("a string"), b)
-
-	b, err = toBytes(5, gob.Codec)
-	assert.NoError(t, err)
-	assert.NotNil(t, b)
-
-	b, err = toBytes([]byte("Hey"), gob.Codec)
-	assert.NoError(t, err)
-	assert.Equal(t, []byte("Hey"), b)
-}
-
-func TestToBytesWithCodec(t *testing.T) {
-	b, err := toBytes([]byte("a slice of bytes"), json.Codec)
-	assert.NoError(t, err)
-	assert.Equal(t, []byte("a slice of bytes"), b)
-
-	b, err = toBytes("a string", json.Codec)
+	b, err = toBytes("a string", nil)
 	assert.NoError(t, err)
 	assert.Equal(t, []byte("a string"), b)
 
 	b, err = toBytes(&SimpleUser{ID: 10, Name: "John", age: 100}, json.Codec)
 	assert.NoError(t, err)
 	assert.Equal(t, `{"ID":10,"Name":"John"}`, string(b))
+
+	tests := map[interface{}]interface{}{
+		int(-math.MaxInt64):    int64(-math.MaxInt64),
+		int(math.MaxInt64):     int64(math.MaxInt64),
+		int8(-math.MaxInt8):    int8(-math.MaxInt8),
+		int8(math.MaxInt8):     int8(math.MaxInt8),
+		int16(-math.MaxInt16):  int16(-math.MaxInt16),
+		int16(math.MaxInt16):   int16(math.MaxInt16),
+		int32(-math.MaxInt32):  int32(-math.MaxInt32),
+		int32(math.MaxInt32):   int32(math.MaxInt32),
+		int64(-math.MaxInt64):  int64(-math.MaxInt64),
+		int64(math.MaxInt64):   int64(math.MaxInt64),
+		uint(math.MaxUint64):   uint64(math.MaxUint64),
+		uint64(math.MaxUint64): uint64(math.MaxUint64),
+	}
+
+	for v, expected := range tests {
+		b, err = toBytes(v, nil)
+		require.NoError(t, err)
+		require.NotNil(t, b)
+		buf := bytes.NewReader(b)
+		typ := reflect.TypeOf(expected)
+		actual := reflect.New(typ)
+		err = binary.Read(buf, binary.BigEndian, actual.Interface())
+		require.NoError(t, err)
+		require.Equal(t, expected, actual.Elem().Interface())
+	}
 }
 
 func createDB(t errorHandler, opts ...func(*DB) error) (*DB, func()) {
