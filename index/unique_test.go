@@ -132,38 +132,38 @@ func TestUniqueIndexRange(t *testing.T) {
 		assert.NoError(t, err)
 
 		for i := 0; i < 10; i++ {
-			val, _ := gob.Codec.Encode(i)
+			val, _ := gob.Codec.Marshal(i)
 			err = idx.Add(val, val)
 			assert.NoError(t, err)
 		}
 
-		min, _ := gob.Codec.Encode(3)
-		max, _ := gob.Codec.Encode(5)
+		min, _ := gob.Codec.Marshal(3)
+		max, _ := gob.Codec.Marshal(5)
 		list, err := idx.Range(min, max, nil)
 		assert.Len(t, list, 3)
 		assert.NoError(t, err)
 		assertEncodedIntListEqual(t, []int{3, 4, 5}, list)
 
-		min, _ = gob.Codec.Encode(11)
-		max, _ = gob.Codec.Encode(20)
+		min, _ = gob.Codec.Marshal(11)
+		max, _ = gob.Codec.Marshal(20)
 		list, err = idx.Range(min, max, nil)
 		assert.Len(t, list, 0)
 		assert.NoError(t, err)
 
-		min, _ = gob.Codec.Encode(7)
-		max, _ = gob.Codec.Encode(2)
+		min, _ = gob.Codec.Marshal(7)
+		max, _ = gob.Codec.Marshal(2)
 		list, err = idx.Range(min, max, nil)
 		assert.Len(t, list, 0)
 		assert.NoError(t, err)
 
-		min, _ = gob.Codec.Encode(-5)
-		max, _ = gob.Codec.Encode(2)
+		min, _ = gob.Codec.Marshal(-5)
+		max, _ = gob.Codec.Marshal(2)
 		list, err = idx.Range(min, max, nil)
 		assert.Len(t, list, 0)
 		assert.NoError(t, err)
 
-		min, _ = gob.Codec.Encode(3)
-		max, _ = gob.Codec.Encode(7)
+		min, _ = gob.Codec.Marshal(3)
+		max, _ = gob.Codec.Marshal(7)
 		opts := index.NewOptions()
 		opts.Skip = 2
 		list, err = idx.Range(min, max, opts)
@@ -194,7 +194,7 @@ func assertEncodedIntListEqual(t *testing.T, expected []int, actual [][]byte) {
 	ints := make([]int, len(actual))
 
 	for i, e := range actual {
-		err := gob.Codec.Decode(e, &ints[i])
+		err := gob.Codec.Unmarshal(e, &ints[i])
 		assert.NoError(t, err)
 	}
 

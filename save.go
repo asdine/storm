@@ -37,7 +37,7 @@ func (n *node) Save(data interface{}) error {
 	var raw []byte
 	// postpone encoding if AutoIncrement mode if enabled
 	if !n.s.autoIncrement {
-		raw, err = n.s.codec.Encode(data)
+		raw, err = n.s.codec.Marshal(data)
 		if err != nil {
 			return err
 		}
@@ -68,7 +68,7 @@ func (n *node) save(tx *bolt.Tx, info *modelInfo, id []byte, raw []byte, data in
 
 	if data != nil {
 		if n.s.autoIncrement {
-			raw, err = n.s.codec.Encode(data)
+			raw, err = n.s.codec.Marshal(data)
 			if err != nil {
 				return err
 			}

@@ -45,7 +45,7 @@ func (n *node) get(tx *bolt.Tx, bucketName string, id []byte, to interface{}) er
 		return ErrNotFound
 	}
 
-	return n.s.codec.Decode(raw, to)
+	return n.s.codec.Unmarshal(raw, to)
 }
 
 // Set a key/value pair into a bucket
@@ -61,7 +61,7 @@ func (n *node) Set(bucketName string, key interface{}, value interface{}) error 
 
 	var data []byte
 	if value != nil {
-		data, err = n.s.codec.Encode(value)
+		data, err = n.s.codec.Marshal(value)
 		if err != nil {
 			return err
 		}

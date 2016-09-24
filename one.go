@@ -91,7 +91,7 @@ func (n *node) one(tx *bolt.Tx, bucketName, fieldName, tag string, to interface{
 		return ErrNotFound
 	}
 
-	return n.s.codec.Decode(raw, to)
+	return n.s.codec.Unmarshal(raw, to)
 }
 
 // One returns one record by the specified index

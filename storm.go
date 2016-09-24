@@ -65,7 +65,7 @@ type DB struct {
 	Path string
 
 	// Handles encoding and decoding of objects
-	codec codec.EncodeDecoder
+	codec codec.MarshalUnmarshaler
 
 	// Bolt is still easily accessible
 	Bolt *bolt.DB
@@ -115,12 +115,12 @@ func (s *DB) Close() error {
 }
 
 // Codec returns the EncodeDecoder used by this instance of Storm
-func (s *DB) Codec() codec.EncodeDecoder {
+func (s *DB) Codec() codec.MarshalUnmarshaler {
 	return s.codec
 }
 
 // WithCodec returns a New Storm Node that will use the given Codec.
-func (s *DB) WithCodec(codec codec.EncodeDecoder) Node {
+func (s *DB) WithCodec(codec codec.MarshalUnmarshaler) Node {
 	n := s.From().(*node)
 	n.codec = codec
 	return n
@@ -149,7 +149,7 @@ func (s *DB) checkVersion() error {
 }
 
 // toBytes turns an interface into a slice of bytes
-func toBytes(key interface{}, encoder codec.EncodeDecoder) ([]byte, error) {
+func toBytes(key interface{}, codec codec.MarshalUnmarshaler) ([]byte, error) {
 	if key == nil {
 		return nil, nil
 	}
@@ -167,7 +167,7 @@ func toBytes(key interface{}, encoder codec.EncodeDecoder) ([]byte, error) {
 	case uint64:
 		return itob(int(t)), nil
 	default:
-		return encoder.Encode(key)
+		return codec.Marshal(key)
 	}
 }
 

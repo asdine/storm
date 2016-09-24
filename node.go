@@ -32,11 +32,11 @@ type Node interface {
 	// Begin starts a new transaction.
 	Begin(writable bool) (Node, error)
 
-	// Codec returns the EncodeDecoder used by this instance of Storm
-	Codec() codec.EncodeDecoder
+	// Codec used by this instance of Storm
+	Codec() codec.MarshalUnmarshaler
 
 	// WithCodec returns a New Storm Node that will use the given Codec.
-	WithCodec(codec codec.EncodeDecoder) Node
+	WithCodec(codec codec.MarshalUnmarshaler) Node
 
 	// WithBatch returns a new Storm Node with the batch mode enabled.
 	WithBatch(enabled bool) Node
@@ -53,7 +53,7 @@ type node struct {
 	tx *bolt.Tx
 
 	// Codec of this node
-	codec codec.EncodeDecoder
+	codec codec.MarshalUnmarshaler
 
 	// Enable batch mode for read-write transaction, instead of update mode
 	batchMode bool
@@ -73,7 +73,7 @@ func (n node) WithTransaction(tx *bolt.Tx) Node {
 }
 
 // WithCodec returns a new Storm Node that will use the given Codec.
-func (n node) WithCodec(codec codec.EncodeDecoder) Node {
+func (n node) WithCodec(codec codec.MarshalUnmarshaler) Node {
 	n.codec = codec
 	return &n
 }
@@ -91,7 +91,7 @@ func (n *node) Bucket() []string {
 }
 
 // Codec returns the EncodeDecoder used by this instance of Storm
-func (n *node) Codec() codec.EncodeDecoder {
+func (n *node) Codec() codec.MarshalUnmarshaler {
 	return n.codec
 }
 
