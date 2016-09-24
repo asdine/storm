@@ -93,7 +93,7 @@ func (n *node) update(data interface{}, fn func(*reflect.Value, *reflect.Value, 
 		return err
 	}
 
-	raw, err := ntx.s.codec.Encode(current.Interface())
+	raw, err := ntx.s.codec.Marshal(current.Interface())
 	if err != nil {
 		return err
 	}

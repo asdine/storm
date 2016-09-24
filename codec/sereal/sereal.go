@@ -12,10 +12,10 @@ var Codec = new(serealCodec)
 
 type serealCodec int
 
-func (c serealCodec) Encode(v interface{}) ([]byte, error) {
+func (c serealCodec) Marshal(v interface{}) ([]byte, error) {
 	return sereal.Marshal(v)
 }
 
-func (c serealCodec) Decode(b []byte, v interface{}) error {
+func (c serealCodec) Unmarshal(b []byte, v interface{}) error {
 	return sereal.Unmarshal(b, v)
 }

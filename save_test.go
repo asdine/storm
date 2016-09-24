@@ -59,7 +59,7 @@ func TestSave(t *testing.T) {
 		val := bucket.Get(i)
 		assert.NotNil(t, val)
 
-		content, err := db.codec.Encode(&v)
+		content, err := db.codec.Marshal(&v)
 		assert.NoError(t, err)
 		assert.Equal(t, content, val)
 		return nil
