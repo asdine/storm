@@ -96,20 +96,20 @@ func TestBoltDB(t *testing.T) {
 
 type dummyCodec int
 
-func (c dummyCodec) Encode(v interface{}) ([]byte, error) {
+func (c dummyCodec) Marshal(v interface{}) ([]byte, error) {
 	return []byte("dummy"), nil
 }
 
-func (c dummyCodec) Decode(b []byte, v interface{}) error {
+func (c dummyCodec) Unmarshal(b []byte, v interface{}) error {
 	return nil
 }
 
 func TestCodec(t *testing.T) {
 	u1 := &SimpleUser{Name: "John"}
-	encoded, err := defaultCodec.Encode(u1)
+	encoded, err := defaultCodec.Marshal(u1)
 	assert.Nil(t, err)
 	u2 := &SimpleUser{}
-	err = defaultCodec.Decode(encoded, u2)
+	err = defaultCodec.Unmarshal(encoded, u2)
 	assert.Nil(t, err)
 	if !reflect.DeepEqual(u1, u2) {
 		t.Fatal("Codec mismatch")

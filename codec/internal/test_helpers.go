@@ -12,8 +12,8 @@ type testStruct struct {
 	Name string
 }
 
-// RoundtripTester is a test helper to test a EncodeDecoder
-func RoundtripTester(t *testing.T, c codec.EncodeDecoder, vals ...interface{}) {
+// RoundtripTester is a test helper to test a MarshalUnmarshaler
+func RoundtripTester(t *testing.T, c codec.MarshalUnmarshaler, vals ...interface{}) {
 	var val, to interface{}
 	if len(vals) > 0 {
 		if len(vals) != 2 {
@@ -26,11 +26,11 @@ func RoundtripTester(t *testing.T, c codec.EncodeDecoder, vals ...interface{}) {
 		to = &testStruct{}
 	}
 
-	encoded, err := c.Encode(val)
+	encoded, err := c.Marshal(val)
 	if err != nil {
 		t.Fatal("Encode error:", err)
 	}
-	err = c.Decode(encoded, to)
+	err = c.Unmarshal(encoded, to)
 	if err != nil {
 		t.Fatal("Decode error:", err)
 	}

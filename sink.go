@@ -21,7 +21,7 @@ type reflectSink interface {
 
 func filter(s reflectSink, node Node, tree q.Matcher, bucket *bolt.Bucket, k, v []byte) (bool, error) {
 	newElem := s.elem()
-	err := node.Codec().Decode(v, newElem.Interface())
+	err := node.Codec().Unmarshal(v, newElem.Interface())
 	if err != nil {
 		return false, err
 	}

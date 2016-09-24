@@ -8,9 +8,6 @@ Storm is a simple and powerful ORM for [BoltDB](https://github.com/boltdb/bolt).
 
 In addition to the examples below, see also the [examples in the GoDoc](https://godoc.org/github.com/asdine/storm#pkg-examples).
 
-**NEWS**
-*Update: JSON is the new default codec and replaces Gob. To keep using gob use the [`storm.Codec` option](#provided-codecs) below*
-
 ## Getting Started
 
 ```bash
@@ -279,9 +276,9 @@ You can change this behavior by using `BoltOptions`
 db, err := storm.Open("my.db", storm.BoltOptions(0600, &bolt.Options{Timeout: 1 * time.Second}))
 ```
 
-#### EncodeDecoder
+#### MarshalUnmarshaler
 
-To store the data in BoltDB, Storm encodes it in JSON by default. If you wish to change this behavior you can pass a codec that implements [`codec.EncodeDecoder`](https://godoc.org/github.com/asdine/storm/codec#EncodeDecoder) via the [`storm.Codec`](https://godoc.org/github.com/asdine/storm#Codec) option:
+To store the data in BoltDB, Storm marshals it in JSON by default. If you wish to change this behavior you can pass a codec that implements [`codec.MarshalUnmarshaler`](https://godoc.org/github.com/asdine/storm/codec#MarshalUnmarshaler) via the [`storm.Codec`](https://godoc.org/github.com/asdine/storm#Codec) option:
 
 ```go
 db := storm.Open("my.db", storm.Codec(myCodec))
@@ -289,7 +286,7 @@ db := storm.Open("my.db", storm.Codec(myCodec))
 
 ##### Provided Codecs
 
-You can easily implement your own `EncodeDecoder`, but Storm comes with built-in support for [JSON](https://godoc.org/github.com/asdine/storm/codec/json) (default), [GOB](https://godoc.org/github.com/asdine/storm/codec/gob),  [Sereal](https://godoc.org/github.com/asdine/storm/codec/sereal) and [Protocol Buffers](https://godoc.org/github.com/asdine/storm/codec/protobuf)
+You can easily implement your own `MarshalUnmarshaler`, but Storm comes with built-in support for [JSON](https://godoc.org/github.com/asdine/storm/codec/json) (default), [GOB](https://godoc.org/github.com/asdine/storm/codec/gob),  [Sereal](https://godoc.org/github.com/asdine/storm/codec/sereal) and [Protocol Buffers](https://godoc.org/github.com/asdine/storm/codec/protobuf)
 
 These can be used by importing the relevant package and use that codec to configure Storm. The example below shows all three (without proper error handling):
 
