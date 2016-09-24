@@ -1,8 +1,10 @@
 package storm
 
 import (
+	"bytes"
 	"encoding/binary"
 	"io/ioutil"
+	"math"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -130,22 +132,31 @@ func TestToBytes(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, `{"ID":10,"Name":"John"}`, string(b))
 
-	tests := map[interface{}]int64{
-		-1000:        int64(-1000),
-		1000:         int64(1000),
-		uint(1000):   int64(1000),
-		uint64(1000): int64(1000),
-		int64(-1000): int64(-1000),
-		int64(1000):  int64(1000),
+	tests := map[interface{}]interface{}{
+		int(-math.MaxInt64):    int64(-math.MaxInt64),
+		int(math.MaxInt64):     int64(math.MaxInt64),
+		int8(-math.MaxInt8):    int8(-math.MaxInt8),
+		int8(math.MaxInt8):     int8(math.MaxInt8),
+		int16(-math.MaxInt16):  int16(-math.MaxInt16),
+		int16(math.MaxInt16):   int16(math.MaxInt16),
+		int32(-math.MaxInt32):  int32(-math.MaxInt32),
+		int32(math.MaxInt32):   int32(math.MaxInt32),
+		int64(-math.MaxInt64):  int64(-math.MaxInt64),
+		int64(math.MaxInt64):   int64(math.MaxInt64),
+		uint(math.MaxUint64):   uint64(math.MaxUint64),
+		uint64(math.MaxUint64): uint64(math.MaxUint64),
 	}
 
 	for v, expected := range tests {
 		b, err = toBytes(v, nil)
 		require.NoError(t, err)
 		require.NotNil(t, b)
-		actual, n := binary.Varint(b)
-		require.True(t, n > 0)
-		require.Equal(t, expected, actual)
+		buf := bytes.NewReader(b)
+		typ := reflect.TypeOf(expected)
+		actual := reflect.New(typ)
+		err = binary.Read(buf, binary.BigEndian, actual.Interface())
+		require.NoError(t, err)
+		require.Equal(t, expected, actual.Elem().Interface())
 	}
 }
 
