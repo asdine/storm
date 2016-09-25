@@ -54,6 +54,12 @@ func (n *node) save(tx *bolt.Tx, info *modelInfo, id []byte, raw []byte, data in
 		return err
 	}
 
+	// save node configuration in the bucket
+	err = n.saveMetadata(bucket)
+	if err != nil {
+		return err
+	}
+
 	if info.ID.IsZero {
 		// isZero and integer, generate next sequence
 		intID, _ := bucket.NextSequence()

@@ -5,9 +5,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/asdine/storm/codec/gob"
 	"github.com/asdine/storm/codec/json"
 	"github.com/boltdb/bolt"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSave(t *testing.T) {
@@ -315,6 +317,18 @@ func TestSaveWithBatch(t *testing.T) {
 	}
 
 	wg.Wait()
+}
+
+func TestSaveMetadata(t *testing.T) {
+	db, cleanup := createDB(t, Batch())
+	defer cleanup()
+
+	w := User{ID: 10, Name: "John"}
+	err := db.Save(&w)
+	require.NoError(t, err)
+	n := db.WithCodec(gob.Codec)
+	err = n.Save(&w)
+	require.Equal(t, ErrDifferentCodec, err)
 }
 
 func BenchmarkSave(b *testing.B) {

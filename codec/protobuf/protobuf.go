@@ -8,6 +8,8 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
+const name = "protobuf"
+
 // More details on Protocol Buffers https://github.com/golang/protobuf
 var (
 	Codec                       = new(protobufCodec)
@@ -34,4 +36,8 @@ func (c protobufCodec) Unmarshal(b []byte, v interface{}) error {
 		return json.Codec.Unmarshal(b, v)
 	}
 	return proto.Unmarshal(b, message)
+}
+
+func (c protobufCodec) Name() string {
+	return name
 }

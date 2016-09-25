@@ -12,6 +12,7 @@ import (
 )
 
 const (
+	dbinfo         = "__storm_db"
 	metadataBucket = "__storm_metadata"
 )
 
@@ -136,14 +137,14 @@ func (s *DB) WithBatch(enabled bool) Node {
 
 func (s *DB) checkVersion() error {
 	var v string
-	err := s.Get(metadataBucket, "version", &v)
+	err := s.Get(dbinfo, "version", &v)
 	if err != nil && err != ErrNotFound {
 		return err
 	}
 
 	// for now, we only set the current version if it doesn't exist
 	if v == "" {
-		return s.Set(metadataBucket, "version", Version)
+		return s.Set(dbinfo, "version", Version)
 	}
 
 	return nil

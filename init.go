@@ -26,6 +26,12 @@ func (n *node) init(tx *bolt.Tx, info *modelInfo) error {
 		return err
 	}
 
+	// save node configuration in the bucket
+	err = n.saveMetadata(bucket)
+	if err != nil {
+		return err
+	}
+
 	for fieldName, idxInfo := range info.Indexes {
 		switch idxInfo.Type {
 		case tagUniqueIdx:

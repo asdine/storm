@@ -39,7 +39,7 @@ func TestNewStorm(t *testing.T) {
 	assert.Equal(t, defaultCodec, db.Codec())
 
 	var v string
-	err = db.Get(metadataBucket, "version", &v)
+	err = db.Get(dbinfo, "version", &v)
 	assert.NoError(t, err)
 	assert.Equal(t, Version, v)
 }
@@ -105,6 +105,10 @@ func (c dummyCodec) Marshal(v interface{}) ([]byte, error) {
 
 func (c dummyCodec) Unmarshal(b []byte, v interface{}) error {
 	return nil
+}
+
+func (c dummyCodec) Name() string {
+	return "dummy"
 }
 
 func TestCodec(t *testing.T) {
