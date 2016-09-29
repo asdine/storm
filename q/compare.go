@@ -1,6 +1,7 @@
 package q
 
 import (
+	"fmt"
 	"go/constant"
 	"go/token"
 	"reflect"
@@ -50,6 +51,24 @@ func compare(a, b interface{}, tok token.Token) bool {
 		}
 	case ak == reflect.String:
 		if bk == reflect.String {
+			return constant.Compare(constant.MakeString(vala.String()), tok, constant.MakeString(valb.String()))
+		}
+
+		st := reflect.TypeOf((*fmt.Stringer)(nil)).Elem()
+		bt := reflect.TypeOf(b)
+		if bt.Implements(st) {
+			return constant.Compare(constant.MakeString(vala.String()), tok, constant.MakeString(valb.String()))
+		}
+	case ak == reflect.Struct:
+		st := reflect.TypeOf((*fmt.Stringer)(nil)).Elem()
+		at := reflect.TypeOf(a)
+		bt := reflect.TypeOf(b)
+
+		if at.Implements(st) && bt.Implements(st) {
+			return constant.Compare(constant.MakeString(vala.String()), tok, constant.MakeString(valb.String()))
+		}
+
+		if at.Implements(st) && bk == reflect.String {
 			return constant.Compare(constant.MakeString(vala.String()), tok, constant.MakeString(valb.String()))
 		}
 	case tok == token.EQL:

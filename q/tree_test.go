@@ -3,6 +3,7 @@ package q
 import (
 	"go/token"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -24,6 +25,7 @@ func TestCompare(t *testing.T) {
 	assert.True(t, compare(10.0, "10.0", token.EQL))
 	assert.False(t, compare(10.0, "hello", token.EQL))
 	assert.True(t, compare("hello", "hello", token.EQL))
+	assert.False(t, compare(time.Date(2016, time.January, 29, 16, 20, 0, 0, time.UTC), time.Date(2016, time.September, 29, 16, 20, 0, 0, time.UTC), token.GTR))
 	assert.True(t, compare(&User{Name: "John"}, &User{Name: "John"}, token.EQL))
 	assert.False(t, compare(&User{Name: "John"}, &User{Name: "Jack"}, token.GTR))
 	assert.True(t, compare(10, 5.0, token.GTR))
