@@ -3,11 +3,17 @@ package q
 import (
 	"go/token"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
 
-type User struct {
+type A struct {
+	Age  int
+	Name string
+}
+
+type B struct {
 	Age  int
 	Name string
 }
@@ -24,17 +30,25 @@ func TestCompare(t *testing.T) {
 	assert.True(t, compare(10.0, "10.0", token.EQL))
 	assert.False(t, compare(10.0, "hello", token.EQL))
 	assert.True(t, compare("hello", "hello", token.EQL))
-	assert.True(t, compare(&User{Name: "John"}, &User{Name: "John"}, token.EQL))
-	assert.False(t, compare(&User{Name: "John"}, &User{Name: "Jack"}, token.GTR))
+	assert.True(t, compare(&A{Name: "John"}, &A{Name: "John"}, token.EQL))
+	assert.False(t, compare(&A{Name: "John"}, &A{Name: "Jack"}, token.GTR))
 	assert.True(t, compare(10, 5.0, token.GTR))
+	t1 := time.Now()
+	t2 := t1.Add(2 * time.Hour)
+	t3 := t1.Add(-2 * time.Hour)
+	assert.True(t, compare(t1, t1, token.EQL))
+	assert.True(t, compare(t1, t2, token.LSS))
+	assert.True(t, compare(t1, t3, token.GTR))
+	assert.False(t, compare(&A{Name: "John"}, t1, token.EQL))
+	assert.False(t, compare(&A{Name: "John"}, t1, token.LEQ))
 }
 
 func TestCmp(t *testing.T) {
-	a := User{
+	a := A{
 		Age: 10,
 	}
 
-	b := User{
+	b := A{
 		Age: 100,
 	}
 
@@ -56,7 +70,7 @@ func TestCmp(t *testing.T) {
 }
 
 func TestStrictEq(t *testing.T) {
-	a := User{
+	a := A{
 		Age: 10,
 	}
 
@@ -86,12 +100,12 @@ func TestStrictEq(t *testing.T) {
 }
 
 func TestAnd(t *testing.T) {
-	a := User{
+	a := A{
 		Age:  10,
 		Name: "John",
 	}
 
-	b := User{
+	b := A{
 		Age:  10,
 		Name: "Jack",
 	}
@@ -109,12 +123,12 @@ func TestAnd(t *testing.T) {
 }
 
 func TestOr(t *testing.T) {
-	a := User{
+	a := A{
 		Age:  10,
 		Name: "John",
 	}
 
-	b := User{
+	b := A{
 		Age:  10,
 		Name: "Jack",
 	}
@@ -132,12 +146,12 @@ func TestOr(t *testing.T) {
 }
 
 func TestAndOr(t *testing.T) {
-	a := User{
+	a := A{
 		Age:  10,
 		Name: "John",
 	}
 
-	b := User{
+	b := A{
 		Age:  100,
 		Name: "Jack",
 	}
