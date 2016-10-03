@@ -42,11 +42,7 @@ func (n *node) AllByIndex(fieldName string, to interface{}, options ...func(*ind
 		fn(opts)
 	}
 
-	if n.tx != nil {
-		return n.allByIndex(n.tx, fieldName, info, &ref, opts)
-	}
-
-	return n.s.Bolt.View(func(tx *bolt.Tx) error {
+	return n.readTx(func(tx *bolt.Tx) error {
 		return n.allByIndex(tx, fieldName, info, &ref, opts)
 	})
 }
@@ -83,7 +79,7 @@ func (n *node) allByIndex(tx *bolt.Tx, fieldName string, info *modelInfo, ref *r
 			return ErrNotFound
 		}
 
-		err = n.s.codec.Decode(raw, results.Index(i).Addr().Interface())
+		err = n.s.codec.Unmarshal(raw, results.Index(i).Addr().Interface())
 		if err != nil {
 			return err
 		}

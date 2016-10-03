@@ -2,8 +2,10 @@
 // to encode and decode entities in Storm.
 package codec
 
-// EncodeDecoder represents a codec used to encode and decode entities.
-type EncodeDecoder interface {
-	Encode(v interface{}) ([]byte, error)
-	Decode(b []byte, v interface{}) error
+// MarshalUnmarshaler represents a codec used to marshal and unmarshal entities.
+type MarshalUnmarshaler interface {
+	Marshal(v interface{}) ([]byte, error)
+	Unmarshal(b []byte, v interface{}) error
+	// name of this codec
+	Name() string
 }

@@ -1,12 +1,15 @@
 package storm
 
 import (
+	"sync"
 	"testing"
 	"time"
 
+	"github.com/asdine/storm/codec/gob"
 	"github.com/asdine/storm/codec/json"
 	"github.com/boltdb/bolt"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSave(t *testing.T) {
@@ -58,7 +61,7 @@ func TestSave(t *testing.T) {
 		val := bucket.Get(i)
 		assert.NotNil(t, val)
 
-		content, err := db.codec.Encode(&v)
+		content, err := db.codec.Marshal(&v)
 		assert.NoError(t, err)
 		assert.Equal(t, content, val)
 		return nil
@@ -296,6 +299,36 @@ func TestSaveByValue(t *testing.T) {
 	err := db.Save(w)
 	assert.Error(t, err)
 	assert.Equal(t, ErrStructPtrNeeded, err)
+}
+
+func TestSaveWithBatch(t *testing.T) {
+	db, cleanup := createDB(t, Batch())
+	defer cleanup()
+
+	var wg sync.WaitGroup
+
+	for i := 0; i < 5; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			err := db.Save(&User{ID: i + 1, Name: "John"})
+			assert.NoError(t, err)
+		}()
+	}
+
+	wg.Wait()
+}
+
+func TestSaveMetadata(t *testing.T) {
+	db, cleanup := createDB(t, Batch())
+	defer cleanup()
+
+	w := User{ID: 10, Name: "John"}
+	err := db.Save(&w)
+	require.NoError(t, err)
+	n := db.WithCodec(gob.Codec)
+	err = n.Save(&w)
+	require.Equal(t, ErrDifferentCodec, err)
 }
 
 func BenchmarkSave(b *testing.B) {

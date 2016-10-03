@@ -5,9 +5,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/asdine/storm/codec/gob"
 	"github.com/asdine/storm/codec/json"
 	"github.com/boltdb/bolt"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestGet(t *testing.T) {
@@ -102,6 +104,18 @@ func TestSet(t *testing.T) {
 
 	err = db.Set("b", nil, nil)
 	assert.Error(t, err)
+}
+
+func TestSetMetadata(t *testing.T) {
+	db, cleanup := createDB(t, Batch())
+	defer cleanup()
+
+	w := User{ID: 10, Name: "John"}
+	err := db.Set("User", 10, &w)
+	require.NoError(t, err)
+	n := db.WithCodec(gob.Codec)
+	err = n.Set("User", 10, &w)
+	require.Equal(t, ErrDifferentCodec, err)
 }
 
 func TestDelete(t *testing.T) {

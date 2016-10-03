@@ -22,14 +22,9 @@ func (n *node) Drop(data interface{}) error {
 		bucketName = v.Interface().(string)
 	}
 
-	if n.tx != nil {
-		return n.drop(n.tx, bucketName)
-	}
-
-	err := n.s.Bolt.Update(func(tx *bolt.Tx) error {
+	return n.readWriteTx(func(tx *bolt.Tx) error {
 		return n.drop(tx, bucketName)
 	})
-	return err
 }
 
 func (n *node) drop(tx *bolt.Tx, bucketName string) error {

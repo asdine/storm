@@ -1,6 +1,8 @@
 package storm
 
 import (
+	"bytes"
+	"encoding/binary"
 	"os"
 	"time"
 
@@ -10,6 +12,7 @@ import (
 )
 
 const (
+	dbinfo         = "__storm_db"
 	metadataBucket = "__storm_metadata"
 )
 
@@ -39,7 +42,7 @@ func Open(path string, stormOptions ...func(*DB) error) (*DB, error) {
 		s.boltOptions = &bolt.Options{Timeout: 1 * time.Second}
 	}
 
-	s.root = &node{s: s, rootBucket: s.rootBucket, codec: s.codec}
+	s.root = &node{s: s, rootBucket: s.rootBucket, codec: s.codec, batchMode: s.batchMode}
 
 	// skip if UseDB option is used
 	if s.Bolt == nil {
@@ -64,7 +67,7 @@ type DB struct {
 	Path string
 
 	// Handles encoding and decoding of objects
-	codec codec.EncodeDecoder
+	codec codec.MarshalUnmarshaler
 
 	// Bolt is still easily accessible
 	Bolt *bolt.DB
@@ -83,6 +86,9 @@ type DB struct {
 
 	// The root bucket name
 	rootBucket []string
+
+	// Enable batch mode for read-write transaction, instead of update mode
+	batchMode bool
 }
 
 // From returns a new Storm node with a new bucket root.
@@ -111,43 +117,65 @@ func (s *DB) Close() error {
 }
 
 // Codec returns the EncodeDecoder used by this instance of Storm
-func (s *DB) Codec() codec.EncodeDecoder {
+func (s *DB) Codec() codec.MarshalUnmarshaler {
 	return s.codec
 }
 
 // WithCodec returns a New Storm Node that will use the given Codec.
-func (s *DB) WithCodec(codec codec.EncodeDecoder) Node {
+func (s *DB) WithCodec(codec codec.MarshalUnmarshaler) Node {
 	n := s.From().(*node)
 	n.codec = codec
 	return n
 }
 
+// WithBatch returns a new Storm Node with the batch mode enabled.
+func (s *DB) WithBatch(enabled bool) Node {
+	n := s.From().(*node)
+	n.batchMode = enabled
+	return n
+}
+
 func (s *DB) checkVersion() error {
 	var v string
-	err := s.Get(metadataBucket, "version", &v)
+	err := s.Get(dbinfo, "version", &v)
 	if err != nil && err != ErrNotFound {
 		return err
 	}
 
 	// for now, we only set the current version if it doesn't exist
 	if v == "" {
-		return s.Set(metadataBucket, "version", Version)
+		return s.Set(dbinfo, "version", Version)
 	}
 
 	return nil
 }
 
 // toBytes turns an interface into a slice of bytes
-func toBytes(key interface{}, encoder codec.EncodeDecoder) ([]byte, error) {
+func toBytes(key interface{}, codec codec.MarshalUnmarshaler) ([]byte, error) {
 	if key == nil {
 		return nil, nil
 	}
-	if k, ok := key.([]byte); ok {
-		return k, nil
+	switch t := key.(type) {
+	case []byte:
+		return t, nil
+	case string:
+		return []byte(t), nil
+	case int:
+		return numbertob(int64(t))
+	case uint:
+		return numbertob(uint64(t))
+	case int8, int16, int32, int64, uint8, uint16, uint32, uint64:
+		return numbertob(t)
+	default:
+		return codec.Marshal(key)
 	}
-	if k, ok := key.(string); ok {
-		return []byte(k), nil
-	}
+}
 
-	return encoder.Encode(key)
+func numbertob(v interface{}) ([]byte, error) {
+	var buf bytes.Buffer
+	err := binary.Write(&buf, binary.BigEndian, v)
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
 }

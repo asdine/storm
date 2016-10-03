@@ -29,11 +29,7 @@ func (n *node) Get(bucketName string, key interface{}, to interface{}) error {
 		return err
 	}
 
-	if n.tx != nil {
-		return n.get(n.tx, bucketName, id, to)
-	}
-
-	return n.s.Bolt.View(func(tx *bolt.Tx) error {
+	return n.readTx(func(tx *bolt.Tx) error {
 		return n.get(tx, bucketName, id, to)
 	})
 }
@@ -49,7 +45,7 @@ func (n *node) get(tx *bolt.Tx, bucketName string, id []byte, to interface{}) er
 		return ErrNotFound
 	}
 
-	return n.s.codec.Decode(raw, to)
+	return n.s.codec.Unmarshal(raw, to)
 }
 
 // Set a key/value pair into a bucket
@@ -65,17 +61,13 @@ func (n *node) Set(bucketName string, key interface{}, value interface{}) error 
 
 	var data []byte
 	if value != nil {
-		data, err = n.s.codec.Encode(value)
+		data, err = n.s.codec.Marshal(value)
 		if err != nil {
 			return err
 		}
 	}
 
-	if n.tx != nil {
-		return n.set(n.tx, bucketName, id, data)
-	}
-
-	return n.s.Bolt.Update(func(tx *bolt.Tx) error {
+	return n.readWriteTx(func(tx *bolt.Tx) error {
 		return n.set(tx, bucketName, id, data)
 	})
 }
@@ -85,6 +77,13 @@ func (n *node) set(tx *bolt.Tx, bucketName string, id, data []byte) error {
 	if err != nil {
 		return err
 	}
+
+	// save node configuration in the bucket
+	err = n.saveMetadata(bucket)
+	if err != nil {
+		return err
+	}
+
 	return bucket.Put(id, data)
 }
 
@@ -95,11 +94,7 @@ func (n *node) Delete(bucketName string, key interface{}) error {
 		return err
 	}
 
-	if n.tx != nil {
-		return n.delete(n.tx, bucketName, id)
-	}
-
-	return n.s.Bolt.Update(func(tx *bolt.Tx) error {
+	return n.readWriteTx(func(tx *bolt.Tx) error {
 		return n.delete(tx, bucketName, id)
 	})
 }

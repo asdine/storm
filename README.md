@@ -8,8 +8,47 @@ Storm is a simple and powerful ORM for [BoltDB](https://github.com/boltdb/bolt).
 
 In addition to the examples below, see also the [examples in the GoDoc](https://godoc.org/github.com/asdine/storm#pkg-examples).
 
-**NEWS**
-*Update: JSON is the new default codec and replaces Gob. To keep using gob use the [`storm.Codec` option](#provided-codecs) below*
+*NEWS*: The v0.5 is incompatible with old version of Storm. A [migration](#migrations) tool has been developed to migrate databases that use older version of Storm. Any feedback would be highly appreciated.
+
+## Table of Contents
+
+<!-- TOC depthFrom:2 depthTo:6 withLinks:1 updateOnSave:0 orderedList:0 -->
+
+- [Getting Started](#getting-started)
+- [Import Storm](#import-storm)
+- [Open a database](#open-a-database)
+- [Simple ORM](#simple-orm)
+	- [Declare your structures](#declare-your-structures)
+	- [Save your object](#save-your-object)
+	- [Simple queries](#simple-queries)
+		- [Fetch one object](#fetch-one-object)
+		- [Fetch multiple objects](#fetch-multiple-objects)
+		- [Fetch all objects](#fetch-all-objects)
+		- [Fetch all objects sorted by index](#fetch-all-objects-sorted-by-index)
+		- [Fetch a range of objects](#fetch-a-range-of-objects)
+		- [Skip, Limit and Reverse](#skip-limit-and-reverse)
+		- [Delete an object](#delete-an-object)
+		- [Update an object](#update-an-object)
+		- [Initialize buckets and indexes before saving an object](#initialize-buckets-and-indexes-before-saving-an-object)
+		- [Drop a bucket](#drop-a-bucket)
+	- [Advanced queries](#advanced-queries)
+	- [Transactions](#transactions)
+	- [Options](#options)
+		- [BoltOptions](#boltoptions)
+		- [MarshalUnmarshaler](#marshalunmarshaler)
+			- [Provided Codecs](#provided-codecs)
+		- [Auto Increment](#auto-increment)
+		- [Use existing Bolt connection](#use-existing-bolt-connection)
+		- [Batch mode](#batch-mode)
+- [Nodes and nested buckets](#nodes-and-nested-buckets)
+	- [Node options](#node-options)
+- [Simple Key/Value store](#simple-keyvalue-store)
+- [BoltDB](#boltdb)
+- [Migrations](#migrations)
+- [License](#license)
+- [Credits](#credits)
+
+<!-- /TOC -->
 
 ## Getting Started
 
@@ -279,9 +318,9 @@ You can change this behavior by using `BoltOptions`
 db, err := storm.Open("my.db", storm.BoltOptions(0600, &bolt.Options{Timeout: 1 * time.Second}))
 ```
 
-#### EncodeDecoder
+#### MarshalUnmarshaler
 
-To store the data in BoltDB, Storm encodes it in JSON by default. If you wish to change this behavior you can pass a codec that implements [`codec.EncodeDecoder`](https://godoc.org/github.com/asdine/storm/codec#EncodeDecoder) via the [`storm.Codec`](https://godoc.org/github.com/asdine/storm#Codec) option:
+To store the data in BoltDB, Storm marshals it in JSON by default. If you wish to change this behavior you can pass a codec that implements [`codec.MarshalUnmarshaler`](https://godoc.org/github.com/asdine/storm/codec#MarshalUnmarshaler) via the [`storm.Codec`](https://godoc.org/github.com/asdine/storm#Codec) option:
 
 ```go
 db := storm.Open("my.db", storm.Codec(myCodec))
@@ -289,7 +328,7 @@ db := storm.Open("my.db", storm.Codec(myCodec))
 
 ##### Provided Codecs
 
-You can easily implement your own `EncodeDecoder`, but Storm comes with built-in support for [JSON](https://godoc.org/github.com/asdine/storm/codec/json) (default), [GOB](https://godoc.org/github.com/asdine/storm/codec/gob),  [Sereal](https://godoc.org/github.com/asdine/storm/codec/sereal) and [Protocol Buffers](https://godoc.org/github.com/asdine/storm/codec/protobuf)
+You can easily implement your own `MarshalUnmarshaler`, but Storm comes with built-in support for [JSON](https://godoc.org/github.com/asdine/storm/codec/json) (default), [GOB](https://godoc.org/github.com/asdine/storm/codec/gob),  [Sereal](https://godoc.org/github.com/asdine/storm/codec/sereal) and [Protocol Buffers](https://godoc.org/github.com/asdine/storm/codec/protobuf)
 
 These can be used by importing the relevant package and use that codec to configure Storm. The example below shows all three (without proper error handling):
 
@@ -334,7 +373,15 @@ You can use an existing connection and pass it to Storm
 
 ```go
 bDB, _ := bolt.Open(filepath.Join(dir, "bolt.db"), 0600, &bolt.Options{Timeout: 10 * time.Second})
-db := storm.Open("", storm.UseDB(bDB))
+db := storm.Open("my.db", storm.UseDB(bDB))
+```
+
+#### Batch mode
+
+Batch mode can be enabled to speed up concurrent writes (see [Batch read-write transactions](https://github.com/boltdb/bolt#batch-read-write-transactions))
+
+```go
+db := storm.Open("my.db", storm.Batch())
 ```
 
 ## Nodes and nested buckets
@@ -375,6 +422,29 @@ You can even pass the entire hierarchy as arguments to `From`:
 ```go
 privateNotes := db.From("notes", "private")
 workNotes :=  db.From("notes", "work")
+```
+
+### Node options
+
+A Node can also be configured. Activating an option on a Node creates a copy, so a Node is always thread-safe.
+
+```go
+n := db.From("my-node")
+```
+
+Give a bolt.Tx transaction to the Node
+```go
+n = n.WithTransaction(tx)
+```
+
+Enable batch mode
+```go
+n = n.WithBatch(true)
+```
+
+Use a Codec
+```go
+n = n.WithCodec(gob.Codec)
 ```
 
 ## Simple Key/Value store
@@ -433,6 +503,11 @@ db.Bolt.Update(func(tx *bolt.Tx) error {
   return nil
 })
 ```
+
+## Migrations
+
+You can use the migration tool to migrate databases that use older version of Storm.
+See this [README](https://github.com/asdine/storm-migrator) for more informations.
 
 ## License
 

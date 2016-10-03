@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/asdine/storm/codec/gob"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestFind(t *testing.T) {
-	db, cleanup := createDB(t, Codec(gob.Codec))
+	db, cleanup := createDB(t)
 	defer cleanup()
 
 	for i := 0; i < 100; i++ {
@@ -100,6 +100,32 @@ func TestFind(t *testing.T) {
 	assert.Len(t, users, 10)
 	assert.Equal(t, 21, users[0].ID)
 	assert.Equal(t, 30, users[9].ID)
+}
+
+func TestFindIntIndex(t *testing.T) {
+	db, cleanup := createDB(t, AutoIncrement())
+	defer cleanup()
+
+	type Score struct {
+		ID    int
+		Score uint64 `storm:"index"`
+	}
+
+	for i := 0; i < 10; i++ {
+		w := Score{Score: uint64(i % 3)}
+		err := db.Save(&w)
+		require.NoError(t, err)
+	}
+
+	var scores []Score
+	err := db.Find("Score", 2, &scores)
+	require.NoError(t, err)
+	require.Len(t, scores, 3)
+	require.Equal(t, []Score{
+		{ID: 3, Score: 2},
+		{ID: 6, Score: 2},
+		{ID: 9, Score: 2},
+	}, scores)
 }
 
 func BenchmarkFindWithIndex(b *testing.B) {

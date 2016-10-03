@@ -32,11 +32,14 @@ type Node interface {
 	// Begin starts a new transaction.
 	Begin(writable bool) (Node, error)
 
-	// Codec returns the EncodeDecoder used by this instance of Storm
-	Codec() codec.EncodeDecoder
+	// Codec used by this instance of Storm
+	Codec() codec.MarshalUnmarshaler
 
 	// WithCodec returns a New Storm Node that will use the given Codec.
-	WithCodec(codec codec.EncodeDecoder) Node
+	WithCodec(codec codec.MarshalUnmarshaler) Node
+
+	// WithBatch returns a new Storm Node with the batch mode enabled.
+	WithBatch(enabled bool) Node
 }
 
 // A Node in Storm represents the API to a BoltDB bucket.
@@ -50,7 +53,10 @@ type node struct {
 	tx *bolt.Tx
 
 	// Codec of this node
-	codec codec.EncodeDecoder
+	codec codec.MarshalUnmarshaler
+
+	// Enable batch mode for read-write transaction, instead of update mode
+	batchMode bool
 }
 
 // From returns a new Storm Node with a new bucket root below the current.
@@ -60,15 +66,21 @@ func (n node) From(addend ...string) Node {
 	return &n
 }
 
-// WithTransaction returns a New Storm Node that will use the given transaction.
+// WithTransaction returns a new Storm Node that will use the given transaction.
 func (n node) WithTransaction(tx *bolt.Tx) Node {
 	n.tx = tx
 	return &n
 }
 
-// WithCodec returns a New Storm Node that will use the given Codec.
-func (n node) WithCodec(codec codec.EncodeDecoder) Node {
+// WithCodec returns a new Storm Node that will use the given Codec.
+func (n node) WithCodec(codec codec.MarshalUnmarshaler) Node {
 	n.codec = codec
+	return &n
+}
+
+// WithBatch returns a new Storm Node with the batch mode enabled.
+func (n node) WithBatch(enabled bool) Node {
+	n.batchMode = enabled
 	return &n
 }
 
@@ -79,6 +91,54 @@ func (n *node) Bucket() []string {
 }
 
 // Codec returns the EncodeDecoder used by this instance of Storm
-func (n *node) Codec() codec.EncodeDecoder {
+func (n *node) Codec() codec.MarshalUnmarshaler {
 	return n.codec
+}
+
+// Detects if already in transaction or runs a read write transaction.
+// Uses batch mode if enabled.
+func (n *node) readWriteTx(fn func(tx *bolt.Tx) error) error {
+	if n.tx != nil {
+		return fn(n.tx)
+	}
+
+	if n.batchMode {
+		return n.s.Bolt.Batch(func(tx *bolt.Tx) error {
+			return fn(tx)
+		})
+	}
+
+	return n.s.Bolt.Update(func(tx *bolt.Tx) error {
+		return fn(tx)
+	})
+}
+
+// Detects if already in transaction or runs a read transaction.
+func (n *node) readTx(fn func(tx *bolt.Tx) error) error {
+	if n.tx != nil {
+		return fn(n.tx)
+	}
+
+	return n.s.Bolt.View(func(tx *bolt.Tx) error {
+		return fn(tx)
+	})
+}
+
+func (n *node) saveMetadata(b *bolt.Bucket) error {
+	m := b.Bucket([]byte(metadataBucket))
+	if m != nil {
+		name := m.Get([]byte("codec"))
+		if string(name) != n.Codec().Name() {
+			return ErrDifferentCodec
+		}
+		return nil
+	}
+
+	m, err := b.CreateBucket([]byte(metadataBucket))
+	if err != nil {
+		return err
+	}
+
+	m.Put([]byte("codec"), []byte(n.Codec().Name()))
+	return nil
 }

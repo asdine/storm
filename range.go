@@ -43,13 +43,9 @@ func (n *node) Range(fieldName string, min, max, to interface{}, options ...func
 			query.Reverse()
 		}
 
-		if n.tx != nil {
-			err = query.query(n.tx, sink)
-		} else {
-			err = n.s.Bolt.View(func(tx *bolt.Tx) error {
-				return query.query(tx, sink)
-			})
-		}
+		err = n.readTx(func(tx *bolt.Tx) error {
+			return query.query(tx, sink)
+		})
 
 		if err != nil {
 			return err

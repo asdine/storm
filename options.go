@@ -18,9 +18,17 @@ func BoltOptions(mode os.FileMode, options *bolt.Options) func(*DB) error {
 }
 
 // Codec used to set a custom encoder and decoder. The default is JSON.
-func Codec(c codec.EncodeDecoder) func(*DB) error {
+func Codec(c codec.MarshalUnmarshaler) func(*DB) error {
 	return func(d *DB) error {
 		d.codec = c
+		return nil
+	}
+}
+
+// Batch enables the use of batch instead of update for read-write transactions.
+func Batch() func(*DB) error {
+	return func(d *DB) error {
+		d.batchMode = true
 		return nil
 	}
 }

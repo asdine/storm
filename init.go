@@ -15,18 +15,19 @@ func (n *node) Init(data interface{}) error {
 		return err
 	}
 
-	if n.tx != nil {
-		return n.init(n.tx, info)
-	}
-
-	err = n.s.Bolt.Update(func(tx *bolt.Tx) error {
+	return n.readWriteTx(func(tx *bolt.Tx) error {
 		return n.init(tx, info)
 	})
-	return err
 }
 
 func (n *node) init(tx *bolt.Tx, info *modelInfo) error {
 	bucket, err := n.CreateBucketIfNotExists(tx, info.Name)
+	if err != nil {
+		return err
+	}
+
+	// save node configuration in the bucket
+	err = n.saveMetadata(bucket)
 	if err != nil {
 		return err
 	}

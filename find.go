@@ -93,13 +93,9 @@ func (n *node) Find(fieldName string, value interface{}, to interface{}, options
 			query.Reverse()
 		}
 
-		if n.tx != nil {
-			err = query.query(n.tx, sink)
-		} else {
-			err = n.s.Bolt.View(func(tx *bolt.Tx) error {
-				return query.query(tx, sink)
-			})
-		}
+		err = n.readTx(func(tx *bolt.Tx) error {
+			return query.query(tx, sink)
+		})
 
 		if err != nil {
 			return err
@@ -113,11 +109,7 @@ func (n *node) Find(fieldName string, value interface{}, to interface{}, options
 		return err
 	}
 
-	if n.tx != nil {
-		return n.find(n.tx, bucketName, fieldName, tag, sink, val, opts)
-	}
-
-	return n.s.Bolt.View(func(tx *bolt.Tx) error {
+	return n.readTx(func(tx *bolt.Tx) error {
 		return n.find(tx, bucketName, fieldName, tag, sink, val, opts)
 	})
 }

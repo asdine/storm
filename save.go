@@ -37,23 +37,25 @@ func (n *node) Save(data interface{}) error {
 	var raw []byte
 	// postpone encoding if AutoIncrement mode if enabled
 	if !n.s.autoIncrement {
-		raw, err = n.s.codec.Encode(data)
+		raw, err = n.s.codec.Marshal(data)
 		if err != nil {
 			return err
 		}
 	}
 
-	if n.tx != nil {
-		return n.save(n.tx, info, id, raw, data)
-	}
-
-	return n.s.Bolt.Update(func(tx *bolt.Tx) error {
+	return n.readWriteTx(func(tx *bolt.Tx) error {
 		return n.save(tx, info, id, raw, data)
 	})
 }
 
 func (n *node) save(tx *bolt.Tx, info *modelInfo, id []byte, raw []byte, data interface{}) error {
 	bucket, err := n.CreateBucketIfNotExists(tx, info.Name)
+	if err != nil {
+		return err
+	}
+
+	// save node configuration in the bucket
+	err = n.saveMetadata(bucket)
 	if err != nil {
 		return err
 	}
@@ -72,7 +74,7 @@ func (n *node) save(tx *bolt.Tx, info *modelInfo, id []byte, raw []byte, data in
 
 	if data != nil {
 		if n.s.autoIncrement {
-			raw, err = n.s.codec.Encode(data)
+			raw, err = n.s.codec.Marshal(data)
 			if err != nil {
 				return err
 			}
