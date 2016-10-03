@@ -8,6 +8,48 @@ Storm is a simple and powerful ORM for [BoltDB](https://github.com/boltdb/bolt).
 
 In addition to the examples below, see also the [examples in the GoDoc](https://godoc.org/github.com/asdine/storm#pkg-examples).
 
+*NEWS*: The v0.5 is incompatible with old version of Storm. A [migration](#migrations) tool has been developed to migrate databases that use older version of Storm. Any feedback would be highly appreciated.
+
+## Table of Contents
+
+<!-- TOC depthFrom:2 depthTo:6 withLinks:1 updateOnSave:0 orderedList:0 -->
+
+- [Getting Started](#getting-started)
+- [Import Storm](#import-storm)
+- [Open a database](#open-a-database)
+- [Simple ORM](#simple-orm)
+	- [Declare your structures](#declare-your-structures)
+	- [Save your object](#save-your-object)
+	- [Simple queries](#simple-queries)
+		- [Fetch one object](#fetch-one-object)
+		- [Fetch multiple objects](#fetch-multiple-objects)
+		- [Fetch all objects](#fetch-all-objects)
+		- [Fetch all objects sorted by index](#fetch-all-objects-sorted-by-index)
+		- [Fetch a range of objects](#fetch-a-range-of-objects)
+		- [Skip, Limit and Reverse](#skip-limit-and-reverse)
+		- [Delete an object](#delete-an-object)
+		- [Update an object](#update-an-object)
+		- [Initialize buckets and indexes before saving an object](#initialize-buckets-and-indexes-before-saving-an-object)
+		- [Drop a bucket](#drop-a-bucket)
+	- [Advanced queries](#advanced-queries)
+	- [Transactions](#transactions)
+	- [Options](#options)
+		- [BoltOptions](#boltoptions)
+		- [MarshalUnmarshaler](#marshalunmarshaler)
+			- [Provided Codecs](#provided-codecs)
+		- [Auto Increment](#auto-increment)
+		- [Use existing Bolt connection](#use-existing-bolt-connection)
+		- [Batch mode](#batch-mode)
+- [Nodes and nested buckets](#nodes-and-nested-buckets)
+	- [Node options](#node-options)
+- [Simple Key/Value store](#simple-keyvalue-store)
+- [BoltDB](#boltdb)
+- [Migrations](#migrations)
+- [License](#license)
+- [Credits](#credits)
+
+<!-- /TOC -->
+
 ## Getting Started
 
 ```bash
@@ -461,6 +503,11 @@ db.Bolt.Update(func(tx *bolt.Tx) error {
   return nil
 })
 ```
+
+## Migrations
+
+You can use the migration tool to migrate databases that use older version of Storm.
+See this [README](https://github.com/asdine/storm-migrator) for more informations.
 
 ## License
 
