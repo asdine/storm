@@ -55,7 +55,7 @@ func (n *node) save(tx *bolt.Tx, cfg *structConfig, id []byte, raw []byte, data 
 	}
 
 	// save node configuration in the bucket
-	err = n.saveMetadata(bucket)
+	metab, err := n.metadataBucket(bucket)
 	if err != nil {
 		return err
 	}
@@ -82,6 +82,27 @@ func (n *node) save(tx *bolt.Tx, cfg *structConfig, id []byte, raw []byte, data 
 	}
 
 	for fieldName, fieldCfg := range cfg.Fields {
+		if fieldCfg.Increment && fieldCfg.IsInteger && fieldCfg.IsZero {
+			var counter int64
+			raw := metab.Get([]byte(fieldName + "counter"))
+			if raw != nil {
+				counter, err = numberfromb(raw)
+				if err != nil {
+					return err
+				}
+			}
+			counter++
+			raw, err = numbertob(counter)
+			if err != nil {
+				return err
+			}
+			err = metab.Put([]byte(fieldName+"counter"), raw)
+			if err != nil {
+				return err
+			}
+			fieldCfg.Value.SetInt(counter)
+		}
+
 		if fieldCfg.Index == "" {
 			continue
 		}

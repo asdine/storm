@@ -27,7 +27,7 @@ func (n *node) init(tx *bolt.Tx, cfg *structConfig) error {
 	}
 
 	// save node configuration in the bucket
-	err = n.saveMetadata(bucket)
+	_, err = n.metadataBucket(bucket)
 	if err != nil {
 		return err
 	}
