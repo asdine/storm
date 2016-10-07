@@ -36,8 +36,12 @@ func (n *node) deleteStruct(tx *bolt.Tx, cfg *structConfig, id []byte) error {
 		return ErrNotFound
 	}
 
-	for fieldName, idxInfo := range cfg.Fields {
-		idx, err := getIndex(bucket, idxInfo.Type, fieldName)
+	for fieldName, fieldCfg := range cfg.Fields {
+		if fieldCfg.Index == "" {
+			continue
+		}
+
+		idx, err := getIndex(bucket, fieldCfg.Index, fieldName)
 		if err != nil {
 			return err
 		}
