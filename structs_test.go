@@ -35,7 +35,7 @@ type ClassicUnique struct {
 	privateField2 string    `storm:"unique"`
 	Date          time.Time `storm:"unique"`
 	InlineStruct  struct {
-		a float32
+		A float32
 		B float64
 	} `storm:"unique"`
 	Interf io.Writer `storm:"unique"`

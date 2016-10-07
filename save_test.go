@@ -103,6 +103,25 @@ func TestSaveUnique(t *testing.T) {
 	})
 }
 
+func TestSaveUniqueStruct(t *testing.T) {
+	db, cleanup := createDB(t)
+	defer cleanup()
+
+	a := ClassicUnique{ID: "id1"}
+	a.InlineStruct.A = 10.0
+	a.InlineStruct.B = 12.0
+
+	err := db.Save(&a)
+	require.NoError(t, err)
+
+	b := ClassicUnique{ID: "id2"}
+	b.InlineStruct.A = 10.0
+	b.InlineStruct.B = 12.0
+
+	err = db.Save(&b)
+	require.Equal(t, ErrAlreadyExists, err)
+}
+
 func TestSaveIndex(t *testing.T) {
 	db, cleanup := createDB(t)
 	defer cleanup()
