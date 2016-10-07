@@ -81,13 +81,17 @@ func (n *node) save(tx *bolt.Tx, cfg *structConfig, id []byte, raw []byte, data 
 		}
 	}
 
-	for fieldName, idxInfo := range cfg.Fields {
-		idx, err := getIndex(bucket, idxInfo.Type, fieldName)
+	for fieldName, fieldCfg := range cfg.Fields {
+		if fieldCfg.Index == "" {
+			continue
+		}
+
+		idx, err := getIndex(bucket, fieldCfg.Index, fieldName)
 		if err != nil {
 			return err
 		}
 
-		if idxInfo.IsZero {
+		if fieldCfg.IsZero {
 			err = idx.RemoveID(id)
 			if err != nil {
 				return err
@@ -95,7 +99,7 @@ func (n *node) save(tx *bolt.Tx, cfg *structConfig, id []byte, raw []byte, data 
 			continue
 		}
 
-		value, err := toBytes(idxInfo.Value.Interface(), n.s.codec)
+		value, err := toBytes(fieldCfg.Value.Interface(), n.s.codec)
 		if err != nil {
 			return err
 		}

@@ -32,8 +32,11 @@ func (n *node) init(tx *bolt.Tx, cfg *structConfig) error {
 		return err
 	}
 
-	for fieldName, idxInfo := range cfg.Fields {
-		switch idxInfo.Type {
+	for fieldName, fieldCfg := range cfg.Fields {
+		if fieldCfg.Index == "" {
+			continue
+		}
+		switch fieldCfg.Index {
 		case tagUniqueIdx:
 			_, err = index.NewUniqueIndex(bucket, []byte(indexPrefix+fieldName))
 		case tagIdx:

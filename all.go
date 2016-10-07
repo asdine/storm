@@ -53,12 +53,12 @@ func (n *node) allByIndex(tx *bolt.Tx, fieldName string, cfg *structConfig, ref 
 		return ErrNotFound
 	}
 
-	idxInfo, ok := cfg.Fields[fieldName]
+	fieldCfg, ok := cfg.Fields[fieldName]
 	if !ok {
 		return ErrNotFound
 	}
 
-	idx, err := getIndex(bucket, idxInfo.Type, fieldName)
+	idx, err := getIndex(bucket, fieldCfg.Index, fieldName)
 	if err != nil {
 		return err
 	}

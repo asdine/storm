@@ -3,6 +3,7 @@ package storm
 import (
 	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/asdine/storm/index"
 	"github.com/asdine/storm/q"
@@ -56,8 +57,14 @@ func (n *node) One(fieldName string, value interface{}, to interface{}) error {
 		return err
 	}
 
+	var isID bool
+	if tag != "" {
+		tags := strings.Split(tag, ",")
+		isID = tags[0] == ""
+	}
+
 	return n.readTx(func(tx *bolt.Tx) error {
-		return n.one(tx, bucketName, fieldName, tag, to, val, fieldName == "ID" || tag == "id")
+		return n.one(tx, bucketName, fieldName, tag, to, val, fieldName == "ID" || isID)
 	})
 }
 

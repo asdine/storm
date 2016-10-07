@@ -7,6 +7,17 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func allByType(m *structConfig, indexType string) []*fieldConfig {
+	var idx []*fieldConfig
+	for k := range m.Fields {
+		if m.Fields[k].Index == indexType {
+			idx = append(idx, m.Fields[k])
+		}
+	}
+
+	return idx
+}
+
 func TestExtractNoTags(t *testing.T) {
 	s := ClassicNoTags{}
 	r := reflect.ValueOf(&s)
@@ -33,8 +44,8 @@ func TestExtractUniqueTags(t *testing.T) {
 	assert.NotNil(t, infos.ID)
 	assert.False(t, infos.ID.IsZero)
 	assert.Equal(t, "ClassicUnique", infos.Name)
-	assert.Len(t, infos.AllByType("index"), 0)
-	assert.Len(t, infos.AllByType("unique"), 4)
+	assert.Len(t, allByType(infos, "index"), 0)
+	assert.Len(t, allByType(infos, "unique"), 4)
 }
 
 func TestExtractIndexTags(t *testing.T) {
@@ -46,8 +57,8 @@ func TestExtractIndexTags(t *testing.T) {
 	assert.NotNil(t, infos.ID)
 	assert.False(t, infos.ID.IsZero)
 	assert.Equal(t, "ClassicIndex", infos.Name)
-	assert.Len(t, infos.AllByType("index"), 5)
-	assert.Len(t, infos.AllByType("unique"), 0)
+	assert.Len(t, allByType(infos, "index"), 5)
+	assert.Len(t, allByType(infos, "unique"), 0)
 }
 
 func TestExtractInlineWithIndex(t *testing.T) {
@@ -58,6 +69,6 @@ func TestExtractInlineWithIndex(t *testing.T) {
 	assert.NotNil(t, infos)
 	assert.NotNil(t, infos.ID)
 	assert.Equal(t, "ClassicInline", infos.Name)
-	assert.Len(t, infos.AllByType("index"), 3)
-	assert.Len(t, infos.AllByType("unique"), 2)
+	assert.Len(t, allByType(infos, "index"), 3)
+	assert.Len(t, allByType(infos, "unique"), 2)
 }

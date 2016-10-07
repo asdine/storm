@@ -14,12 +14,13 @@ const (
 	tagIdx       = "index"
 	tagUniqueIdx = "unique"
 	tagInline    = "inline"
+	tagIncrement = "increment"
 	indexPrefix  = "__storm_index_"
 )
 
 type fieldConfig struct {
 	Name      string
-	Type      string
+	Index     string
 	IsZero    bool
 	IsID      bool
 	Increment bool
@@ -32,18 +33,6 @@ type structConfig struct {
 	Name   string
 	Fields map[string]*fieldConfig
 	ID     *fieldConfig
-}
-
-// helper
-func (m *structConfig) AllByType(indexType string) []*fieldConfig {
-	var idx []*fieldConfig
-	for k := range m.Fields {
-		if m.Fields[k].Type == indexType {
-			idx = append(idx, m.Fields[k])
-		}
-	}
-
-	return idx
 }
 
 func extract(s *reflect.Value, mi ...*structConfig) (*structConfig, error) {
@@ -130,7 +119,9 @@ func extractField(value *reflect.Value, field *reflect.StructField, m *structCon
 			case "id":
 				f.IsID = true
 			case tagUniqueIdx, tagIdx:
-				f.Type = tag
+				f.Index = tag
+			case tagIncrement:
+				f.Increment = true
 			case tagInline:
 				if value.Kind() == reflect.Ptr {
 					e := value.Elem()
@@ -150,10 +141,8 @@ func extractField(value *reflect.Value, field *reflect.StructField, m *structCon
 			}
 		}
 
-		if f.Type != "" {
-			if _, ok := m.Fields[f.Name]; !ok || !isChild {
-				m.Fields[f.Name] = f
-			}
+		if _, ok := m.Fields[f.Name]; !ok || !isChild {
+			m.Fields[f.Name] = f
 		}
 	}
 
