@@ -15,28 +15,28 @@ func (n *node) DeleteStruct(data interface{}) error {
 		return ErrStructPtrNeeded
 	}
 
-	info, err := extract(&ref)
+	cfg, err := extract(&ref)
 	if err != nil {
 		return err
 	}
 
-	id, err := toBytes(info.ID.Value.Interface(), n.s.codec)
+	id, err := toBytes(cfg.ID.Value.Interface(), n.s.codec)
 	if err != nil {
 		return err
 	}
 
 	return n.readWriteTx(func(tx *bolt.Tx) error {
-		return n.deleteStruct(tx, info, id)
+		return n.deleteStruct(tx, cfg, id)
 	})
 }
 
-func (n *node) deleteStruct(tx *bolt.Tx, info *modelInfo, id []byte) error {
-	bucket := n.GetBucket(tx, info.Name)
+func (n *node) deleteStruct(tx *bolt.Tx, cfg *structConfig, id []byte) error {
+	bucket := n.GetBucket(tx, cfg.Name)
 	if bucket == nil {
 		return ErrNotFound
 	}
 
-	for fieldName, idxInfo := range info.Indexes {
+	for fieldName, idxInfo := range cfg.Fields {
 		idx, err := getIndex(bucket, idxInfo.Type, fieldName)
 		if err != nil {
 			return err
