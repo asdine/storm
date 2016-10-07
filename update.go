@@ -4,7 +4,7 @@ import "reflect"
 
 // Update a structure
 func (n *node) Update(data interface{}) error {
-	return n.update(data, func(ref *reflect.Value, current *reflect.Value, info *modelInfo) error {
+	return n.update(data, func(ref *reflect.Value, current *reflect.Value, cfg *structConfig) error {
 		numfield := ref.NumField()
 		for i := 0; i < numfield; i++ {
 			f := ref.Field(i)
@@ -16,7 +16,7 @@ func (n *node) Update(data interface{}) error {
 			if !reflect.DeepEqual(actual, zero) {
 				cf := current.Field(i)
 				cf.Set(f)
-				idxInfo, ok := info.Indexes[ref.Type().Field(i).Name]
+				idxInfo, ok := cfg.Fields[ref.Type().Field(i).Name]
 				if ok {
 					idxInfo.Value = &cf
 				}
@@ -28,7 +28,7 @@ func (n *node) Update(data interface{}) error {
 
 // UpdateField updates a single field
 func (n *node) UpdateField(data interface{}, fieldName string, value interface{}) error {
-	return n.update(data, func(ref *reflect.Value, current *reflect.Value, info *modelInfo) error {
+	return n.update(data, func(ref *reflect.Value, current *reflect.Value, cfg *structConfig) error {
 		f := current.FieldByName(fieldName)
 		if !f.IsValid() {
 			return ErrNotFound
@@ -42,32 +42,32 @@ func (n *node) UpdateField(data interface{}, fieldName string, value interface{}
 			return ErrIncompatibleValue
 		}
 		f.Set(v)
-		idxInfo, ok := info.Indexes[fieldName]
+		idxInfo, ok := cfg.Fields[fieldName]
 		if ok {
 			idxInfo.Value = &f
-			idxInfo.IsZero = idxInfo.isZero()
+			idxInfo.IsZero = isZero(idxInfo.Value)
 		}
 		return nil
 	})
 }
 
-func (n *node) update(data interface{}, fn func(*reflect.Value, *reflect.Value, *modelInfo) error) error {
+func (n *node) update(data interface{}, fn func(*reflect.Value, *reflect.Value, *structConfig) error) error {
 	ref := reflect.ValueOf(data)
 
 	if !ref.IsValid() || ref.Kind() != reflect.Ptr || ref.Elem().Kind() != reflect.Struct {
 		return ErrStructPtrNeeded
 	}
 
-	info, err := extract(&ref)
+	cfg, err := extract(&ref)
 	if err != nil {
 		return err
 	}
 
-	if info.ID.IsZero {
+	if cfg.ID.IsZero {
 		return ErrNoID
 	}
 
-	id, err := toBytes(info.ID.Value.Interface(), n.s.codec)
+	id, err := toBytes(cfg.ID.Value.Interface(), n.s.codec)
 	if err != nil {
 		return err
 	}
@@ -81,14 +81,14 @@ func (n *node) update(data interface{}, fn func(*reflect.Value, *reflect.Value, 
 	defer tx.Rollback()
 
 	ntx := tx.(*node)
-	err = ntx.One(info.ID.FieldName, info.ID.Value.Interface(), current.Interface())
+	err = ntx.One(cfg.ID.Name, cfg.ID.Value.Interface(), current.Interface())
 	if err != nil {
 		return err
 	}
 
 	ref = ref.Elem()
 	cref := current.Elem()
-	err = fn(&ref, &cref, info)
+	err = fn(&ref, &cref, cfg)
 	if err != nil {
 		return err
 	}
@@ -98,7 +98,7 @@ func (n *node) update(data interface{}, fn func(*reflect.Value, *reflect.Value, 
 		return err
 	}
 
-	err = ntx.save(ntx.tx, info, id, raw, nil)
+	err = ntx.save(ntx.tx, cfg, id, raw, nil)
 	if err != nil {
 		return err
 	}

@@ -10,18 +10,18 @@ import (
 // Init creates the indexes and buckets for a given structure
 func (n *node) Init(data interface{}) error {
 	v := reflect.ValueOf(data)
-	info, err := extract(&v)
+	cfg, err := extract(&v)
 	if err != nil {
 		return err
 	}
 
 	return n.readWriteTx(func(tx *bolt.Tx) error {
-		return n.init(tx, info)
+		return n.init(tx, cfg)
 	})
 }
 
-func (n *node) init(tx *bolt.Tx, info *modelInfo) error {
-	bucket, err := n.CreateBucketIfNotExists(tx, info.Name)
+func (n *node) init(tx *bolt.Tx, cfg *structConfig) error {
+	bucket, err := n.CreateBucketIfNotExists(tx, cfg.Name)
 	if err != nil {
 		return err
 	}
@@ -32,7 +32,7 @@ func (n *node) init(tx *bolt.Tx, info *modelInfo) error {
 		return err
 	}
 
-	for fieldName, idxInfo := range info.Indexes {
+	for fieldName, idxInfo := range cfg.Fields {
 		switch idxInfo.Type {
 		case tagUniqueIdx:
 			_, err = index.NewUniqueIndex(bucket, []byte(indexPrefix+fieldName))

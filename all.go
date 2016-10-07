@@ -28,12 +28,12 @@ func (n *node) AllByIndex(fieldName string, to interface{}, options ...func(*ind
 
 	newElem := reflect.New(typ)
 
-	info, err := extract(&newElem)
+	cfg, err := extract(&newElem)
 	if err != nil {
 		return err
 	}
 
-	if info.ID.FieldName == fieldName {
+	if cfg.ID.Name == fieldName {
 		return n.All(to, options...)
 	}
 
@@ -43,17 +43,17 @@ func (n *node) AllByIndex(fieldName string, to interface{}, options ...func(*ind
 	}
 
 	return n.readTx(func(tx *bolt.Tx) error {
-		return n.allByIndex(tx, fieldName, info, &ref, opts)
+		return n.allByIndex(tx, fieldName, cfg, &ref, opts)
 	})
 }
 
-func (n *node) allByIndex(tx *bolt.Tx, fieldName string, info *modelInfo, ref *reflect.Value, opts *index.Options) error {
-	bucket := n.GetBucket(tx, info.Name)
+func (n *node) allByIndex(tx *bolt.Tx, fieldName string, cfg *structConfig, ref *reflect.Value, opts *index.Options) error {
+	bucket := n.GetBucket(tx, cfg.Name)
 	if bucket == nil {
 		return ErrNotFound
 	}
 
-	idxInfo, ok := info.Indexes[fieldName]
+	idxInfo, ok := cfg.Fields[fieldName]
 	if !ok {
 		return ErrNotFound
 	}

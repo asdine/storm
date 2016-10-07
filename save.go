@@ -16,19 +16,19 @@ func (n *node) Save(data interface{}) error {
 		return ErrStructPtrNeeded
 	}
 
-	info, err := extract(&ref)
+	cfg, err := extract(&ref)
 	if err != nil {
 		return err
 	}
 
 	var id []byte
 
-	if info.ID.IsZero {
-		if !info.ID.IsOfIntegerFamily() || !n.s.autoIncrement {
+	if cfg.ID.IsZero {
+		if !cfg.ID.IsInteger || !n.s.autoIncrement {
 			return ErrZeroID
 		}
 	} else {
-		id, err = toBytes(info.ID.Value.Interface(), n.s.codec)
+		id, err = toBytes(cfg.ID.Value.Interface(), n.s.codec)
 		if err != nil {
 			return err
 		}
@@ -44,12 +44,12 @@ func (n *node) Save(data interface{}) error {
 	}
 
 	return n.readWriteTx(func(tx *bolt.Tx) error {
-		return n.save(tx, info, id, raw, data)
+		return n.save(tx, cfg, id, raw, data)
 	})
 }
 
-func (n *node) save(tx *bolt.Tx, info *modelInfo, id []byte, raw []byte, data interface{}) error {
-	bucket, err := n.CreateBucketIfNotExists(tx, info.Name)
+func (n *node) save(tx *bolt.Tx, cfg *structConfig, id []byte, raw []byte, data interface{}) error {
+	bucket, err := n.CreateBucketIfNotExists(tx, cfg.Name)
 	if err != nil {
 		return err
 	}
@@ -60,13 +60,13 @@ func (n *node) save(tx *bolt.Tx, info *modelInfo, id []byte, raw []byte, data in
 		return err
 	}
 
-	if info.ID.IsZero {
+	if cfg.ID.IsZero {
 		// isZero and integer, generate next sequence
 		intID, _ := bucket.NextSequence()
 
 		// convert to the right integer size
-		info.ID.Value.Set(reflect.ValueOf(intID).Convert(info.ID.Type()))
-		id, err = toBytes(info.ID.Value.Interface(), n.s.codec)
+		cfg.ID.Value.Set(reflect.ValueOf(intID).Convert(cfg.ID.Value.Type()))
+		id, err = toBytes(cfg.ID.Value.Interface(), n.s.codec)
 		if err != nil {
 			return err
 		}
@@ -81,7 +81,7 @@ func (n *node) save(tx *bolt.Tx, info *modelInfo, id []byte, raw []byte, data in
 		}
 	}
 
-	for fieldName, idxInfo := range info.Indexes {
+	for fieldName, idxInfo := range cfg.Fields {
 		idx, err := getIndex(bucket, idxInfo.Type, fieldName)
 		if err != nil {
 			return err
