@@ -179,3 +179,13 @@ func numbertob(v interface{}) ([]byte, error) {
 	}
 	return buf.Bytes(), nil
 }
+
+func numberfromb(raw []byte) (int64, error) {
+	r := bytes.NewReader(raw)
+	var to int64
+	err := binary.Read(r, binary.BigEndian, &to)
+	if err != nil {
+		return 0, err
+	}
+	return to, nil
+}

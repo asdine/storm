@@ -254,6 +254,19 @@ func TestSaveAutoIncrement(t *testing.T) {
 	assert.Equal(t, ErrZeroID, err)
 }
 
+func TestSaveIncrement(t *testing.T) {
+	db, cleanup := createDB(t, AutoIncrement())
+	defer cleanup()
+
+	for i := 1; i < 10; i++ {
+		s := UserWithIncrementField{Name: "John"}
+		err := db.Save(&s)
+		assert.NoError(t, err)
+		assert.Equal(t, i, s.ID)
+		assert.Equal(t, i, s.Age)
+	}
+}
+
 func TestSaveDifferentBucketRoot(t *testing.T) {
 	db, cleanup := createDB(t)
 	defer cleanup()
