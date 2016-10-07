@@ -120,6 +120,13 @@ func TestSaveUniqueStruct(t *testing.T) {
 
 	err = db.Save(&b)
 	require.Equal(t, ErrAlreadyExists, err)
+
+	err = db.One("InlineStruct", struct {
+		A float32
+		B float64
+	}{A: 10.0, B: 12.0}, &b)
+	require.NoError(t, err)
+	require.Equal(t, a.ID, b.ID)
 }
 
 func TestSaveIndex(t *testing.T) {
