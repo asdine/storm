@@ -123,22 +123,3 @@ func (n *node) readTx(fn func(tx *bolt.Tx) error) error {
 		return fn(tx)
 	})
 }
-
-func (n *node) metadataBucket(b *bolt.Bucket) (*bolt.Bucket, error) {
-	m := b.Bucket([]byte(metadataBucket))
-	if m != nil {
-		name := m.Get([]byte("codec"))
-		if string(name) != n.Codec().Name() {
-			return nil, ErrDifferentCodec
-		}
-		return m, nil
-	}
-
-	m, err := b.CreateBucket([]byte(metadataBucket))
-	if err != nil {
-		return nil, err
-	}
-
-	m.Put([]byte("codec"), []byte(n.Codec().Name()))
-	return m, nil
-}

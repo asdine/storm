@@ -54,7 +54,7 @@ func (n *node) init(tx *bolt.Tx, cfg *structConfig) error {
 	}
 
 	// save node configuration in the bucket
-	_, err = n.metadataBucket(bucket)
+	_, err = newMeta(bucket, n)
 	if err != nil {
 		return err
 	}
@@ -93,86 +93,47 @@ func (n *node) Save(data interface{}) error {
 		return err
 	}
 
-	var id []byte
-
 	if cfg.ID.IsZero {
-		if !cfg.ID.IsInteger || !n.s.autoIncrement {
+		if !cfg.ID.IsInteger || (!n.s.autoIncrement && !cfg.ID.Increment) {
 			return ErrZeroID
-		}
-	} else {
-		id, err = toBytes(cfg.ID.Value.Interface(), n.s.codec)
-		if err != nil {
-			return err
-		}
-	}
-
-	var raw []byte
-	// postpone encoding if AutoIncrement mode if enabled
-	if !n.s.autoIncrement {
-		raw, err = n.s.codec.Marshal(data)
-		if err != nil {
-			return err
 		}
 	}
 
 	return n.readWriteTx(func(tx *bolt.Tx) error {
-		return n.save(tx, cfg, id, raw, data)
+		return n.save(tx, cfg, data, true)
 	})
 }
 
-func (n *node) save(tx *bolt.Tx, cfg *structConfig, id []byte, raw []byte, data interface{}) error {
+func (n *node) save(tx *bolt.Tx, cfg *structConfig, data interface{}, edit bool) error {
 	bucket, err := n.CreateBucketIfNotExists(tx, cfg.Name)
 	if err != nil {
 		return err
 	}
 
 	// save node configuration in the bucket
-	metab, err := n.metadataBucket(bucket)
+	meta, err := newMeta(bucket, n)
 	if err != nil {
 		return err
 	}
 
 	if cfg.ID.IsZero {
-		// isZero and integer, generate next sequence
-		intID, _ := bucket.NextSequence()
-
-		// convert to the right integer size
-		cfg.ID.Value.Set(reflect.ValueOf(intID).Convert(cfg.ID.Value.Type()))
-		id, err = toBytes(cfg.ID.Value.Interface(), n.s.codec)
+		err = meta.increment(cfg.ID)
 		if err != nil {
 			return err
 		}
 	}
 
-	if data != nil {
-		if n.s.autoIncrement {
-			raw, err = n.s.codec.Marshal(data)
-			if err != nil {
-				return err
-			}
-		}
+	id, err := toBytes(cfg.ID.Value.Interface(), n.s.codec)
+	if err != nil {
+		return err
 	}
 
 	for fieldName, fieldCfg := range cfg.Fields {
-		if fieldCfg.Increment && fieldCfg.IsInteger && fieldCfg.IsZero {
-			var counter int64
-			raw := metab.Get([]byte(fieldName + "counter"))
-			if raw != nil {
-				counter, err = numberfromb(raw)
-				if err != nil {
-					return err
-				}
-			}
-			counter++
-			raw, err = numbertob(counter)
+		if edit && !fieldCfg.IsID && fieldCfg.Increment && fieldCfg.IsInteger && fieldCfg.IsZero {
+			err = meta.increment(fieldCfg)
 			if err != nil {
 				return err
 			}
-			err = metab.Put([]byte(fieldName+"counter"), raw)
-			if err != nil {
-				return err
-			}
-			fieldCfg.Value.SetInt(counter)
 		}
 
 		if fieldCfg.Index == "" {
@@ -225,6 +186,11 @@ func (n *node) save(tx *bolt.Tx, cfg *structConfig, id []byte, raw []byte, data 
 			}
 			return err
 		}
+	}
+
+	raw, err := n.s.codec.Marshal(data)
+	if err != nil {
+		return err
 	}
 
 	return bucket.Put(id, raw)
@@ -295,11 +261,6 @@ func (n *node) update(data interface{}, fn func(*reflect.Value, *reflect.Value, 
 		return ErrNoID
 	}
 
-	id, err := toBytes(cfg.ID.Value.Interface(), n.s.codec)
-	if err != nil {
-		return err
-	}
-
 	current := reflect.New(reflect.Indirect(ref).Type())
 
 	tx, err := n.Begin(true)
@@ -321,12 +282,7 @@ func (n *node) update(data interface{}, fn func(*reflect.Value, *reflect.Value, 
 		return err
 	}
 
-	raw, err := ntx.s.codec.Marshal(current.Interface())
-	if err != nil {
-		return err
-	}
-
-	err = ntx.save(ntx.tx, cfg, id, raw, nil)
+	err = ntx.save(ntx.tx, cfg, current.Interface(), false)
 	if err != nil {
 		return err
 	}
