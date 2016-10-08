@@ -1,6 +1,7 @@
 package storm
 
 import (
+	"fmt"
 	"sync"
 	"testing"
 	"time"
@@ -11,6 +12,49 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestInit(t *testing.T) {
+	db, cleanup := createDB(t)
+	defer cleanup()
+
+	var u IndexedNameUser
+	err := db.One("Name", "John", &u)
+	assert.Equal(t, ErrNotFound, err)
+
+	err = db.Init(&u)
+	assert.NoError(t, err)
+
+	err = db.One("Name", "John", &u)
+	assert.Error(t, err)
+	assert.Equal(t, ErrNotFound, err)
+
+	err = db.Init(&ClassicBadTags{})
+	assert.Error(t, err)
+	assert.Equal(t, ErrUnknownTag, err)
+
+	err = db.Init(10)
+	assert.Error(t, err)
+	assert.Equal(t, ErrBadType, err)
+
+	err = db.Init(&ClassicNoTags{})
+	assert.Error(t, err)
+	assert.Equal(t, ErrNoID, err)
+
+	err = db.Init(&struct{ ID string }{})
+	assert.Error(t, err)
+	assert.Equal(t, ErrNoName, err)
+}
+
+func TestInitMetadata(t *testing.T) {
+	db, cleanup := createDB(t, Batch())
+	defer cleanup()
+
+	err := db.Init(new(User))
+	require.NoError(t, err)
+	n := db.WithCodec(gob.Codec)
+	err = n.Init(new(User))
+	require.Equal(t, ErrDifferentCodec, err)
+}
 
 func TestSave(t *testing.T) {
 	db, cleanup := createDB(t)
@@ -370,16 +414,191 @@ func TestSaveMetadata(t *testing.T) {
 	require.Equal(t, ErrDifferentCodec, err)
 }
 
-func BenchmarkSave(b *testing.B) {
-	db, cleanup := createDB(b, AutoIncrement())
+func TestUpdate(t *testing.T) {
+	db, cleanup := createDB(t)
 	defer cleanup()
 
-	w := User{Name: "John"}
-	b.ResetTimer()
-	for n := 0; n < b.N; n++ {
-		err := db.Save(&w)
-		if err != nil {
-			b.Error(err)
-		}
+	var u User
+
+	err := db.Save(&User{ID: 10, Name: "John", Group: "Staff", Slug: "john"})
+	assert.NoError(t, err)
+
+	// nil
+	err = db.Update(nil)
+	assert.Equal(t, ErrStructPtrNeeded, err)
+
+	// no id
+	err = db.Update(&User{Name: "Jack"})
+	assert.Equal(t, ErrNoID, err)
+
+	// Unknown user
+	err = db.Update(&User{ID: 11, Name: "Jack"})
+	assert.Equal(t, ErrNotFound, err)
+
+	// actual user
+	err = db.Update(&User{ID: 10, Name: "Jack"})
+	assert.NoError(t, err)
+
+	err = db.One("Name", "John", &u)
+	assert.Equal(t, ErrNotFound, err)
+
+	err = db.One("Name", "Jack", &u)
+	assert.NoError(t, err)
+	assert.Equal(t, "Jack", u.Name)
+}
+
+func TestUpdateField(t *testing.T) {
+	db, cleanup := createDB(t)
+	defer cleanup()
+
+	var u User
+
+	err := db.Save(&User{ID: 10, Name: "John", Group: "Staff", Slug: "john"})
+	assert.NoError(t, err)
+
+	// nil
+	err = db.UpdateField(nil, "", nil)
+	assert.Equal(t, ErrStructPtrNeeded, err)
+
+	// no id
+	err = db.UpdateField(&User{}, "Name", "Jack")
+	assert.Equal(t, ErrNoID, err)
+
+	// Unknown user
+	err = db.UpdateField(&User{ID: 11}, "Name", "Jack")
+	assert.Equal(t, ErrNotFound, err)
+
+	// Unknown field
+	err = db.UpdateField(&User{ID: 11}, "Address", "Jack")
+	assert.Equal(t, ErrNotFound, err)
+
+	// Uncompatible value
+	err = db.UpdateField(&User{ID: 10}, "Name", 50)
+	assert.Equal(t, ErrIncompatibleValue, err)
+
+	// actual user
+	err = db.UpdateField(&User{ID: 10}, "Name", "Jack")
+	assert.NoError(t, err)
+
+	err = db.One("Name", "John", &u)
+	assert.Equal(t, ErrNotFound, err)
+
+	err = db.One("Name", "Jack", &u)
+	assert.NoError(t, err)
+	assert.Equal(t, "Jack", u.Name)
+
+	// zero value
+	err = db.UpdateField(&User{ID: 10}, "Name", "")
+	assert.NoError(t, err)
+
+	err = db.One("Name", "Jack", &u)
+	assert.Equal(t, ErrNotFound, err)
+
+	err = db.One("ID", 10, &u)
+	assert.NoError(t, err)
+	assert.Equal(t, "", u.Name)
+}
+
+func TestDropByString(t *testing.T) {
+	db, cleanup := createDB(t)
+	defer cleanup()
+
+	n := db.From("b1", "b2", "b3")
+	err := n.Save(&SimpleUser{ID: 10, Name: "John"})
+	assert.NoError(t, err)
+
+	err = db.From("b1").Drop("b2")
+	assert.NoError(t, err)
+
+	err = db.From("b1").Drop("b2")
+	assert.Error(t, err)
+
+	n.From("b4").Drop("b5")
+	assert.Error(t, err)
+
+	err = db.Drop("b1")
+	assert.NoError(t, err)
+
+	db.Bolt.Update(func(tx *bolt.Tx) error {
+		assert.Nil(t, db.From().GetBucket(tx, "b1"))
+		d := db.WithTransaction(tx)
+		n := d.From("a1")
+		err = n.Save(&SimpleUser{ID: 10, Name: "John"})
+		assert.NoError(t, err)
+
+		err = d.Drop("a1")
+		assert.NoError(t, err)
+
+		return nil
+	})
+}
+
+func TestDropByStruct(t *testing.T) {
+	db, cleanup := createDB(t)
+	defer cleanup()
+
+	n := db.From("b1", "b2", "b3")
+	err := n.Save(&SimpleUser{ID: 10, Name: "John"})
+	assert.NoError(t, err)
+
+	err = n.Drop(&SimpleUser{})
+	assert.NoError(t, err)
+
+	db.Bolt.Update(func(tx *bolt.Tx) error {
+		assert.Nil(t, n.GetBucket(tx, "SimpleUser"))
+		d := db.WithTransaction(tx)
+		n := d.From("a1")
+		err = n.Save(&SimpleUser{ID: 10, Name: "John"})
+		assert.NoError(t, err)
+
+		err = n.Drop(&SimpleUser{})
+		assert.NoError(t, err)
+
+		assert.Nil(t, n.GetBucket(tx, "SimpleUser"))
+		return nil
+	})
+}
+
+func TestDeleteStruct(t *testing.T) {
+	db, cleanup := createDB(t)
+	defer cleanup()
+
+	u1 := IndexedNameUser{ID: 10, Name: "John", age: 10}
+	err := db.Save(&u1)
+	assert.NoError(t, err)
+
+	err = db.DeleteStruct(u1)
+	assert.Equal(t, ErrStructPtrNeeded, err)
+
+	err = db.DeleteStruct(&u1)
+	assert.NoError(t, err)
+
+	err = db.DeleteStruct(&u1)
+	assert.Equal(t, ErrNotFound, err)
+
+	u2 := IndexedNameUser{}
+	err = db.Get("IndexedNameUser", 10, &u2)
+	assert.True(t, ErrNotFound == err)
+
+	err = db.DeleteStruct(nil)
+	assert.Equal(t, ErrStructPtrNeeded, err)
+
+	var users []User
+	for i := 0; i < 10; i++ {
+		user := User{Name: "John", ID: i + 1, Slug: fmt.Sprintf("John%d", i+1), DateOfBirth: time.Now().Add(-time.Duration(i*10) * time.Minute)}
+		err = db.Save(&user)
+		assert.NoError(t, err)
+		users = append(users, user)
 	}
+
+	err = db.DeleteStruct(&users[0])
+	assert.NoError(t, err)
+	err = db.DeleteStruct(&users[1])
+	assert.NoError(t, err)
+
+	users = nil
+	err = db.All(&users)
+	assert.NoError(t, err)
+	assert.Len(t, users, 8)
+	assert.Equal(t, 3, users[0].ID)
 }
