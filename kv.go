@@ -107,18 +107,3 @@ func (n *node) delete(tx *bolt.Tx, bucketName string, id []byte) error {
 
 	return bucket.Delete(id)
 }
-
-// Get a value from a bucket
-func (s *DB) Get(bucketName string, key interface{}, to interface{}) error {
-	return s.root.Get(bucketName, key, to)
-}
-
-// Set a key/value pair into a bucket
-func (s *DB) Set(bucketName string, key interface{}, value interface{}) error {
-	return s.root.Set(bucketName, key, value)
-}
-
-// Delete deletes a key from a bucket
-func (s *DB) Delete(bucketName string, key interface{}) error {
-	return s.root.Delete(bucketName, key)
-}

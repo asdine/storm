@@ -1,0 +1,427 @@
+package storm
+
+import (
+	"bytes"
+	"reflect"
+
+	"github.com/asdine/storm/index"
+	"github.com/boltdb/bolt"
+)
+
+// TypeStore stores user defined types in BoltDB
+type TypeStore interface {
+	Finder
+	// Init creates the indexes and buckets for a given structure
+	Init(data interface{}) error
+
+	// Save a structure
+	Save(data interface{}) error
+
+	// Update a structure
+	Update(data interface{}) error
+
+	// UpdateField updates a single field
+	UpdateField(data interface{}, fieldName string, value interface{}) error
+
+	// Drop a bucket
+	Drop(data interface{}) error
+
+	// DeleteStruct deletes a structure from the associated bucket
+	DeleteStruct(data interface{}) error
+
+	// Remove deletes a structure from the associated bucket
+	// Deprecated: Use DeleteStruct instead.
+	Remove(data interface{}) error
+}
+
+// Init creates the indexes and buckets for a given structure
+func (n *node) Init(data interface{}) error {
+	v := reflect.ValueOf(data)
+	cfg, err := extract(&v)
+	if err != nil {
+		return err
+	}
+
+	return n.readWriteTx(func(tx *bolt.Tx) error {
+		return n.init(tx, cfg)
+	})
+}
+
+func (n *node) init(tx *bolt.Tx, cfg *structConfig) error {
+	bucket, err := n.CreateBucketIfNotExists(tx, cfg.Name)
+	if err != nil {
+		return err
+	}
+
+	// save node configuration in the bucket
+	_, err = n.metadataBucket(bucket)
+	if err != nil {
+		return err
+	}
+
+	for fieldName, fieldCfg := range cfg.Fields {
+		if fieldCfg.Index == "" {
+			continue
+		}
+		switch fieldCfg.Index {
+		case tagUniqueIdx:
+			_, err = index.NewUniqueIndex(bucket, []byte(indexPrefix+fieldName))
+		case tagIdx:
+			_, err = index.NewListIndex(bucket, []byte(indexPrefix+fieldName))
+		default:
+			err = ErrIdxNotFound
+		}
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// Save a structure
+func (n *node) Save(data interface{}) error {
+	ref := reflect.ValueOf(data)
+
+	if !ref.IsValid() || ref.Kind() != reflect.Ptr || ref.Elem().Kind() != reflect.Struct {
+		return ErrStructPtrNeeded
+	}
+
+	cfg, err := extract(&ref)
+	if err != nil {
+		return err
+	}
+
+	var id []byte
+
+	if cfg.ID.IsZero {
+		if !cfg.ID.IsInteger || !n.s.autoIncrement {
+			return ErrZeroID
+		}
+	} else {
+		id, err = toBytes(cfg.ID.Value.Interface(), n.s.codec)
+		if err != nil {
+			return err
+		}
+	}
+
+	var raw []byte
+	// postpone encoding if AutoIncrement mode if enabled
+	if !n.s.autoIncrement {
+		raw, err = n.s.codec.Marshal(data)
+		if err != nil {
+			return err
+		}
+	}
+
+	return n.readWriteTx(func(tx *bolt.Tx) error {
+		return n.save(tx, cfg, id, raw, data)
+	})
+}
+
+func (n *node) save(tx *bolt.Tx, cfg *structConfig, id []byte, raw []byte, data interface{}) error {
+	bucket, err := n.CreateBucketIfNotExists(tx, cfg.Name)
+	if err != nil {
+		return err
+	}
+
+	// save node configuration in the bucket
+	metab, err := n.metadataBucket(bucket)
+	if err != nil {
+		return err
+	}
+
+	if cfg.ID.IsZero {
+		// isZero and integer, generate next sequence
+		intID, _ := bucket.NextSequence()
+
+		// convert to the right integer size
+		cfg.ID.Value.Set(reflect.ValueOf(intID).Convert(cfg.ID.Value.Type()))
+		id, err = toBytes(cfg.ID.Value.Interface(), n.s.codec)
+		if err != nil {
+			return err
+		}
+	}
+
+	if data != nil {
+		if n.s.autoIncrement {
+			raw, err = n.s.codec.Marshal(data)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	for fieldName, fieldCfg := range cfg.Fields {
+		if fieldCfg.Increment && fieldCfg.IsInteger && fieldCfg.IsZero {
+			var counter int64
+			raw := metab.Get([]byte(fieldName + "counter"))
+			if raw != nil {
+				counter, err = numberfromb(raw)
+				if err != nil {
+					return err
+				}
+			}
+			counter++
+			raw, err = numbertob(counter)
+			if err != nil {
+				return err
+			}
+			err = metab.Put([]byte(fieldName+"counter"), raw)
+			if err != nil {
+				return err
+			}
+			fieldCfg.Value.SetInt(counter)
+		}
+
+		if fieldCfg.Index == "" {
+			continue
+		}
+
+		idx, err := getIndex(bucket, fieldCfg.Index, fieldName)
+		if err != nil {
+			return err
+		}
+
+		if fieldCfg.IsZero {
+			err = idx.RemoveID(id)
+			if err != nil {
+				return err
+			}
+			continue
+		}
+
+		value, err := toBytes(fieldCfg.Value.Interface(), n.s.codec)
+		if err != nil {
+			return err
+		}
+
+		var found bool
+		idsSaved, err := idx.All(value, nil)
+		if err != nil {
+			return err
+		}
+		for _, idSaved := range idsSaved {
+			if bytes.Compare(idSaved, id) == 0 {
+				found = true
+				break
+			}
+		}
+
+		if found {
+			continue
+		}
+
+		err = idx.RemoveID(id)
+		if err != nil {
+			return err
+		}
+
+		err = idx.Add(value, id)
+		if err != nil {
+			if err == index.ErrAlreadyExists {
+				return ErrAlreadyExists
+			}
+			return err
+		}
+	}
+
+	return bucket.Put(id, raw)
+}
+
+// Update a structure
+func (n *node) Update(data interface{}) error {
+	return n.update(data, func(ref *reflect.Value, current *reflect.Value, cfg *structConfig) error {
+		numfield := ref.NumField()
+		for i := 0; i < numfield; i++ {
+			f := ref.Field(i)
+			if ref.Type().Field(i).PkgPath != "" {
+				continue
+			}
+			zero := reflect.Zero(f.Type()).Interface()
+			actual := f.Interface()
+			if !reflect.DeepEqual(actual, zero) {
+				cf := current.Field(i)
+				cf.Set(f)
+				idxInfo, ok := cfg.Fields[ref.Type().Field(i).Name]
+				if ok {
+					idxInfo.Value = &cf
+				}
+			}
+		}
+		return nil
+	})
+}
+
+// UpdateField updates a single field
+func (n *node) UpdateField(data interface{}, fieldName string, value interface{}) error {
+	return n.update(data, func(ref *reflect.Value, current *reflect.Value, cfg *structConfig) error {
+		f := current.FieldByName(fieldName)
+		if !f.IsValid() {
+			return ErrNotFound
+		}
+		tf, _ := current.Type().FieldByName(fieldName)
+		if tf.PkgPath != "" {
+			return ErrNotFound
+		}
+		v := reflect.ValueOf(value)
+		if v.Kind() != f.Kind() {
+			return ErrIncompatibleValue
+		}
+		f.Set(v)
+		idxInfo, ok := cfg.Fields[fieldName]
+		if ok {
+			idxInfo.Value = &f
+			idxInfo.IsZero = isZero(idxInfo.Value)
+		}
+		return nil
+	})
+}
+
+func (n *node) update(data interface{}, fn func(*reflect.Value, *reflect.Value, *structConfig) error) error {
+	ref := reflect.ValueOf(data)
+
+	if !ref.IsValid() || ref.Kind() != reflect.Ptr || ref.Elem().Kind() != reflect.Struct {
+		return ErrStructPtrNeeded
+	}
+
+	cfg, err := extract(&ref)
+	if err != nil {
+		return err
+	}
+
+	if cfg.ID.IsZero {
+		return ErrNoID
+	}
+
+	id, err := toBytes(cfg.ID.Value.Interface(), n.s.codec)
+	if err != nil {
+		return err
+	}
+
+	current := reflect.New(reflect.Indirect(ref).Type())
+
+	tx, err := n.Begin(true)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	ntx := tx.(*node)
+	err = ntx.One(cfg.ID.Name, cfg.ID.Value.Interface(), current.Interface())
+	if err != nil {
+		return err
+	}
+
+	ref = ref.Elem()
+	cref := current.Elem()
+	err = fn(&ref, &cref, cfg)
+	if err != nil {
+		return err
+	}
+
+	raw, err := ntx.s.codec.Marshal(current.Interface())
+	if err != nil {
+		return err
+	}
+
+	err = ntx.save(ntx.tx, cfg, id, raw, nil)
+	if err != nil {
+		return err
+	}
+
+	return ntx.Commit()
+}
+
+// Drop a bucket
+func (n *node) Drop(data interface{}) error {
+	var bucketName string
+
+	v := reflect.ValueOf(data)
+	if v.Kind() != reflect.String {
+		info, err := extract(&v)
+		if err != nil {
+			return err
+		}
+
+		bucketName = info.Name
+	} else {
+		bucketName = v.Interface().(string)
+	}
+
+	return n.readWriteTx(func(tx *bolt.Tx) error {
+		return n.drop(tx, bucketName)
+	})
+}
+
+func (n *node) drop(tx *bolt.Tx, bucketName string) error {
+	bucket := n.GetBucket(tx)
+	if bucket == nil {
+		return tx.DeleteBucket([]byte(bucketName))
+	}
+
+	return bucket.DeleteBucket([]byte(bucketName))
+}
+
+// DeleteStruct deletes a structure from the associated bucket
+func (n *node) DeleteStruct(data interface{}) error {
+	ref := reflect.ValueOf(data)
+
+	if !ref.IsValid() || ref.Kind() != reflect.Ptr || ref.Elem().Kind() != reflect.Struct {
+		return ErrStructPtrNeeded
+	}
+
+	cfg, err := extract(&ref)
+	if err != nil {
+		return err
+	}
+
+	id, err := toBytes(cfg.ID.Value.Interface(), n.s.codec)
+	if err != nil {
+		return err
+	}
+
+	return n.readWriteTx(func(tx *bolt.Tx) error {
+		return n.deleteStruct(tx, cfg, id)
+	})
+}
+
+func (n *node) deleteStruct(tx *bolt.Tx, cfg *structConfig, id []byte) error {
+	bucket := n.GetBucket(tx, cfg.Name)
+	if bucket == nil {
+		return ErrNotFound
+	}
+
+	for fieldName, fieldCfg := range cfg.Fields {
+		if fieldCfg.Index == "" {
+			continue
+		}
+
+		idx, err := getIndex(bucket, fieldCfg.Index, fieldName)
+		if err != nil {
+			return err
+		}
+
+		err = idx.RemoveID(id)
+		if err != nil {
+			if err == index.ErrNotFound {
+				return ErrNotFound
+			}
+			return err
+		}
+	}
+
+	raw := bucket.Get(id)
+	if raw == nil {
+		return ErrNotFound
+	}
+
+	return bucket.Delete(id)
+}
+
+// Remove deletes a structure from the associated bucket
+// Deprecated: Use DeleteStruct instead.
+func (n *node) Remove(data interface{}) error {
+	return n.DeleteStruct(data)
+}
