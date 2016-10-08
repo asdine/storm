@@ -8,6 +8,7 @@ import (
 
 	"github.com/asdine/storm/codec/gob"
 	"github.com/asdine/storm/codec/json"
+	"github.com/asdine/storm/q"
 	"github.com/boltdb/bolt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -302,12 +303,24 @@ func TestSaveIncrement(t *testing.T) {
 	db, cleanup := createDB(t, AutoIncrement())
 	defer cleanup()
 
+	type User struct {
+		Identifier int    `storm:"id,increment"`
+		Name       string `storm:"index,increment"`
+		Age        int    `storm:"unique,increment"`
+	}
+
 	for i := 1; i < 10; i++ {
-		s := UserWithIncrementField{Name: "John"}
-		err := db.Save(&s)
+		s1 := User{Name: fmt.Sprintf("John%d", i)}
+		err := db.Save(&s1)
 		assert.NoError(t, err)
-		assert.Equal(t, i, s.ID)
-		assert.Equal(t, i, s.Age)
+		assert.Equal(t, i, s1.Identifier)
+		assert.Equal(t, i, s1.Age)
+		assert.Equal(t, fmt.Sprintf("John%d", i), s1.Name)
+
+		var s2 User
+		err = db.One("Identifier", i, &s2)
+		require.NoError(t, err)
+		require.Equal(t, s1, s2)
 	}
 }
 
@@ -418,9 +431,18 @@ func TestUpdate(t *testing.T) {
 	db, cleanup := createDB(t)
 	defer cleanup()
 
+	type User struct {
+		ID          int       `storm:"id,increment"`
+		Name        string    `storm:"index"`
+		Age         uint64    `storm:"index,increment"`
+		DateOfBirth time.Time `storm:"index"`
+		Group       string
+		Slug        string `storm:"unique"`
+	}
+
 	var u User
 
-	err := db.Save(&User{ID: 10, Name: "John", Group: "Staff", Slug: "john"})
+	err := db.Save(&User{ID: 10, Name: "John", Age: 5, Group: "Staff", Slug: "john"})
 	assert.NoError(t, err)
 
 	// nil
@@ -445,15 +467,25 @@ func TestUpdate(t *testing.T) {
 	err = db.One("Name", "Jack", &u)
 	assert.NoError(t, err)
 	assert.Equal(t, "Jack", u.Name)
+	assert.Equal(t, uint64(5), u.Age)
 }
 
 func TestUpdateField(t *testing.T) {
 	db, cleanup := createDB(t)
 	defer cleanup()
 
+	type User struct {
+		ID          int       `storm:"id,increment"`
+		Name        string    `storm:"index"`
+		Age         uint64    `storm:"index,increment"`
+		DateOfBirth time.Time `storm:"index"`
+		Group       string
+		Slug        string `storm:"unique"`
+	}
+
 	var u User
 
-	err := db.Save(&User{ID: 10, Name: "John", Group: "Staff", Slug: "john"})
+	err := db.Save(&User{ID: 10, Name: "John", Age: 5, Group: "Staff", Slug: "john"})
 	assert.NoError(t, err)
 
 	// nil
@@ -497,6 +529,16 @@ func TestUpdateField(t *testing.T) {
 	err = db.One("ID", 10, &u)
 	assert.NoError(t, err)
 	assert.Equal(t, "", u.Name)
+
+	// zero value with int and increment
+	err = db.UpdateField(&User{ID: 10}, "Age", uint64(0))
+	assert.NoError(t, err)
+
+	err = db.Select(q.Eq("Age", uint64(5))).First(&u)
+	assert.Equal(t, ErrNotFound, err)
+
+	err = db.Select(q.Eq("Age", uint64(0))).First(&u)
+	assert.NoError(t, err)
 }
 
 func TestDropByString(t *testing.T) {

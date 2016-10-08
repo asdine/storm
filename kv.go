@@ -79,7 +79,7 @@ func (n *node) set(tx *bolt.Tx, bucketName string, id, data []byte) error {
 	}
 
 	// save node configuration in the bucket
-	_, err = n.metadataBucket(bucket)
+	_, err = newMeta(bucket, n)
 	if err != nil {
 		return err
 	}
