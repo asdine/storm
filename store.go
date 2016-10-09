@@ -5,6 +5,7 @@ import (
 	"reflect"
 
 	"github.com/asdine/storm/index"
+	"github.com/asdine/storm/q"
 	"github.com/boltdb/bolt"
 )
 
@@ -13,6 +14,9 @@ type TypeStore interface {
 	Finder
 	// Init creates the indexes and buckets for a given structure
 	Init(data interface{}) error
+
+	// ReIndex rebuilds all the indexes of a bucket
+	ReIndex(data interface{}) error
 
 	// Save a structure
 	Save(data interface{}) error
@@ -72,6 +76,60 @@ func (n *node) init(tx *bolt.Tx, cfg *structConfig) error {
 			err = ErrIdxNotFound
 		}
 
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (n *node) ReIndex(data interface{}) error {
+	ref := reflect.ValueOf(data)
+
+	if !ref.IsValid() || ref.Kind() != reflect.Ptr || ref.Elem().Kind() != reflect.Struct {
+		return ErrStructPtrNeeded
+	}
+
+	cfg, err := extract(&ref)
+	if err != nil {
+		return err
+	}
+
+	return n.readWriteTx(func(tx *bolt.Tx) error {
+		return n.reIndex(tx, data, cfg)
+	})
+}
+
+func (n *node) reIndex(tx *bolt.Tx, data interface{}, cfg *structConfig) error {
+	root := n.WithTransaction(tx)
+	nodes := root.From(cfg.Name).PrefixScan(indexPrefix)
+	bucket := root.GetBucket(tx, cfg.Name)
+	if bucket == nil {
+		return ErrNotFound
+	}
+
+	for _, node := range nodes {
+		buckets := node.Bucket()
+		name := buckets[len(buckets)-1]
+		err := bucket.DeleteBucket([]byte(name))
+		if err != nil {
+			return err
+		}
+	}
+
+	total, err := root.Count(data)
+	if err != nil {
+		return err
+	}
+
+	for i := 0; i < total; i++ {
+		err = root.Select(q.True()).Skip(i).First(data)
+		if err != nil {
+			return err
+		}
+
+		err = root.Update(data)
 		if err != nil {
 			return err
 		}
@@ -263,31 +321,21 @@ func (n *node) update(data interface{}, fn func(*reflect.Value, *reflect.Value, 
 
 	current := reflect.New(reflect.Indirect(ref).Type())
 
-	tx, err := n.Begin(true)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
+	return n.readWriteTx(func(tx *bolt.Tx) error {
+		err = n.WithTransaction(tx).One(cfg.ID.Name, cfg.ID.Value.Interface(), current.Interface())
+		if err != nil {
+			return err
+		}
 
-	ntx := tx.(*node)
-	err = ntx.One(cfg.ID.Name, cfg.ID.Value.Interface(), current.Interface())
-	if err != nil {
-		return err
-	}
+		ref = ref.Elem()
+		cref := current.Elem()
+		err = fn(&ref, &cref, cfg)
+		if err != nil {
+			return err
+		}
 
-	ref = ref.Elem()
-	cref := current.Elem()
-	err = fn(&ref, &cref, cfg)
-	if err != nil {
-		return err
-	}
-
-	err = ntx.save(ntx.tx, cfg, current.Interface(), false)
-	if err != nil {
-		return err
-	}
-
-	return ntx.Commit()
+		return n.save(tx, cfg, current.Interface(), false)
+	})
 }
 
 // Drop a bucket

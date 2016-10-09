@@ -218,6 +218,11 @@ func (s *DB) Init(data interface{}) error {
 	return s.root.Init(data)
 }
 
+// ReIndex rebuilds all the indexes of a bucket
+func (s *DB) ReIndex(data interface{}) error {
+	return s.root.ReIndex(data)
+}
+
 // One returns one record by the specified index
 func (s *DB) One(fieldName string, value interface{}, to interface{}) error {
 	return s.root.One(fieldName, value, to)
