@@ -117,17 +117,17 @@ func TestSaveUnique(t *testing.T) {
 	db, cleanup := createDB(t)
 	defer cleanup()
 
-	u1 := UniqueNameUser{ID: 10, Name: "John", age: 10}
+	u1 := UniqueNameUser{ID: 10, Name: "John", Age: 10}
 	err := db.Save(&u1)
 	assert.NoError(t, err)
 
-	u2 := UniqueNameUser{ID: 11, Name: "John", age: 100}
+	u2 := UniqueNameUser{ID: 11, Name: "John", Age: 100}
 	err = db.Save(&u2)
 	assert.Error(t, err)
 	assert.True(t, ErrAlreadyExists == err)
 
 	// same id
-	u3 := UniqueNameUser{ID: 10, Name: "Jake", age: 100}
+	u3 := UniqueNameUser{ID: 10, Name: "Jake", Age: 100}
 	err = db.Save(&u3)
 	assert.NoError(t, err)
 

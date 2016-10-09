@@ -108,9 +108,8 @@ func TestFind(t *testing.T) {
 	assert.Equal(t, 21, users[0].ID)
 	assert.Equal(t, 30, users[9].ID)
 
-	// err = db.Find("Age", 10, &users)
-	// assert.NoError(t, err)
-
+	err = db.Find("Age", 10, &users)
+	assert.NoError(t, err)
 }
 
 func TestFindIntIndex(t *testing.T) {
@@ -249,6 +248,10 @@ func TestAllByIndex(t *testing.T) {
 	assert.Len(t, users, 10)
 	assert.Equal(t, 90, users[0].ID)
 	assert.Equal(t, 81, users[9].ID)
+
+	err = db.AllByIndex("Age", &users, Limit(10))
+	assert.NoError(t, err)
+	assert.Len(t, users, 10)
 }
 
 func TestAll(t *testing.T) {
@@ -379,7 +382,7 @@ func TestOne(t *testing.T) {
 		assert.NoError(t, err)
 	}
 
-	x := IndexedNameUser{}
+	var x IndexedNameUser
 	err = db.One("Name", "John", &x)
 	assert.NoError(t, err)
 	assert.Equal(t, "John", x.Name)
@@ -406,6 +409,10 @@ func TestOne(t *testing.T) {
 	err = db.One("Group", "staff", &x)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, x.ID)
+
+	err = db.One("Score", 5, &x)
+	assert.NoError(t, err)
+	assert.Equal(t, 5, x.ID)
 
 	err = db.One("Group", "admin", &x)
 	assert.Error(t, err)
@@ -531,6 +538,10 @@ func TestRange(t *testing.T) {
 	err = db.Range("Age", min, max, &users)
 	assert.Error(t, err)
 	assert.EqualError(t, err, "not found")
+
+	err = db.Range("Age", 2, 5, &users)
+	assert.NoError(t, err)
+	assert.Len(t, users, 4)
 
 	dateMin := time.Now().Add(-time.Duration(50) * time.Hour)
 	dateMax := dateMin.Add(time.Duration(3) * time.Hour)
