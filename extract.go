@@ -1,6 +1,7 @@
 package storm
 
 import (
+	"fmt"
 	"reflect"
 	"strings"
 
@@ -76,15 +77,6 @@ func extract(s *reflect.Value, mi ...*structConfig) (*structConfig, error) {
 		}
 	}
 
-	// ID field or tag detected
-	if m.ID != nil {
-		zero := reflect.Zero(m.ID.Value.Type()).Interface()
-		current := m.ID.Value.Interface()
-		if reflect.DeepEqual(current, zero) {
-			m.ID.IsZero = true
-		}
-	}
-
 	if child {
 		return m, nil
 	}
@@ -157,13 +149,33 @@ func extractField(value *reflect.Value, field *reflect.StructField, m *structCon
 				Name:      field.Name,
 				IsZero:    isZero(value),
 				IsInteger: isInteger(value),
+				IsID:      true,
 				Value:     value,
 			}
+			m.Fields[field.Name] = f
 		}
 		m.ID = f
 	}
 
 	return nil
+}
+
+func extractSingleField(ref *reflect.Value, fieldName string) (*structConfig, error) {
+	var cfg structConfig
+	cfg.Fields = make(map[string]*fieldConfig)
+
+	f, ok := ref.Type().FieldByName(fieldName)
+	if !ok || f.PkgPath != "" {
+		return nil, fmt.Errorf("field %s not found", fieldName)
+	}
+
+	v := ref.FieldByName(fieldName)
+	err := extractField(&v, &f, &cfg, false)
+	if err != nil {
+		return nil, err
+	}
+
+	return &cfg, nil
 }
 
 func getIndex(bucket *bolt.Bucket, idxKind string, fieldName string) (index.Index, error) {

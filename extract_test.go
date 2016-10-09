@@ -72,3 +72,28 @@ func TestExtractInlineWithIndex(t *testing.T) {
 	assert.Len(t, allByType(infos, "index"), 3)
 	assert.Len(t, allByType(infos, "unique"), 2)
 }
+
+func TestExtractMultipleTags(t *testing.T) {
+	type User struct {
+		ID              uint64 `storm:"id,increment"`
+		Age             uint16 `storm:"index,increment"`
+		unexportedField int32  `storm:"index,increment"`
+		Pos             string `storm:"unique,increment"`
+	}
+
+	s := User{}
+	r := reflect.ValueOf(&s)
+	infos, err := extract(&r)
+	assert.NoError(t, err)
+	assert.NotNil(t, infos)
+	assert.NotNil(t, infos.ID)
+	assert.Equal(t, "User", infos.Name)
+	assert.Len(t, allByType(infos, "index"), 1)
+	assert.Len(t, allByType(infos, "unique"), 1)
+	assert.True(t, infos.Fields["Age"].Increment)
+	assert.Equal(t, "index", infos.Fields["Age"].Index)
+	assert.False(t, infos.Fields["Age"].IsID)
+	assert.True(t, infos.Fields["Age"].IsInteger)
+	assert.True(t, infos.Fields["Age"].IsZero)
+	assert.NotNil(t, infos.Fields["Age"].Value)
+}

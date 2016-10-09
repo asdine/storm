@@ -6,6 +6,66 @@ import (
 	"time"
 )
 
+func BenchmarkFindWithIndex(b *testing.B) {
+	db, cleanup := createDB(b, AutoIncrement())
+	defer cleanup()
+
+	var users []User
+	for i := 0; i < 100; i++ {
+		var w User
+
+		if i%2 == 0 {
+			w.Name = "John"
+			w.Group = "Staff"
+		} else {
+			w.Name = "Jack"
+			w.Group = "Admin"
+		}
+		err := db.Save(&w)
+		if err != nil {
+			b.Error(err)
+		}
+	}
+
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		err := db.Find("Name", "John", &users)
+		if err != nil {
+			b.Error(err)
+		}
+	}
+}
+
+func BenchmarkFindWithoutIndex(b *testing.B) {
+	db, cleanup := createDB(b, AutoIncrement())
+	defer cleanup()
+
+	var users []User
+	for i := 0; i < 100; i++ {
+		var w User
+
+		if i%2 == 0 {
+			w.Name = "John"
+			w.Group = "Staff"
+		} else {
+			w.Name = "Jack"
+			w.Group = "Admin"
+		}
+		err := db.Save(&w)
+		if err != nil {
+			b.Error(err)
+		}
+	}
+
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		err := db.Find("Group", "Staff", &users)
+		if err != nil {
+			b.Error(err)
+		}
+	}
+}
+
 func BenchmarkOneWithIndex(b *testing.B) {
 	db, cleanup := createDB(b, AutoIncrement())
 	defer cleanup()
@@ -75,66 +135,6 @@ func BenchmarkOneWithoutIndex(b *testing.B) {
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
 		err := db.One("Group", "Staff99", &u)
-		if err != nil {
-			b.Error(err)
-		}
-	}
-}
-
-func BenchmarkFindWithIndex(b *testing.B) {
-	db, cleanup := createDB(b, AutoIncrement())
-	defer cleanup()
-
-	var users []User
-	for i := 0; i < 100; i++ {
-		var w User
-
-		if i%2 == 0 {
-			w.Name = "John"
-			w.Group = "Staff"
-		} else {
-			w.Name = "Jack"
-			w.Group = "Admin"
-		}
-		err := db.Save(&w)
-		if err != nil {
-			b.Error(err)
-		}
-	}
-
-	b.ResetTimer()
-	for n := 0; n < b.N; n++ {
-		err := db.Find("Name", "John", &users)
-		if err != nil {
-			b.Error(err)
-		}
-	}
-}
-
-func BenchmarkFindWithoutIndex(b *testing.B) {
-	db, cleanup := createDB(b, AutoIncrement())
-	defer cleanup()
-
-	var users []User
-	for i := 0; i < 100; i++ {
-		var w User
-
-		if i%2 == 0 {
-			w.Name = "John"
-			w.Group = "Staff"
-		} else {
-			w.Name = "Jack"
-			w.Group = "Admin"
-		}
-		err := db.Save(&w)
-		if err != nil {
-			b.Error(err)
-		}
-	}
-
-	b.ResetTimer()
-	for n := 0; n < b.N; n++ {
-		err := db.Find("Group", "Staff", &users)
 		if err != nil {
 			b.Error(err)
 		}

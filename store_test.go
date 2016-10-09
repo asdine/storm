@@ -295,6 +295,12 @@ func TestSaveIncrement(t *testing.T) {
 		err = db.One("Identifier", i, &s2)
 		require.NoError(t, err)
 		require.Equal(t, s1, s2)
+
+		var list []User
+		err = db.Find("Age", i, &list)
+		require.NoError(t, err)
+		require.Len(t, list, 1)
+		require.Equal(t, s1, list[0])
 	}
 }
 
