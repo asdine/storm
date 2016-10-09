@@ -124,6 +124,7 @@ type UserWithIncrementField struct {
 type IndexedNameUser struct {
 	ID          int    `storm:"id"`
 	Name        string `storm:"index"`
+	Score       int    `storm:"index,increment"`
 	age         int
 	DateOfBirth time.Time `storm:"index"`
 	Group       string
@@ -132,5 +133,5 @@ type IndexedNameUser struct {
 type UniqueNameUser struct {
 	ID   int    `storm:"id"`
 	Name string `storm:"unique"`
-	age  int
+	Age  int    `storm:"index,increment"`
 }
