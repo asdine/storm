@@ -280,7 +280,7 @@ func TestSaveIncrement(t *testing.T) {
 	type User struct {
 		Identifier int    `storm:"id,increment"`
 		Name       string `storm:"index,increment"`
-		Age        int    `storm:"unique,increment"`
+		Age        int    `storm:"unique,increment=18"`
 	}
 
 	for i := 1; i < 10; i++ {
@@ -288,7 +288,7 @@ func TestSaveIncrement(t *testing.T) {
 		err := db.Save(&s1)
 		assert.NoError(t, err)
 		assert.Equal(t, i, s1.Identifier)
-		assert.Equal(t, i, s1.Age)
+		assert.Equal(t, i-1+18, s1.Age)
 		assert.Equal(t, fmt.Sprintf("John%d", i), s1.Name)
 
 		var s2 User
@@ -297,7 +297,7 @@ func TestSaveIncrement(t *testing.T) {
 		require.Equal(t, s1, s2)
 
 		var list []User
-		err = db.Find("Age", i, &list)
+		err = db.Find("Age", i-1+18, &list)
 		require.NoError(t, err)
 		require.Len(t, list, 1)
 		require.Equal(t, s1, list[0])

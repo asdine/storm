@@ -41,8 +41,8 @@ type meta struct {
 }
 
 func (m *meta) increment(field *fieldConfig) error {
-	var counter int64
 	var err error
+	counter := field.IncrementStart
 
 	raw := m.bucket.Get([]byte(field.Name + "counter"))
 	if raw != nil {
@@ -50,9 +50,9 @@ func (m *meta) increment(field *fieldConfig) error {
 		if err != nil {
 			return err
 		}
+		counter++
 	}
 
-	counter++
 	raw, err = numbertob(counter)
 	if err != nil {
 		return err

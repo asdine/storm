@@ -78,7 +78,8 @@ func TestExtractMultipleTags(t *testing.T) {
 		ID              uint64 `storm:"id,increment"`
 		Age             uint16 `storm:"index,increment"`
 		unexportedField int32  `storm:"index,increment"`
-		Pos             string `storm:"unique,increment"`
+		X               uint32 `storm:"unique,increment=100"`
+		Y               int8   `storm:"index,increment=-100"`
 	}
 
 	s := User{}
@@ -88,12 +89,48 @@ func TestExtractMultipleTags(t *testing.T) {
 	assert.NotNil(t, infos)
 	assert.NotNil(t, infos.ID)
 	assert.Equal(t, "User", infos.Name)
-	assert.Len(t, allByType(infos, "index"), 1)
+	assert.Len(t, allByType(infos, "index"), 2)
 	assert.Len(t, allByType(infos, "unique"), 1)
+
 	assert.True(t, infos.Fields["Age"].Increment)
+	assert.Equal(t, int64(1), infos.Fields["Age"].IncrementStart)
 	assert.Equal(t, "index", infos.Fields["Age"].Index)
 	assert.False(t, infos.Fields["Age"].IsID)
 	assert.True(t, infos.Fields["Age"].IsInteger)
 	assert.True(t, infos.Fields["Age"].IsZero)
 	assert.NotNil(t, infos.Fields["Age"].Value)
+
+	assert.True(t, infos.Fields["X"].Increment)
+	assert.Equal(t, int64(100), infos.Fields["X"].IncrementStart)
+	assert.Equal(t, "unique", infos.Fields["X"].Index)
+	assert.False(t, infos.Fields["X"].IsID)
+	assert.True(t, infos.Fields["X"].IsInteger)
+	assert.True(t, infos.Fields["X"].IsZero)
+	assert.NotNil(t, infos.Fields["X"].Value)
+
+	assert.True(t, infos.Fields["Y"].Increment)
+	assert.Equal(t, int64(-100), infos.Fields["Y"].IncrementStart)
+	assert.Equal(t, "index", infos.Fields["Y"].Index)
+	assert.False(t, infos.Fields["Y"].IsID)
+	assert.True(t, infos.Fields["Y"].IsInteger)
+	assert.True(t, infos.Fields["Y"].IsZero)
+	assert.NotNil(t, infos.Fields["Y"].Value)
+
+	type NoInt struct {
+		ID uint64 `storm:"id,increment=hello"`
+	}
+
+	var n NoInt
+	r = reflect.ValueOf(&n)
+	_, err = extract(&r)
+	assert.Error(t, err)
+
+	type BadSuffix struct {
+		ID uint64 `storm:"id,incrementag=100"`
+	}
+
+	var b BadSuffix
+	r = reflect.ValueOf(&b)
+	_, err = extract(&r)
+	assert.Error(t, err)
 }
