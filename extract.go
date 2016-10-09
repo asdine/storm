@@ -3,6 +3,7 @@ package storm
 import (
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/asdine/storm/index"
@@ -20,13 +21,14 @@ const (
 )
 
 type fieldConfig struct {
-	Name      string
-	Index     string
-	IsZero    bool
-	IsID      bool
-	Increment bool
-	IsInteger bool
-	Value     *reflect.Value
+	Name           string
+	Index          string
+	IsZero         bool
+	IsID           bool
+	Increment      bool
+	IncrementStart int64
+	IsInteger      bool
+	Value          *reflect.Value
 }
 
 // structConfig is a structure gathering all the relevant informations about a model
@@ -94,14 +96,16 @@ func extract(s *reflect.Value, mi ...*structConfig) (*structConfig, error) {
 
 func extractField(value *reflect.Value, field *reflect.StructField, m *structConfig, isChild bool) error {
 	var f *fieldConfig
+	var err error
 
 	tag := field.Tag.Get("storm")
 	if tag != "" {
 		f = &fieldConfig{
-			Name:      field.Name,
-			IsZero:    isZero(value),
-			IsInteger: isInteger(value),
-			Value:     value,
+			Name:           field.Name,
+			IsZero:         isZero(value),
+			IsInteger:      isInteger(value),
+			Value:          value,
+			IncrementStart: 1,
 		}
 
 		tags := strings.Split(tag, ",")
@@ -112,8 +116,6 @@ func extractField(value *reflect.Value, field *reflect.StructField, m *structCon
 				f.IsID = true
 			case tagUniqueIdx, tagIdx:
 				f.Index = tag
-			case tagIncrement:
-				f.Increment = true
 			case tagInline:
 				if value.Kind() == reflect.Ptr {
 					e := value.Elem()
@@ -129,7 +131,21 @@ func extractField(value *reflect.Value, field *reflect.StructField, m *structCon
 				// we don't need to save this field
 				return nil
 			default:
-				return ErrUnknownTag
+				if strings.HasPrefix(tag, tagIncrement) {
+					f.Increment = true
+					parts := strings.Split(tag, "=")
+					if parts[0] != tagIncrement {
+						return ErrUnknownTag
+					}
+					if len(parts) > 1 {
+						f.IncrementStart, err = strconv.ParseInt(parts[1], 0, 64)
+						if err != nil {
+							return err
+						}
+					}
+				} else {
+					return ErrUnknownTag
+				}
 			}
 		}
 
@@ -146,11 +162,12 @@ func extractField(value *reflect.Value, field *reflect.StructField, m *structCon
 	if m.ID == nil && field.Name == "ID" {
 		if f == nil {
 			f = &fieldConfig{
-				Name:      field.Name,
-				IsZero:    isZero(value),
-				IsInteger: isInteger(value),
-				IsID:      true,
-				Value:     value,
+				Name:           field.Name,
+				IsZero:         isZero(value),
+				IsInteger:      isInteger(value),
+				IsID:           true,
+				Value:          value,
+				IncrementStart: 1,
 			}
 			m.Fields[field.Name] = f
 		}
