@@ -34,6 +34,7 @@ func Batch() func(*DB) error {
 }
 
 // AutoIncrement used to enable bolt.NextSequence on empty integer ids.
+// Deprecated: Set the increment tag to the id field instead.
 func AutoIncrement() func(*DB) error {
 	return func(d *DB) error {
 		d.autoIncrement = true

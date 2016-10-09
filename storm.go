@@ -8,6 +8,8 @@ import (
 
 	"github.com/asdine/storm/codec"
 	"github.com/asdine/storm/codec/json"
+	"github.com/asdine/storm/index"
+	"github.com/asdine/storm/q"
 	"github.com/boltdb/bolt"
 )
 
@@ -135,6 +137,128 @@ func (s *DB) WithBatch(enabled bool) Node {
 	return n
 }
 
+// Get a value from a bucket
+func (s *DB) Get(bucketName string, key interface{}, to interface{}) error {
+	return s.root.Get(bucketName, key, to)
+}
+
+// Set a key/value pair into a bucket
+func (s *DB) Set(bucketName string, key interface{}, value interface{}) error {
+	return s.root.Set(bucketName, key, value)
+}
+
+// Delete deletes a key from a bucket
+func (s *DB) Delete(bucketName string, key interface{}) error {
+	return s.root.Delete(bucketName, key)
+}
+
+// Save a structure
+func (s *DB) Save(data interface{}) error {
+	return s.root.Save(data)
+}
+
+// PrefixScan scans the root buckets for keys matching the given prefix.
+func (s *DB) PrefixScan(prefix string) []Node {
+	return s.root.PrefixScan(prefix)
+}
+
+// RangeScan scans the root buckets over a range such as a sortable time range.
+func (s *DB) RangeScan(min, max string) []Node {
+	return s.root.RangeScan(min, max)
+}
+
+// Select a list of records that match a list of matchers. Doesn't use indexes.
+func (s *DB) Select(matchers ...q.Matcher) Query {
+	return s.root.Select(matchers...)
+}
+
+// Range returns one or more records by the specified index within the specified range
+func (s *DB) Range(fieldName string, min, max, to interface{}, options ...func(*index.Options)) error {
+	return s.root.Range(fieldName, min, max, to, options...)
+}
+
+// AllByIndex gets all the records of a bucket that are indexed in the specified index
+func (s *DB) AllByIndex(fieldName string, to interface{}, options ...func(*index.Options)) error {
+	return s.root.AllByIndex(fieldName, to, options...)
+}
+
+// All get all the records of a bucket
+func (s *DB) All(to interface{}, options ...func(*index.Options)) error {
+	return s.root.All(to, options...)
+}
+
+// Count counts all the records of a bucket
+func (s *DB) Count(data interface{}) (int, error) {
+	return s.root.Count(data)
+}
+
+// DeleteStruct deletes a structure from the associated bucket
+func (s *DB) DeleteStruct(data interface{}) error {
+	return s.root.DeleteStruct(data)
+}
+
+// Remove deletes a structure from the associated bucket
+// Deprecated: Use DeleteStruct instead.
+func (s *DB) Remove(data interface{}) error {
+	return s.root.DeleteStruct(data)
+}
+
+// Drop a bucket
+func (s *DB) Drop(data interface{}) error {
+	return s.root.Drop(data)
+}
+
+// Find returns one or more records by the specified index
+func (s *DB) Find(fieldName string, value interface{}, to interface{}, options ...func(q *index.Options)) error {
+	return s.root.Find(fieldName, value, to, options...)
+}
+
+// Init creates the indexes and buckets for a given structure
+func (s *DB) Init(data interface{}) error {
+	return s.root.Init(data)
+}
+
+// One returns one record by the specified index
+func (s *DB) One(fieldName string, value interface{}, to interface{}) error {
+	return s.root.One(fieldName, value, to)
+}
+
+// Begin starts a new transaction.
+func (s *DB) Begin(writable bool) (Node, error) {
+	return s.root.Begin(writable)
+}
+
+// Rollback closes the transaction and ignores all previous updates.
+func (s *DB) Rollback() error {
+	return s.root.Rollback()
+}
+
+// Commit writes all changes to disk.
+func (s *DB) Commit() error {
+	return s.root.Rollback()
+}
+
+// Update a structure
+func (s *DB) Update(data interface{}) error {
+	return s.root.Update(data)
+}
+
+// UpdateField updates a single field
+func (s *DB) UpdateField(data interface{}, fieldName string, value interface{}) error {
+	return s.root.UpdateField(data, fieldName, value)
+}
+
+// CreateBucketIfNotExists creates the bucket below the current node if it doesn't
+// already exist.
+func (s *DB) CreateBucketIfNotExists(tx *bolt.Tx, bucket string) (*bolt.Bucket, error) {
+	return s.root.CreateBucketIfNotExists(tx, bucket)
+}
+
+// GetBucket returns the given bucket below the current node.
+func (s *DB) GetBucket(tx *bolt.Tx, children ...string) *bolt.Bucket {
+	return s.root.GetBucket(tx, children...)
+}
+
 func (s *DB) checkVersion() error {
 	var v string
 	err := s.Get(dbinfo, "version", &v)
@@ -178,4 +302,14 @@ func numbertob(v interface{}) ([]byte, error) {
 		return nil, err
 	}
 	return buf.Bytes(), nil
+}
+
+func numberfromb(raw []byte) (int64, error) {
+	r := bytes.NewReader(raw)
+	var to int64
+	err := binary.Read(r, binary.BigEndian, &to)
+	if err != nil {
+		return 0, err
+	}
+	return to, nil
 }
