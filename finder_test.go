@@ -51,9 +51,9 @@ func TestFind(t *testing.T) {
 
 	users := []User{}
 
-	err = db.Find("Age", "John", &users)
+	err = db.Find("unexportedField", "John", &users)
 	assert.Error(t, err)
-	assert.EqualError(t, err, "field Age not found")
+	assert.EqualError(t, err, "field unexportedField not found")
 
 	err = db.Find("DateOfBirth", "John", &users)
 	assert.Error(t, err)
@@ -107,6 +107,10 @@ func TestFind(t *testing.T) {
 	assert.Len(t, users, 10)
 	assert.Equal(t, 21, users[0].ID)
 	assert.Equal(t, 30, users[9].ID)
+
+	// err = db.Find("Age", 10, &users)
+	// assert.NoError(t, err)
+
 }
 
 func TestFindIntIndex(t *testing.T) {
@@ -153,7 +157,7 @@ func TestAllByIndex(t *testing.T) {
 
 	err = db.AllByIndex("Unknown field", &users)
 	assert.Error(t, err)
-	assert.True(t, ErrNotFound == err)
+	assert.Equal(t, ErrNotFound, err)
 
 	err = db.AllByIndex("DateOfBirth", &users)
 	assert.NoError(t, err)
@@ -526,7 +530,7 @@ func TestRange(t *testing.T) {
 
 	err = db.Range("Age", min, max, &users)
 	assert.Error(t, err)
-	assert.EqualError(t, err, "field Age not found")
+	assert.EqualError(t, err, "not found")
 
 	dateMin := time.Now().Add(-time.Duration(50) * time.Hour)
 	dateMax := dateMin.Add(time.Duration(3) * time.Hour)

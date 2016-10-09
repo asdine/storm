@@ -62,12 +62,13 @@ type ClassicInline struct {
 }
 
 type User struct {
-	ID          int    `storm:"id"`
-	Name        string `storm:"index"`
-	age         int
-	DateOfBirth time.Time `storm:"index"`
-	Group       string
-	Slug        string `storm:"unique"`
+	ID              int       `storm:"id"`
+	Name            string    `storm:"index"`
+	Age             int       `storm:"index,increment"`
+	DateOfBirth     time.Time `storm:"index"`
+	Group           string
+	unexportedField int
+	Slug            string `storm:"unique"`
 }
 
 type ToEmbed struct {

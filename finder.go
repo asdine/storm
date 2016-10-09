@@ -1,9 +1,7 @@
 package storm
 
 import (
-	"fmt"
 	"reflect"
-	"strings"
 
 	"github.com/asdine/storm/index"
 	"github.com/asdine/storm/q"
@@ -51,15 +49,14 @@ func (n *node) One(fieldName string, value interface{}, to interface{}) error {
 		return ErrNotFound
 	}
 
-	typ := reflect.Indirect(sink.ref).Type()
-
-	field, ok := typ.FieldByName(fieldName)
-	if !ok {
-		return fmt.Errorf("field %s not found", fieldName)
+	ref := reflect.Indirect(sink.ref)
+	cfg, err := extractSingleField(&ref, fieldName)
+	if err != nil {
+		return err
 	}
 
-	tag := field.Tag.Get("storm")
-	if tag == "" && fieldName != "ID" {
+	field, ok := cfg.Fields[fieldName]
+	if !ok || (!field.IsID && field.Index == "") {
 		query := newQuery(n, q.StrictEq(fieldName, value))
 
 		if n.tx != nil {
@@ -82,18 +79,12 @@ func (n *node) One(fieldName string, value interface{}, to interface{}) error {
 		return err
 	}
 
-	var isID bool
-	if tag != "" {
-		tags := strings.Split(tag, ",")
-		isID = tags[0] == "id"
-	}
-
 	return n.readTx(func(tx *bolt.Tx) error {
-		return n.one(tx, bucketName, fieldName, tag, to, val, fieldName == "ID" || isID)
+		return n.one(tx, bucketName, fieldName, cfg, to, val, field.IsID)
 	})
 }
 
-func (n *node) one(tx *bolt.Tx, bucketName, fieldName, tag string, to interface{}, val []byte, skipIndex bool) error {
+func (n *node) one(tx *bolt.Tx, bucketName, fieldName string, cfg *structConfig, to interface{}, val []byte, skipIndex bool) error {
 	bucket := n.GetBucket(tx, bucketName)
 	if bucket == nil {
 		return ErrNotFound
@@ -101,7 +92,7 @@ func (n *node) one(tx *bolt.Tx, bucketName, fieldName, tag string, to interface{
 
 	var id []byte
 	if !skipIndex {
-		idx, err := getIndex(bucket, tag, fieldName)
+		idx, err := getIndex(bucket, cfg.Fields[fieldName].Index, fieldName)
 		if err != nil {
 			if err == index.ErrNotFound {
 				return ErrNotFound
@@ -137,11 +128,10 @@ func (n *node) Find(fieldName string, value interface{}, to interface{}, options
 		return ErrNoName
 	}
 
-	typ := reflect.Indirect(sink.ref).Type().Elem()
-
-	field, ok := typ.FieldByName(fieldName)
-	if !ok {
-		return fmt.Errorf("field %s not found", fieldName)
+	ref := reflect.Indirect(reflect.New(sink.elemType))
+	cfg, err := extractSingleField(&ref, fieldName)
+	if err != nil {
+		return err
 	}
 
 	opts := index.NewOptions()
@@ -149,8 +139,8 @@ func (n *node) Find(fieldName string, value interface{}, to interface{}, options
 		fn(opts)
 	}
 
-	tag := field.Tag.Get("storm")
-	if tag == "" {
+	field, ok := cfg.Fields[fieldName]
+	if !ok || (!field.IsID && field.Index == "") {
 		sink.limit = opts.Limit
 		sink.skip = opts.Skip
 		query := newQuery(n, q.StrictEq(fieldName, value))
@@ -176,17 +166,17 @@ func (n *node) Find(fieldName string, value interface{}, to interface{}, options
 	}
 
 	return n.readTx(func(tx *bolt.Tx) error {
-		return n.find(tx, bucketName, fieldName, tag, sink, val, opts)
+		return n.find(tx, bucketName, fieldName, cfg, sink, val, opts)
 	})
 }
 
-func (n *node) find(tx *bolt.Tx, bucketName, fieldName, tag string, sink *listSink, val []byte, opts *index.Options) error {
+func (n *node) find(tx *bolt.Tx, bucketName, fieldName string, cfg *structConfig, sink *listSink, val []byte, opts *index.Options) error {
 	bucket := n.GetBucket(tx, bucketName)
 	if bucket == nil {
 		return ErrNotFound
 	}
 
-	idx, err := getIndex(bucket, tag, fieldName)
+	idx, err := getIndex(bucket, cfg.Fields[fieldName].Index, fieldName)
 	if err != nil {
 		return err
 	}
@@ -341,11 +331,10 @@ func (n *node) Range(fieldName string, min, max, to interface{}, options ...func
 		return ErrNoName
 	}
 
-	typ := reflect.Indirect(sink.ref).Type().Elem()
-
-	field, ok := typ.FieldByName(fieldName)
-	if !ok {
-		return fmt.Errorf("field %s not found", fieldName)
+	ref := reflect.Indirect(reflect.New(sink.elemType))
+	cfg, err := extractSingleField(&ref, fieldName)
+	if err != nil {
+		return err
 	}
 
 	opts := index.NewOptions()
@@ -353,8 +342,8 @@ func (n *node) Range(fieldName string, min, max, to interface{}, options ...func
 		fn(opts)
 	}
 
-	tag := field.Tag.Get("storm")
-	if tag == "" {
+	field, ok := cfg.Fields[fieldName]
+	if !ok || (!field.IsID && field.Index == "") {
 		sink.limit = opts.Limit
 		sink.skip = opts.Skip
 		query := newQuery(n, q.And(q.Gte(fieldName, min), q.Lte(fieldName, max)))
@@ -384,23 +373,19 @@ func (n *node) Range(fieldName string, min, max, to interface{}, options ...func
 		return err
 	}
 
-	if n.tx != nil {
-		return n.rnge(n.tx, bucketName, fieldName, tag, sink, mn, mx, opts)
-	}
-
-	return n.s.Bolt.View(func(tx *bolt.Tx) error {
-		return n.rnge(tx, bucketName, fieldName, tag, sink, mn, mx, opts)
+	return n.readTx(func(tx *bolt.Tx) error {
+		return n.rnge(tx, bucketName, fieldName, cfg, sink, mn, mx, opts)
 	})
 }
 
-func (n *node) rnge(tx *bolt.Tx, bucketName, fieldName, tag string, sink *listSink, min, max []byte, opts *index.Options) error {
+func (n *node) rnge(tx *bolt.Tx, bucketName, fieldName string, cfg *structConfig, sink *listSink, min, max []byte, opts *index.Options) error {
 	bucket := n.GetBucket(tx, bucketName)
 	if bucket == nil {
 		reflect.Indirect(sink.ref).SetLen(0)
 		return nil
 	}
 
-	idx, err := getIndex(bucket, tag, fieldName)
+	idx, err := getIndex(bucket, cfg.Fields[fieldName].Index, fieldName)
 	if err != nil {
 		return err
 	}

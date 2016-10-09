@@ -64,5 +64,6 @@ func (m *meta) increment(field *fieldConfig) error {
 	}
 
 	field.Value.Set(reflect.ValueOf(counter).Convert(field.Value.Type()))
+	field.IsZero = false
 	return nil
 }
