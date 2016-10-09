@@ -20,6 +20,7 @@ In addition to the examples below, see also the [examples in the GoDoc](https://
 - [Simple ORM](#simple-orm)
 	- [Declare your structures](#declare-your-structures)
 	- [Save your object](#save-your-object)
+		- [Auto Increment](#auto-increment)
 	- [Simple queries](#simple-queries)
 		- [Fetch one object](#fetch-one-object)
 		- [Fetch multiple objects](#fetch-multiple-objects)
@@ -37,7 +38,6 @@ In addition to the examples below, see also the [examples in the GoDoc](https://
 		- [BoltOptions](#boltoptions)
 		- [MarshalUnmarshaler](#marshalunmarshaler)
 			- [Provided Codecs](#provided-codecs)
-		- [Auto Increment](#auto-increment)
 		- [Use existing Bolt connection](#use-existing-bolt-connection)
 		- [Batch mode](#batch-mode)
 - [Nodes and nested buckets](#nodes-and-nested-buckets)
@@ -137,6 +137,44 @@ err = db.Save(&user)
 That's it.
 
 `Save` creates or updates all the required indexes and buckets, checks the unique constraints and saves the object to the store.
+
+#### Auto Increment
+
+Storm can auto increment integer values so you don't have to worry about that when saving your objects. Also, the new value is automatically inserted in your field.
+
+```go
+
+type Product struct {
+	Pk                  int `storm:"id,increment"` // primary key with auto increment
+	Name                string
+	IntegerField        uint64 `storm:"increment"`
+	IndexedIntegerField uint32 `storm:"index,increment"`
+	UniqueIntegerField  int16  `storm:"unique,increment=100"` // the starting value can be set
+}
+
+p := Product{Name: "Vaccum Cleaner"}
+
+fmt.Println(p.Pk)
+fmt.Println(p.IntegerField)
+fmt.Println(p.IndexedIntegerField)
+fmt.Println(p.UniqueIntegerField)
+// 0
+// 0
+// 0
+// 0
+
+_ = db.Save(&p)
+
+fmt.Println(p.Pk)
+fmt.Println(p.IntegerField)
+fmt.Println(p.IndexedIntegerField)
+fmt.Println(p.UniqueIntegerField)
+// 1
+// 1
+// 1
+// 100
+
+```
 
 ### Simple queries
 
@@ -345,26 +383,6 @@ var gobDb, _ = storm.Open("gob.db", storm.Codec(gob.Codec))
 var jsonDb, _ = storm.Open("json.db", storm.Codec(json.Codec))
 var serealDb, _ = storm.Open("sereal.db", storm.Codec(sereal.Codec))
 var protobufDb, _ = storm.Open("protobuf.db", storm.Codec(protobuf.Codec))
-```
-
-#### Auto Increment
-
-Storm can auto increment integer IDs so you don't have to worry about that when saving your objects. Also, the ID is automatically inserted in your ID field.
-
-```go
-db, _ := storm.Open("my.db", storm.AutoIncrement())
-
-u := User{
-  Name: "John",
-}
-
-fmt.Println(u.ID)
-// 0
-
-err := db.Save(&u)
-
-fmt.Println(u.ID)
-// 1
 ```
 
 #### Use existing Bolt connection
