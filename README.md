@@ -32,6 +32,7 @@ In addition to the examples below, see also the [examples in the GoDoc](https://
 		- [Update an object](#update-an-object)
 		- [Initialize buckets and indexes before saving an object](#initialize-buckets-and-indexes-before-saving-an-object)
 		- [Drop a bucket](#drop-a-bucket)
+		- [Re-index a bucket](#re-index-a-bucket)
 	- [Advanced queries](#advanced-queries)
 	- [Transactions](#transactions)
 	- [Options](#options)
@@ -273,6 +274,14 @@ Using the bucket name
 ```go
 err := db.Drop("User")
 ```
+
+#### Re-index a bucket
+
+```go
+err := db.ReIndex(&User{})
+```
+
+Useful when the structure has changed
 
 ### Advanced queries
 
