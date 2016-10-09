@@ -57,6 +57,55 @@ func TestInitMetadata(t *testing.T) {
 	require.Equal(t, ErrDifferentCodec, err)
 }
 
+func TestReIndex(t *testing.T) {
+	db, cleanup := createDB(t)
+	defer cleanup()
+
+	for i := 1; i < 10; i++ {
+		type User struct {
+			ID   int
+			Age  int    `storm:"index"`
+			Name string `storm:"unique"`
+		}
+
+		u := User{
+			ID:   i,
+			Age:  i % 2,
+			Name: fmt.Sprintf("John%d", i),
+		}
+		err := db.Save(&u)
+		assert.NoError(t, err)
+	}
+
+	db.Bolt.View(func(tx *bolt.Tx) error {
+		bucket := tx.Bucket([]byte("User"))
+		assert.NotNil(t, bucket)
+
+		assert.NotNil(t, bucket.Bucket([]byte(indexPrefix+"Name")))
+		assert.NotNil(t, bucket.Bucket([]byte(indexPrefix+"Age")))
+		return nil
+	})
+
+	type User struct {
+		ID    int
+		Age   int
+		Name  string `storm:"index"`
+		Group string `storm:"unique"`
+	}
+
+	require.NoError(t, db.ReIndex(new(User)))
+
+	db.Bolt.View(func(tx *bolt.Tx) error {
+		bucket := tx.Bucket([]byte("User"))
+		assert.NotNil(t, bucket)
+
+		assert.NotNil(t, bucket.Bucket([]byte(indexPrefix+"Name")))
+		assert.Nil(t, bucket.Bucket([]byte(indexPrefix+"Age")))
+		assert.NotNil(t, bucket.Bucket([]byte(indexPrefix+"Group")))
+		return nil
+	})
+}
+
 func TestSave(t *testing.T) {
 	db, cleanup := createDB(t)
 	defer cleanup()
