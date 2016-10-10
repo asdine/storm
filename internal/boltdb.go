@@ -1,10 +1,6 @@
 package internal
 
-import (
-	"bytes"
-
-	"github.com/boltdb/bolt"
-)
+import "github.com/boltdb/bolt"
 
 // Cursor that can be reversed
 type Cursor struct {
@@ -32,10 +28,11 @@ func (c *Cursor) Next() ([]byte, []byte) {
 
 // RangeCursor that can be reversed
 type RangeCursor struct {
-	C       *bolt.Cursor
-	Reverse bool
-	Min     []byte
-	Max     []byte
+	C         *bolt.Cursor
+	Reverse   bool
+	Min       []byte
+	Max       []byte
+	CompareFn func([]byte, []byte) int
 }
 
 // First element
@@ -59,8 +56,8 @@ func (c *RangeCursor) Next() ([]byte, []byte) {
 // Continue tells if the loop needs to continue
 func (c *RangeCursor) Continue(val []byte) bool {
 	if c.Reverse {
-		return val != nil && bytes.Compare(val, c.Min) >= 0
+		return val != nil && c.CompareFn(val, c.Min) >= 0
 	}
 
-	return val != nil && bytes.Compare(val, c.Max) <= 0
+	return val != nil && c.CompareFn(val, c.Max) <= 0
 }

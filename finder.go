@@ -119,6 +119,10 @@ func (n *node) one(tx *bolt.Tx, bucketName, fieldName string, cfg *structConfig,
 
 // Find returns one or more records by the specified index
 func (n *node) Find(fieldName string, value interface{}, to interface{}, options ...func(q *index.Options)) error {
+	if value == nil {
+		return ErrNotFound
+	}
+
 	sink, err := newListSink(n, to)
 	if err != nil {
 		return err

@@ -41,22 +41,17 @@ type ListIndex struct {
 }
 
 // Add a value to the list index
-func (idx *ListIndex) Add(value []byte, targetID []byte) error {
-	if value == nil || len(value) == 0 {
+func (idx *ListIndex) Add(newValue []byte, targetID []byte) error {
+	if newValue == nil || len(newValue) == 0 {
 		return ErrNilParam
 	}
 	if targetID == nil || len(targetID) == 0 {
 		return ErrNilParam
 	}
 
-	oldValue := idx.IDs.Get(targetID)
-	if oldValue != nil {
-		uni, err := NewUniqueIndex(idx.IndexBucket, oldValue)
-		if err != nil {
-			return err
-		}
-
-		err = uni.Remove(targetID)
+	key := idx.IDs.Get(targetID)
+	if key != nil {
+		err := idx.IndexBucket.Delete(key)
 		if err != nil {
 			return err
 		}
@@ -65,67 +60,55 @@ func (idx *ListIndex) Add(value []byte, targetID []byte) error {
 		if err != nil {
 			return err
 		}
+
+		key = key[:0]
 	}
 
-	uni, err := NewUniqueIndex(idx.IndexBucket, value)
+	key = append(key, newValue...)
+	key = append(key, '_')
+	key = append(key, '_')
+	key = append(key, targetID...)
+
+	err := idx.IDs.Add(targetID, key)
 	if err != nil {
 		return err
 	}
 
-	err = uni.Add(targetID, targetID)
-	if err != nil {
-		return err
-	}
-
-	return idx.IDs.Add(targetID, value)
+	return idx.IndexBucket.Put(key, targetID)
 }
 
 // Remove a value from the unique index
 func (idx *ListIndex) Remove(value []byte) error {
-	err := idx.IDs.RemoveID(value)
-	if err != nil {
-		return err
+	var err error
+	var keys [][]byte
+
+	c := idx.IndexBucket.Cursor()
+	prefix := generatePrefix(value)
+
+	for k, _ := c.Seek(prefix); bytes.HasPrefix(k, prefix); k, _ = c.Next() {
+		keys = append(keys, k)
 	}
-	return idx.IndexBucket.DeleteBucket(value)
+
+	for _, k := range keys {
+		err = idx.IndexBucket.Delete(k)
+		if err != nil {
+			return err
+		}
+	}
+
+	return idx.IDs.RemoveID(value)
 }
 
 // RemoveID removes an ID from the list index
 func (idx *ListIndex) RemoveID(targetID []byte) error {
-	c := idx.IndexBucket.Cursor()
-	var emptyBuckets [][]byte
-
-	for bucketName, val := c.First(); bucketName != nil; bucketName, val = c.Next() {
-		if val != nil || bytes.Equal(bucketName, []byte("storm__ids")) {
-			continue
-		}
-
-		uni, err := NewUniqueIndex(idx.IndexBucket, bucketName)
-		if err != nil {
-			return err
-		}
-
-		err = uni.Remove(targetID)
-		if err != nil {
-			return err
-		}
-
-		cd := uni.IndexBucket.Cursor()
-		empty := true
-		for k, _ := cd.First(); k != nil; k, _ = cd.Next() {
-			empty = false
-			break
-		}
-
-		if empty {
-			emptyBuckets = append(emptyBuckets, bucketName)
-		}
+	value := idx.IDs.Get(targetID)
+	if value == nil {
+		return nil
 	}
 
-	for _, bucketName := range emptyBuckets {
-		err := idx.IndexBucket.DeleteBucket(bucketName)
-		if err != nil {
-			return err
-		}
+	err := idx.IndexBucket.Delete(value)
+	if err != nil {
+		return err
 	}
 
 	return idx.IDs.Remove(targetID)
@@ -133,20 +116,52 @@ func (idx *ListIndex) RemoveID(targetID []byte) error {
 
 // Get the first ID corresponding to the given value
 func (idx *ListIndex) Get(value []byte) []byte {
-	uni, err := NewUniqueIndex(idx.IndexBucket, value)
-	if err != nil {
-		return nil
+	c := idx.IndexBucket.Cursor()
+	prefix := generatePrefix(value)
+
+	for k, id := c.Seek(prefix); bytes.HasPrefix(k, prefix); k, id = c.Next() {
+		return id
 	}
-	return uni.first()
+
+	return nil
 }
 
 // All the IDs corresponding to the given value
 func (idx *ListIndex) All(value []byte, opts *Options) ([][]byte, error) {
-	uni, err := NewUniqueIndex(idx.IndexBucket, value)
-	if err != nil {
-		return nil, err
+	var list [][]byte
+	c := idx.IndexBucket.Cursor()
+	cur := internal.Cursor{C: c, Reverse: opts != nil && opts.Reverse}
+
+	prefix := generatePrefix(value)
+
+	k, id := c.Seek(prefix)
+	if cur.Reverse {
+		var count int
+		for ; bytes.HasPrefix(k, prefix) && k != nil; k, _ = c.Next() {
+			count++
+		}
+		k, id = c.Prev()
+		list = make([][]byte, 0, count)
 	}
-	return uni.AllRecords(opts)
+
+	for ; bytes.HasPrefix(k, prefix); k, id = cur.Next() {
+		if opts != nil && opts.Skip > 0 {
+			opts.Skip--
+			continue
+		}
+
+		if opts != nil && opts.Limit == 0 {
+			break
+		}
+
+		if opts != nil && opts.Limit > 0 {
+			opts.Limit--
+		}
+
+		list = append(list, id)
+	}
+
+	return list, nil
 }
 
 // AllRecords returns all the IDs of this index
@@ -155,21 +170,25 @@ func (idx *ListIndex) AllRecords(opts *Options) ([][]byte, error) {
 
 	c := internal.Cursor{C: idx.IndexBucket.Cursor(), Reverse: opts != nil && opts.Reverse}
 
-	for bucketName, val := c.First(); bucketName != nil; bucketName, val = c.Next() {
-		if val != nil || bytes.Equal(bucketName, []byte("storm__ids")) {
+	for k, id := c.First(); k != nil; k, id = c.Next() {
+		if id == nil || bytes.Equal(k, []byte("storm__ids")) {
 			continue
 		}
 
-		uni, err := NewUniqueIndex(idx.IndexBucket, bucketName)
-		if err != nil {
-			return nil, err
+		if opts != nil && opts.Skip > 0 {
+			opts.Skip--
+			continue
 		}
 
-		all, err := uni.AllRecords(opts)
-		if err != nil {
-			return nil, err
+		if opts != nil && opts.Limit == 0 {
+			break
 		}
-		list = append(list, all...)
+
+		if opts != nil && opts.Limit > 0 {
+			opts.Limit--
+		}
+
+		list = append(list, id)
 	}
 
 	return list, nil
@@ -184,25 +203,43 @@ func (idx *ListIndex) Range(min []byte, max []byte, opts *Options) ([][]byte, er
 		Reverse: opts != nil && opts.Reverse,
 		Min:     min,
 		Max:     max,
+		CompareFn: func(val, limit []byte) int {
+			pos := bytes.LastIndex(val, []byte("__"))
+			return bytes.Compare(val[:pos], limit)
+		},
 	}
 
-	for bucketName, val := c.First(); c.Continue(bucketName); bucketName, val = c.Next() {
-		if val != nil || bytes.Equal(bucketName, []byte("storm__ids")) {
+	for k, id := c.First(); c.Continue(k); k, id = c.Next() {
+		if id == nil || bytes.Equal(k, []byte("storm__ids")) {
 			continue
 		}
 
-		uni, err := NewUniqueIndex(idx.IndexBucket, bucketName)
-		if err != nil {
-			return nil, err
+		if opts != nil && opts.Skip > 0 {
+			opts.Skip--
+			continue
 		}
 
-		all, err := uni.AllRecords(opts)
-		if err != nil {
-			return nil, err
+		if opts != nil && opts.Limit == 0 {
+			break
 		}
 
-		list = append(list, all...)
+		if opts != nil && opts.Limit > 0 {
+			opts.Limit--
+		}
+
+		list = append(list, id)
 	}
 
 	return list, nil
+}
+
+func generatePrefix(value []byte) []byte {
+	prefix := make([]byte, len(value)+2)
+	var i int
+	for i = range value {
+		prefix[i] = value[i]
+	}
+	prefix[i+1] = '_'
+	prefix[i+2] = '_'
+	return prefix
 }
