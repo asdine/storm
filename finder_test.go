@@ -760,6 +760,42 @@ func TestSelectFindLimitSkip(t *testing.T) {
 	assert.Equal(t, 19, scores[0].Value)
 }
 
+func TestSelectFindOrderBy(t *testing.T) {
+	db, cleanup := createDB(t)
+	defer cleanup()
+
+	type T struct {
+		ID  int `storm:"increment"`
+		Str string
+		Int int
+	}
+
+	strs := []string{"e", "b", "a", "c", "d"}
+	ints := []int{2, 3, 1, 4, 5}
+	for i := 0; i < 5; i++ {
+		err := db.Save(&T{
+			Str: strs[i],
+			Int: ints[i],
+		})
+		assert.NoError(t, err)
+	}
+
+	var list []T
+	err := db.Select().OrderBy("Str").Find(&list)
+	assert.NoError(t, err)
+	assert.Len(t, list, 5)
+	for i := 0; i < 5; i++ {
+		assert.Equal(t, string([]byte{'a' + byte(i)}), list[i].Str)
+	}
+
+	err = db.Select().OrderBy("Int").Find(&list)
+	assert.NoError(t, err)
+	assert.Len(t, list, 5)
+	for i := 0; i < 5; i++ {
+		assert.Equal(t, i+1, list[i].Int)
+	}
+}
+
 func TestSelectFirst(t *testing.T) {
 	db, cleanup := prepareScoreDB(t)
 	defer cleanup()
