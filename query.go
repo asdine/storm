@@ -14,6 +14,9 @@ type Query interface {
 	// Limit the results by the given number
 	Limit(int) Query
 
+	// Order by the given field.
+	OrderBy(string) Query
+
 	// Reverse the order of the results
 	Reverse() Query
 
@@ -51,6 +54,7 @@ func newQuery(n *node, tree q.Matcher) *query {
 type query struct {
 	limit   int
 	skip    int
+	orderBy string
 	reverse bool
 	tree    q.Matcher
 	node    *node
@@ -64,6 +68,11 @@ func (q *query) Skip(nb int) Query {
 
 func (q *query) Limit(nb int) Query {
 	q.limit = nb
+	return q
+}
+
+func (q *query) OrderBy(field string) Query {
+	q.orderBy = field
 	return q
 }
 
@@ -85,6 +94,7 @@ func (q *query) Find(to interface{}) error {
 
 	sink.limit = q.limit
 	sink.skip = q.skip
+	sink.sorter.orderBy = q.orderBy
 
 	return q.runQuery(sink)
 }
