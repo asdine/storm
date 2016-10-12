@@ -8,7 +8,7 @@ Storm is a simple and powerful ORM for [BoltDB](https://github.com/boltdb/bolt).
 
 In addition to the examples below, see also the [examples in the GoDoc](https://godoc.org/github.com/asdine/storm#pkg-examples).
 
-*NEWS*: The v0.5 is incompatible with old version of Storm. A [migration](#migrations) tool has been developed to migrate databases that use older version of Storm. Any feedback would be highly appreciated.
+*NEWS*: Storm >= v0.5 is incompatible with old versions of Storm. A [migration](#migrations) tool has been developed to migrate databases that use an older version of Storm. Any feedback would be highly appreciated.
 
 ## Table of Contents
 
