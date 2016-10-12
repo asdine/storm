@@ -14,11 +14,6 @@ type BucketScanner interface {
 	RangeScan(min, max string) []Node
 }
 
-// PrefixScan scans the root buckets for keys matching the given prefix.
-func (s *DB) PrefixScan(prefix string) []Node {
-	return s.root.PrefixScan(prefix)
-}
-
 // PrefixScan scans the buckets in this node for keys matching the given prefix.
 func (n *node) PrefixScan(prefix string) []Node {
 	if n.tx != nil {
@@ -48,11 +43,6 @@ func (n *node) prefixScan(tx *bolt.Tx, prefix string) []Node {
 	}
 
 	return nodes
-}
-
-// RangeScan scans the root buckets over a range such as a sortable time range.
-func (s *DB) RangeScan(min, max string) []Node {
-	return s.root.RangeScan(min, max)
 }
 
 // RangeScan scans the buckets in this node  over a range such as a sortable time range.

@@ -50,18 +50,3 @@ func (n *node) Commit() error {
 
 	return err
 }
-
-// Begin starts a new transaction.
-func (s *DB) Begin(writable bool) (Node, error) {
-	return s.root.Begin(writable)
-}
-
-// Rollback closes the transaction and ignores all previous updates.
-func (s *DB) Rollback() error {
-	return s.root.Rollback()
-}
-
-// Commit writes all changes to disk.
-func (s *DB) Commit() error {
-	return s.root.Rollback()
-}

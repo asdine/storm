@@ -62,12 +62,13 @@ type ClassicInline struct {
 }
 
 type User struct {
-	ID          int    `storm:"id"`
-	Name        string `storm:"index"`
-	age         int
-	DateOfBirth time.Time `storm:"index"`
-	Group       string
-	Slug        string `storm:"unique"`
+	ID              int       `storm:"id"`
+	Name            string    `storm:"index"`
+	Age             int       `storm:"index,increment"`
+	DateOfBirth     time.Time `storm:"index"`
+	Group           string
+	unexportedField int
+	Slug            string `storm:"unique"`
 }
 
 type ToEmbed struct {
@@ -114,9 +115,16 @@ type UserWithEmbeddedField struct {
 	ID           uint64
 }
 
+type UserWithIncrementField struct {
+	ID   int
+	Name string
+	Age  int `storm:"unique,increment"`
+}
+
 type IndexedNameUser struct {
 	ID          int    `storm:"id"`
 	Name        string `storm:"index"`
+	Score       int    `storm:"index,increment"`
 	age         int
 	DateOfBirth time.Time `storm:"index"`
 	Group       string
@@ -125,5 +133,5 @@ type IndexedNameUser struct {
 type UniqueNameUser struct {
 	ID   int    `storm:"id"`
 	Name string `storm:"unique"`
-	age  int
+	Age  int    `storm:"index,increment"`
 }

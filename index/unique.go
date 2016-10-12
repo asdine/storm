@@ -119,6 +119,9 @@ func (idx *UniqueIndex) Range(min []byte, max []byte, opts *Options) ([][]byte, 
 		Reverse: opts != nil && opts.Reverse,
 		Min:     min,
 		Max:     max,
+		CompareFn: func(val, limit []byte) int {
+			return bytes.Compare(val, limit)
+		},
 	}
 
 	for val, ident := c.First(); val != nil && c.Continue(val); val, ident = c.Next() {

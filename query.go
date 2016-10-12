@@ -14,6 +14,9 @@ type Query interface {
 	// Limit the results by the given number
 	Limit(int) Query
 
+	// Order by the given field.
+	OrderBy(string) Query
+
 	// Reverse the order of the results
 	Reverse() Query
 
@@ -41,10 +44,11 @@ type Query interface {
 
 func newQuery(n *node, tree q.Matcher) *query {
 	return &query{
-		skip:  0,
-		limit: -1,
-		node:  n,
-		tree:  tree,
+		skip:   0,
+		limit:  -1,
+		node:   n,
+		tree:   tree,
+		sorter: newSorter(n),
 	}
 }
 
@@ -55,6 +59,7 @@ type query struct {
 	tree    q.Matcher
 	node    *node
 	bucket  string
+	sorter  *sorter
 }
 
 func (q *query) Skip(nb int) Query {
@@ -67,8 +72,14 @@ func (q *query) Limit(nb int) Query {
 	return q
 }
 
+func (q *query) OrderBy(field string) Query {
+	q.sorter.orderBy = field
+	return q
+}
+
 func (q *query) Reverse() Query {
 	q.reverse = true
+	q.sorter.reverse = true
 	return q
 }
 
@@ -85,7 +96,6 @@ func (q *query) Find(to interface{}) error {
 
 	sink.limit = q.limit
 	sink.skip = q.skip
-
 	return q.runQuery(sink)
 }
 
@@ -163,22 +173,18 @@ func (q *query) runQuery(sink sink) error {
 		})
 	}
 
-	if err != nil {
-		return err
-	}
-
-	return sink.flush()
+	return err
 }
 
 func (q *query) query(tx *bolt.Tx, sink sink) error {
 	bucketName := q.bucket
 	if bucketName == "" {
-		bucketName = sink.bucket()
+		bucketName = sink.bucketName()
 	}
 	bucket := q.node.GetBucket(tx, bucketName)
 
 	if q.limit == 0 {
-		return nil
+		return q.sorter.flush(sink)
 	}
 
 	if bucket != nil {
@@ -188,16 +194,16 @@ func (q *query) query(tx *bolt.Tx, sink sink) error {
 				continue
 			}
 
-			stop, err := sink.filter(q.tree, bucket, k, v)
+			stop, err := q.sorter.filter(sink, q.tree, bucket, k, v)
 			if err != nil {
 				return err
 			}
 
-			if stop || err != nil {
-				return err
+			if stop {
+				break
 			}
 		}
 	}
 
-	return nil
+	return q.sorter.flush(sink)
 }
