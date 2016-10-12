@@ -1,7 +1,6 @@
 package storm
 
 import (
-	"fmt"
 	"reflect"
 
 	"github.com/asdine/storm/index"
@@ -25,21 +24,30 @@ func newSorter(node Node) *sorter {
 	}
 }
 
-// sorter is a filter
 type sorter struct {
 	node    Node
 	rbTree  *rbt.Tree
 	orderBy string
+	reverse bool
 }
 
-func (s *sorter) filter(r reflectSink, tree q.Matcher, bucket *bolt.Bucket, k, v []byte) (bool, error) {
-	newElem := r.elem()
+func (s *sorter) filter(snk sink, tree q.Matcher, bucket *bolt.Bucket, k, v []byte) (bool, error) {
+	rsnk, ok := snk.(reflectSink)
+	if !ok {
+		return snk.add(&item{
+			bucket: bucket,
+			k:      k,
+			v:      v,
+		})
+	}
+
+	newElem := rsnk.elem()
 	err := s.node.Codec().Unmarshal(v, newElem.Interface())
 	if err != nil {
 		return false, err
 	}
 
-	ok := tree == nil
+	ok = tree == nil
 	if !ok {
 		ok, err = tree.Match(newElem.Interface())
 		if err != nil {
@@ -48,44 +56,54 @@ func (s *sorter) filter(r reflectSink, tree q.Matcher, bucket *bolt.Bucket, k, v
 	}
 
 	if ok {
+		it := item{
+			bucket: bucket,
+			value:  &newElem,
+			k:      k,
+			v:      v,
+		}
+
 		if s.orderBy != "" {
 			elm := reflect.Indirect(newElem).FieldByName(s.orderBy)
 			if !elm.IsValid() {
-				return false, fmt.Errorf("Unknown field %s", s.orderBy)
+				return false, ErrNotFound
 			}
 			raw, err := toBytes(elm.Interface(), s.node.Codec())
 			if err != nil {
 				return false, err
 			}
-			s.rbTree.Put(string(raw), &item{
-				bucket: bucket,
-				value:  &newElem,
-				k:      k,
-				v:      v,
-			})
+			s.rbTree.Put(string(raw), &it)
 			return false, nil
 		}
 
-		return r.add(bucket, k, v, newElem)
+		return snk.add(&it)
 	}
 
 	return false, nil
 }
 
-func (s *sorter) flush(snk reflectSink) error {
+func (s *sorter) flush(snk sink) error {
+	if s.orderBy == "" {
+		return snk.flush()
+	}
 	s.orderBy = ""
 	var err error
 	var stop bool
 
 	it := s.rbTree.Iterator()
-	for it.Next() {
+	if s.reverse {
+		it.End()
+	} else {
+		it.Begin()
+	}
+	for (s.reverse && it.Prev()) || (!s.reverse && it.Next()) {
 		item := it.Value().(*item)
-		stop, err = snk.add(item.bucket, item.k, item.v, *item.value)
+		stop, err = snk.add(item)
 		if err != nil {
 			return err
 		}
 		if stop {
-			return snk.flush()
+			break
 		}
 	}
 
@@ -93,15 +111,13 @@ func (s *sorter) flush(snk reflectSink) error {
 }
 
 type sink interface {
-	filter(tree q.Matcher, bucket *bolt.Bucket, k, v []byte) (bool, error)
-	bucket() string
+	bucketName() string
 	flush() error
+	add(*item) (bool, error)
 }
 
 type reflectSink interface {
 	elem() reflect.Value
-	add(bucket *bolt.Bucket, k []byte, v []byte, elem reflect.Value) (bool, error)
-	flush() error
 }
 
 func newListSink(node Node, to interface{}) (*listSink, error) {
@@ -129,7 +145,6 @@ func newListSink(node Node, to interface{}) (*listSink, error) {
 		elemType: elemType,
 		name:     elemType.Name(),
 		limit:    -1,
-		sorter:   newSorter(node),
 	}, nil
 }
 
@@ -143,11 +158,6 @@ type listSink struct {
 	skip     int
 	limit    int
 	idx      int
-	sorter   *sorter
-}
-
-func (l *listSink) filter(tree q.Matcher, bucket *bolt.Bucket, k, v []byte) (bool, error) {
-	return l.sorter.filter(l, tree, bucket, k, v)
 }
 
 func (l *listSink) elem() reflect.Value {
@@ -157,11 +167,11 @@ func (l *listSink) elem() reflect.Value {
 	return reflect.New(l.elemType)
 }
 
-func (l *listSink) bucket() string {
+func (l *listSink) bucketName() string {
 	return l.name
 }
 
-func (l *listSink) add(bucket *bolt.Bucket, k []byte, v []byte, elem reflect.Value) (bool, error) {
+func (l *listSink) add(i *item) (bool, error) {
 	if l.limit == 0 {
 		return true, nil
 	}
@@ -181,9 +191,9 @@ func (l *listSink) add(bucket *bolt.Bucket, k []byte, v []byte, elem reflect.Val
 
 	if l.idx == l.results.Len() {
 		if l.isPtr {
-			l.results = reflect.Append(l.results, elem)
+			l.results = reflect.Append(l.results, *i.value)
 		} else {
-			l.results = reflect.Append(l.results, reflect.Indirect(elem))
+			l.results = reflect.Append(l.results, reflect.Indirect(*i.value))
 		}
 	}
 
@@ -193,10 +203,6 @@ func (l *listSink) add(bucket *bolt.Bucket, k []byte, v []byte, elem reflect.Val
 }
 
 func (l *listSink) flush() error {
-	if l.sorter.orderBy != "" {
-		return l.sorter.flush(l)
-	}
-
 	if l.results.IsValid() && l.results.Len() > 0 {
 		reflect.Indirect(l.ref).Set(l.results)
 		return nil
@@ -213,48 +219,38 @@ func newFirstSink(node Node, to interface{}) (*firstSink, error) {
 	}
 
 	return &firstSink{
-		node:   node,
-		ref:    ref,
-		sorter: newSorter(node),
+		node: node,
+		ref:  ref,
 	}, nil
 }
 
 type firstSink struct {
-	node   Node
-	ref    reflect.Value
-	skip   int
-	found  bool
-	sorter *sorter
-}
-
-func (f *firstSink) filter(tree q.Matcher, bucket *bolt.Bucket, k, v []byte) (bool, error) {
-	return f.sorter.filter(f, tree, bucket, k, v)
+	node  Node
+	ref   reflect.Value
+	skip  int
+	found bool
 }
 
 func (f *firstSink) elem() reflect.Value {
 	return reflect.New(reflect.Indirect(f.ref).Type())
 }
 
-func (f *firstSink) bucket() string {
+func (f *firstSink) bucketName() string {
 	return reflect.Indirect(f.ref).Type().Name()
 }
 
-func (f *firstSink) add(bucket *bolt.Bucket, k []byte, v []byte, elem reflect.Value) (bool, error) {
+func (f *firstSink) add(i *item) (bool, error) {
 	if f.skip > 0 {
 		f.skip--
 		return false, nil
 	}
 
-	reflect.Indirect(f.ref).Set(elem.Elem())
+	reflect.Indirect(f.ref).Set(i.value.Elem())
 	f.found = true
 	return true, nil
 }
 
 func (f *firstSink) flush() error {
-	if f.sorter.orderBy != "" {
-		return f.sorter.flush(f)
-	}
-
 	if !f.found {
 		return ErrNotFound
 	}
@@ -270,9 +266,8 @@ func newDeleteSink(node Node, kind interface{}) (*deleteSink, error) {
 	}
 
 	return &deleteSink{
-		node:   node,
-		ref:    ref,
-		sorter: newSorter(node),
+		node: node,
+		ref:  ref,
 	}, nil
 }
 
@@ -282,22 +277,17 @@ type deleteSink struct {
 	skip    int
 	limit   int
 	removed int
-	sorter  *sorter
-}
-
-func (d *deleteSink) filter(tree q.Matcher, bucket *bolt.Bucket, k, v []byte) (bool, error) {
-	return d.sorter.filter(d, tree, bucket, k, v)
 }
 
 func (d *deleteSink) elem() reflect.Value {
 	return reflect.New(reflect.Indirect(d.ref).Type())
 }
 
-func (d *deleteSink) bucket() string {
+func (d *deleteSink) bucketName() string {
 	return reflect.Indirect(d.ref).Type().Name()
 }
 
-func (d *deleteSink) add(bucket *bolt.Bucket, k []byte, v []byte, elem reflect.Value) (bool, error) {
+func (d *deleteSink) add(i *item) (bool, error) {
 	if d.skip > 0 {
 		d.skip--
 		return false, nil
@@ -316,12 +306,12 @@ func (d *deleteSink) add(bucket *bolt.Bucket, k []byte, v []byte, elem reflect.V
 		if fieldCfg.Index == "" {
 			continue
 		}
-		idx, err := getIndex(bucket, fieldCfg.Index, fieldName)
+		idx, err := getIndex(i.bucket, fieldCfg.Index, fieldName)
 		if err != nil {
 			return false, err
 		}
 
-		err = idx.RemoveID(k)
+		err = idx.RemoveID(i.k)
 		if err != nil {
 			if err == index.ErrNotFound {
 				return false, ErrNotFound
@@ -331,14 +321,10 @@ func (d *deleteSink) add(bucket *bolt.Bucket, k []byte, v []byte, elem reflect.V
 	}
 
 	d.removed++
-	return d.limit == 0, bucket.Delete(k)
+	return d.limit == 0, i.bucket.Delete(i.k)
 }
 
 func (d *deleteSink) flush() error {
-	if d.sorter.orderBy != "" {
-		return d.sorter.flush(d)
-	}
-
 	if d.removed == 0 {
 		return ErrNotFound
 	}
@@ -354,9 +340,8 @@ func newCountSink(node Node, kind interface{}) (*countSink, error) {
 	}
 
 	return &countSink{
-		node:   node,
-		ref:    ref,
-		sorter: newSorter(node),
+		node: node,
+		ref:  ref,
 	}, nil
 }
 
@@ -366,22 +351,17 @@ type countSink struct {
 	skip    int
 	limit   int
 	counter int
-	sorter  *sorter
-}
-
-func (c *countSink) filter(tree q.Matcher, bucket *bolt.Bucket, k, v []byte) (bool, error) {
-	return c.sorter.filter(c, tree, bucket, k, v)
 }
 
 func (c *countSink) elem() reflect.Value {
 	return reflect.New(reflect.Indirect(c.ref).Type())
 }
 
-func (c *countSink) bucket() string {
+func (c *countSink) bucketName() string {
 	return reflect.Indirect(c.ref).Type().Name()
 }
 
-func (c *countSink) add(bucket *bolt.Bucket, k []byte, v []byte, elem reflect.Value) (bool, error) {
+func (c *countSink) add(i *item) (bool, error) {
 	if c.skip > 0 {
 		c.skip--
 		return false, nil
@@ -416,7 +396,7 @@ type rawSink struct {
 	execFn  func([]byte, []byte) error
 }
 
-func (r *rawSink) filter(tree q.Matcher, bucket *bolt.Bucket, k, v []byte) (bool, error) {
+func (r *rawSink) add(i *item) (bool, error) {
 	if r.limit == 0 {
 		return true, nil
 	}
@@ -431,18 +411,18 @@ func (r *rawSink) filter(tree q.Matcher, bucket *bolt.Bucket, k, v []byte) (bool
 	}
 
 	if r.execFn != nil {
-		err := r.execFn(k, v)
+		err := r.execFn(i.k, i.v)
 		if err != nil {
 			return false, err
 		}
 	} else {
-		r.results = append(r.results, v)
+		r.results = append(r.results, i.v)
 	}
 
 	return r.limit == 0, nil
 }
 
-func (r *rawSink) bucket() string {
+func (r *rawSink) bucketName() string {
 	return ""
 }
 
