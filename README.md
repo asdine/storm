@@ -308,17 +308,17 @@ err = db.Select(q.Or(
 
 ```go
 
-query := db.Select(q.True()).Limit(10).Skip(5).Reverse()
+query := db.Select(q.True()).Limit(10).Skip(5).Reverse().OrderBy("Age")
 
 // Find multiple records
 err = query.Find(&users)
 // or
-err = db.Select(q.True()).Limit(10).Skip(5).Reverse().Find(&users)
+err = db.Select(q.True()).Limit(10).Skip(5).Reverse().OrderBy("Age").Find(&users)
 
 // Find first record
 err = query.First(&user)
 // or
-err = db.Select(q.True()).Limit(10).Skip(5).Reverse().First(&user)
+err = db.Select(q.True()).Limit(10).Skip(5).Reverse().OrderBy("Age").First(&user)
 
 // Delete all matching records
 err = query.Delete(&User{})
