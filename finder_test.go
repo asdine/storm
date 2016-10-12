@@ -781,7 +781,14 @@ func TestSelectFindOrderBy(t *testing.T) {
 	}
 
 	var list []T
-	err := db.Select().OrderBy("Str").Find(&list)
+	err := db.Select().OrderBy("ID").Find(&list)
+	assert.NoError(t, err)
+	assert.Len(t, list, 5)
+	for i := 0; i < 5; i++ {
+		assert.Equal(t, i+1, list[i].ID)
+	}
+
+	err = db.Select().OrderBy("Str").Find(&list)
 	assert.NoError(t, err)
 	assert.Len(t, list, 5)
 	for i := 0; i < 5; i++ {
@@ -794,6 +801,32 @@ func TestSelectFindOrderBy(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		assert.Equal(t, i+1, list[i].Int)
 	}
+
+	err = db.Select().OrderBy("Int").Reverse().Find(&list)
+	assert.NoError(t, err)
+	assert.Len(t, list, 5)
+	for i := 0; i < 5; i++ {
+		assert.Equal(t, 5-i, list[i].Int)
+	}
+
+	err = db.Select().OrderBy("Int").Reverse().Limit(2).Find(&list)
+	assert.NoError(t, err)
+	assert.Len(t, list, 2)
+	for i := 0; i < 2; i++ {
+		assert.Equal(t, 5-i, list[i].Int)
+	}
+
+	err = db.Select().OrderBy("Int").Reverse().Skip(2).Find(&list)
+	assert.NoError(t, err)
+	assert.Len(t, list, 3)
+	for i := 0; i < 2; i++ {
+		assert.Equal(t, 3-i, list[i].Int)
+	}
+
+	err = db.Select().OrderBy("Int").Reverse().Skip(4).Limit(2).Find(&list)
+	assert.NoError(t, err)
+	assert.Len(t, list, 1)
+	assert.Equal(t, 1, list[0].Int)
 }
 
 func TestSelectFirst(t *testing.T) {
@@ -823,7 +856,57 @@ func TestSelectFirst(t *testing.T) {
 	assert.Equal(t, 18, score.Value)
 }
 
-func TestSelectRemove(t *testing.T) {
+func TestSelectFirstOrderBy(t *testing.T) {
+	db, cleanup := createDB(t)
+	defer cleanup()
+
+	type T struct {
+		ID  int `storm:"increment"`
+		Str string
+		Int int
+	}
+
+	strs := []string{"e", "b", "a", "c", "d"}
+	ints := []int{2, 3, 1, 4, 5}
+	for i := 0; i < 5; i++ {
+		err := db.Save(&T{
+			Str: strs[i],
+			Int: ints[i],
+		})
+		assert.NoError(t, err)
+	}
+
+	var record T
+	err := db.Select().OrderBy("ID").First(&record)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, record.ID)
+
+	err = db.Select().OrderBy("Str").First(&record)
+	assert.NoError(t, err)
+	assert.Equal(t, "a", record.Str)
+
+	err = db.Select().OrderBy("Int").First(&record)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, record.Int)
+
+	err = db.Select().OrderBy("Int").Reverse().First(&record)
+	assert.NoError(t, err)
+	assert.Equal(t, 5, record.Int)
+
+	err = db.Select().OrderBy("Int").Reverse().Limit(2).First(&record)
+	assert.NoError(t, err)
+	assert.Equal(t, 5, record.Int)
+
+	err = db.Select().OrderBy("Int").Reverse().Skip(2).First(&record)
+	assert.NoError(t, err)
+	assert.Equal(t, 3, record.Int)
+
+	err = db.Select().OrderBy("Int").Reverse().Skip(4).Limit(2).First(&record)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, record.Int)
+}
+
+func TestSelectDelete(t *testing.T) {
 	db, cleanup := prepareScoreDB(t)
 	defer cleanup()
 

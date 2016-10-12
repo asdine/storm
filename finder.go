@@ -40,7 +40,7 @@ func (n *node) One(fieldName string, value interface{}, to interface{}) error {
 		return err
 	}
 
-	bucketName := sink.bucket()
+	bucketName := sink.bucketName()
 	if bucketName == "" {
 		return ErrNoName
 	}
@@ -127,7 +127,7 @@ func (n *node) Find(fieldName string, value interface{}, to interface{}, options
 	if err != nil {
 		return err
 	}
-	bucketName := sink.bucket()
+	bucketName := sink.bucketName()
 	if bucketName == "" {
 		return ErrNoName
 	}
@@ -180,6 +180,8 @@ func (n *node) find(tx *bolt.Tx, bucketName, fieldName string, cfg *structConfig
 		return ErrNotFound
 	}
 
+	sorter := newSorter(n)
+
 	idx, err := getIndex(bucket, cfg.Fields[fieldName].Index, fieldName)
 	if err != nil {
 		return err
@@ -201,7 +203,7 @@ func (n *node) find(tx *bolt.Tx, bucketName, fieldName string, cfg *structConfig
 			return ErrNotFound
 		}
 
-		_, err = sink.filter(nil, bucket, list[i], raw)
+		_, err = sorter.filter(sink, nil, bucket, list[i], raw)
 		if err != nil {
 			return err
 		}
@@ -299,7 +301,7 @@ func (n *node) All(to interface{}, options ...func(*index.Options)) error {
 		fn(opts)
 	}
 
-	query := newQuery(n, q.True()).Limit(opts.Limit).Skip(opts.Skip)
+	query := newQuery(n, nil).Limit(opts.Limit).Skip(opts.Skip)
 	if opts.Reverse {
 		query.Reverse()
 	}
@@ -330,7 +332,7 @@ func (n *node) Range(fieldName string, min, max, to interface{}, options ...func
 		return err
 	}
 
-	bucketName := sink.bucket()
+	bucketName := sink.bucketName()
 	if bucketName == "" {
 		return ErrNoName
 	}
@@ -389,6 +391,8 @@ func (n *node) rnge(tx *bolt.Tx, bucketName, fieldName string, cfg *structConfig
 		return nil
 	}
 
+	sorter := newSorter(n)
+
 	idx, err := getIndex(bucket, cfg.Fields[fieldName].Index, fieldName)
 	if err != nil {
 		return err
@@ -407,7 +411,7 @@ func (n *node) rnge(tx *bolt.Tx, bucketName, fieldName string, cfg *structConfig
 			return ErrNotFound
 		}
 
-		_, err = sink.filter(nil, bucket, list[i], raw)
+		_, err = sorter.filter(sink, nil, bucket, list[i], raw)
 		if err != nil {
 			return err
 		}
@@ -418,5 +422,5 @@ func (n *node) rnge(tx *bolt.Tx, bucketName, fieldName string, cfg *structConfig
 
 // Count counts all the records of a bucket
 func (n *node) Count(data interface{}) (int, error) {
-	return n.Select(q.True()).Count(data)
+	return n.Select().Count(data)
 }
