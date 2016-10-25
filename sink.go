@@ -376,10 +376,6 @@ func (c *countSink) add(i *item) (bool, error) {
 }
 
 func (c *countSink) flush() error {
-	if c.counter == 0 {
-		return ErrNotFound
-	}
-
 	return nil
 }
 
