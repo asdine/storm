@@ -272,7 +272,7 @@ func (s *DB) checkVersion() error {
 	}
 
 	// for now, we only set the current version if it doesn't exist or if v0.5.0
-	if v == "" || v == "0.5.0" {
+	if v == "" || v == "0.5.0" || v == "0.6.0" {
 		return s.Set(dbinfo, "version", Version)
 	}
 
