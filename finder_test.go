@@ -363,6 +363,19 @@ func TestCount(t *testing.T) {
 	tx.Commit()
 }
 
+func TestCountEmpty(t *testing.T) {
+	db, cleanup := createDB(t)
+	defer cleanup()
+
+	user := &User{}
+	err := db.Init(user)
+	assert.NoError(t, err)
+
+	count, err := db.Count(user)
+	assert.Zero(t, count)
+	assert.NoError(t, err)
+}
+
 func TestOne(t *testing.T) {
 	db, cleanup := createDB(t)
 	defer cleanup()
