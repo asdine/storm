@@ -52,7 +52,20 @@ func compare(a, b interface{}, tok token.Token) bool {
 		if bk == reflect.String {
 			return constant.Compare(constant.MakeString(vala.String()), tok, constant.MakeString(valb.String()))
 		}
-	case tok == token.EQL:
+	}
+
+	if reflect.TypeOf(a).String() == "time.Time" && reflect.TypeOf(b).String() == "time.Time" {
+		var x, y int64
+		x = 1
+		if vala.MethodByName("Equal").Call([]reflect.Value{valb})[0].Bool() {
+			y = 1
+		} else if vala.MethodByName("Before").Call([]reflect.Value{valb})[0].Bool() {
+			y = 2
+		}
+		return constant.Compare(constant.MakeInt64(x), tok, constant.MakeInt64(y))
+	}
+
+	if tok == token.EQL {
 		return reflect.DeepEqual(a, b)
 	}
 
