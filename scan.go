@@ -38,7 +38,7 @@ func (n *node) prefixScan(tx *bolt.Tx, prefix string) []Node {
 		c           = n.cursor(tx)
 	)
 
-	for k, _ := c.Seek(prefixBytes); bytes.HasPrefix(k, prefixBytes); k, _ = c.Next() {
+	for k, _ := c.Seek(prefixBytes); k != nil && bytes.HasPrefix(k, prefixBytes); k, _ = c.Next() {
 		nodes = append(nodes, n.From(string(k)))
 	}
 

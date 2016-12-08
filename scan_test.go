@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestPrefixScan(t *testing.T) {
@@ -46,6 +47,14 @@ func doTestPrefixScan(t *testing.T, node Node) {
 	assert.Equal(t, 1, count)
 
 	assert.NoError(t, buckets2016[1].One("ID", 2, &SimpleUser{}))
+}
+
+func TestPrefixScanWithEmptyPrefix(t *testing.T) {
+	db, cleanup := createDB(t)
+	defer cleanup()
+
+	res := db.PrefixScan("")
+	require.Len(t, res, 1)
 }
 
 func TestRangeScan(t *testing.T) {
