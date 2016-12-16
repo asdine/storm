@@ -1,7 +1,6 @@
 # Storm
 
-[![Join the chat at https://gitter.im/asdine-storm/Lobby](https://badges.gitter.im/asdine-storm/Lobby.svg)](https://gitter.im/asdine-storm/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-
+[![Join the chat at https://gitter.im/asdine/storm](https://badges.gitter.im/asdine/storm.svg)](https://gitter.im/asdine/storm?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Build Status](https://travis-ci.org/asdine/storm.svg)](https://travis-ci.org/asdine/storm)
 [![GoDoc](https://godoc.org/github.com/asdine/storm?status.svg)](https://godoc.org/github.com/asdine/storm)
 [![Go Report Card](https://goreportcard.com/badge/github.com/asdine/storm)](https://goreportcard.com/report/github.com/asdine/storm)
@@ -9,8 +8,6 @@
 Storm is a simple and powerful ORM for [BoltDB](https://github.com/boltdb/bolt). The goal of this project is to provide a simple way to save any object in BoltDB and to easily retrieve it.
 
 In addition to the examples below, see also the [examples in the GoDoc](https://godoc.org/github.com/asdine/storm#pkg-examples).
-
-*NEWS*: Storm >= v0.5 is incompatible with old versions of Storm. A [migration](#migrations) tool has been developed to migrate databases that use an older version of Storm. Any feedback would be highly appreciated.
 
 ## Table of Contents
 
