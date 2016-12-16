@@ -112,6 +112,46 @@ func TestFind(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func TestFindNil(t *testing.T) {
+	db, cleanup := createDB(t, AutoIncrement())
+	defer cleanup()
+
+	type User struct {
+		ID        int        `storm:"increment"`
+		CreatedAt *time.Time `storm:"index"`
+		DeletedAt *time.Time `storm:"unique"`
+	}
+
+	t1 := time.Now()
+	for i := 0; i < 10; i++ {
+		now := time.Now()
+		var u User
+
+		if i%2 == 0 {
+			u.CreatedAt = &t1
+			u.DeletedAt = &now
+		}
+
+		err := db.Save(&u)
+		assert.NoError(t, err)
+	}
+
+	var users []User
+	err := db.Find("CreatedAt", nil, &users)
+	require.NoError(t, err)
+	require.Len(t, users, 5)
+
+	users = nil
+	err = db.Find("CreatedAt", t1, &users)
+	require.NoError(t, err)
+	require.Len(t, users, 5)
+
+	users = nil
+	err = db.Find("DeletedAt", nil, &users)
+	require.NoError(t, err)
+	require.Len(t, users, 5)
+}
+
 func TestFindIntIndex(t *testing.T) {
 	db, cleanup := createDB(t, AutoIncrement())
 	defer cleanup()
