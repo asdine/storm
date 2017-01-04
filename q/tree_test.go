@@ -145,6 +145,47 @@ func TestOr(t *testing.T) {
 	assert.True(t, ok)
 }
 
+func TestNot(t *testing.T) {
+	q := Not(
+		Eq("Age", 10),
+	)
+	ok, err := q.Match(&A{
+		Age: 11,
+	})
+	assert.NoError(t, err)
+	assert.True(t, ok)
+
+	ok, err = q.Match(&A{
+		Age: 10,
+	})
+	assert.NoError(t, err)
+	assert.False(t, ok)
+
+	q = Not(
+		Gt("Age", 10),
+		Eq("Name", "John"),
+	)
+	ok, err = q.Match(&A{
+		Age: 8,
+	})
+	assert.NoError(t, err)
+	assert.True(t, ok)
+
+	ok, err = q.Match(&A{
+		Age:  11,
+		Name: "Jack",
+	})
+	assert.NoError(t, err)
+	assert.False(t, ok)
+
+	ok, err = q.Match(&A{
+		Age:  5,
+		Name: "John",
+	})
+	assert.NoError(t, err)
+	assert.False(t, ok)
+}
+
 func TestAndOr(t *testing.T) {
 	a := A{
 		Age:  10,
