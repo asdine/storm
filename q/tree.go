@@ -115,6 +115,34 @@ func (s *strictEq) MatchField(v interface{}) (bool, error) {
 	return reflect.DeepEqual(v, s.value), nil
 }
 
+type in struct {
+	list interface{}
+}
+
+func (i *in) MatchField(v interface{}) (bool, error) {
+	ref := reflect.ValueOf(i.list)
+	if ref.Kind() != reflect.Slice {
+		return false, nil
+	}
+
+	c := cmp{
+		token: token.EQL,
+	}
+
+	for i := 0; i < ref.Len(); i++ {
+		c.value = ref.Index(i).Interface()
+		ok, err := c.MatchField(v)
+		if err != nil {
+			return false, err
+		}
+		if ok {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
 // Eq matcher, checks if the given field is equal to the given value
 func Eq(field string, v interface{}) Matcher {
 	return NewFieldMatcher(field, &cmp{value: v, token: token.EQL})
@@ -143,6 +171,12 @@ func Lt(field string, v interface{}) Matcher {
 // Lte matcher, checks if the given field is lesser than or equal to the given value
 func Lte(field string, v interface{}) Matcher {
 	return NewFieldMatcher(field, &cmp{value: v, token: token.LEQ})
+}
+
+// In matcher, checks if the given field matches one of the value of the given slice.
+// v must be a slice.
+func In(field string, v interface{}) Matcher {
+	return NewFieldMatcher(field, &in{list: v})
 }
 
 // True matcher, always returns true
