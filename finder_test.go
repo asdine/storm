@@ -385,7 +385,7 @@ func TestCount(t *testing.T) {
 	tx, err := db.Begin(true)
 	assert.NoError(t, err)
 
-	count, err = tx.Count(User{})
+	_, err = tx.Count(User{})
 	assert.Equal(t, ErrStructPtrNeeded, err)
 
 	count, err = tx.Count(&User{})
