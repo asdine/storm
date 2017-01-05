@@ -38,7 +38,11 @@ func (n *node) prefixScan(tx *bolt.Tx, prefix string) []Node {
 		c           = n.cursor(tx)
 	)
 
-	for k, _ := c.Seek(prefixBytes); k != nil && bytes.HasPrefix(k, prefixBytes); k, _ = c.Next() {
+	for k, v := c.Seek(prefixBytes); k != nil && bytes.HasPrefix(k, prefixBytes); k, v = c.Next() {
+		if v != nil {
+			continue
+		}
+
 		nodes = append(nodes, n.From(string(k)))
 	}
 
@@ -69,7 +73,11 @@ func (n *node) rangeScan(tx *bolt.Tx, min, max string) []Node {
 		c        = n.cursor(tx)
 	)
 
-	for k, _ := c.Seek(minBytes); k != nil && bytes.Compare(k, maxBytes) <= 0; k, _ = c.Next() {
+	for k, v := c.Seek(minBytes); k != nil && bytes.Compare(k, maxBytes) <= 0; k, v = c.Next() {
+		if v != nil {
+			continue
+		}
+
 		nodes = append(nodes, n.From(string(k)))
 	}
 
