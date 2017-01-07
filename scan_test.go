@@ -57,6 +57,18 @@ func TestPrefixScanWithEmptyPrefix(t *testing.T) {
 	require.Len(t, res, 1)
 }
 
+func TestPrefixScanSkipValues(t *testing.T) {
+	db, cleanup := createDB(t)
+	defer cleanup()
+
+	db.Set("a", "2015", 1)
+	err := db.From("a", "2016").Save(&SimpleUser{ID: 1, Name: "John"})
+	require.NoError(t, err)
+
+	res := db.From("a").PrefixScan("20")
+	require.Len(t, res, 1)
+}
+
 func TestRangeScan(t *testing.T) {
 	db, cleanup := createDB(t)
 	defer cleanup()
@@ -88,4 +100,16 @@ func doTestRangeScan(t *testing.T, node Node) {
 
 	secondIn2015 := node.RangeScan("2015", "2016")[1]
 	assert.NoError(t, secondIn2015.One("ID", 2, &SimpleUser{}))
+}
+
+func TestRangeScanSkipValues(t *testing.T) {
+	db, cleanup := createDB(t)
+	defer cleanup()
+
+	db.Set("a", "2015", 1)
+	err := db.From("a", "2016").Save(&SimpleUser{ID: 1, Name: "John"})
+	require.NoError(t, err)
+
+	res := db.From("a").RangeScan("2015", "2018")
+	require.Len(t, res, 1)
 }

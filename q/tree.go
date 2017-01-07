@@ -115,6 +115,64 @@ func (s *strictEq) MatchField(v interface{}) (bool, error) {
 	return reflect.DeepEqual(v, s.value), nil
 }
 
+type in struct {
+	list interface{}
+}
+
+func (i *in) MatchField(v interface{}) (bool, error) {
+	ref := reflect.ValueOf(i.list)
+	if ref.Kind() != reflect.Slice {
+		return false, nil
+	}
+
+	c := cmp{
+		token: token.EQL,
+	}
+
+	for i := 0; i < ref.Len(); i++ {
+		c.value = ref.Index(i).Interface()
+		ok, err := c.MatchField(v)
+		if err != nil {
+			return false, err
+		}
+		if ok {
+      return true, nil
+		}
+	}
+
+	return false, nil
+}
+
+type not struct {
+	children []Matcher
+}
+
+func (n *not) Match(i interface{}) (bool, error) {
+	v := reflect.Indirect(reflect.ValueOf(i))
+	return n.MatchValue(&v)
+}
+
+func (n *not) MatchValue(v *reflect.Value) (bool, error) {
+	var err error
+
+	for _, matcher := range n.children {
+		vm, ok := matcher.(ValueMatcher)
+		if ok {
+			ok, err = vm.MatchValue(v)
+		} else {
+			ok, err = matcher.Match(v.Interface())
+		}
+		if err != nil {
+			return false, err
+		}
+		if ok {
+			return false, nil
+		}
+	}
+
+	return true, nil
+}
+
 // Eq matcher, checks if the given field is equal to the given value
 func Eq(field string, v interface{}) Matcher {
 	return NewFieldMatcher(field, &cmp{value: v, token: token.EQL})
@@ -145,6 +203,12 @@ func Lte(field string, v interface{}) Matcher {
 	return NewFieldMatcher(field, &cmp{value: v, token: token.LEQ})
 }
 
+// In matcher, checks if the given field matches one of the value of the given slice.
+// v must be a slice.
+func In(field string, v interface{}) Matcher {
+	return NewFieldMatcher(field, &in{list: v})
+}
+
 // True matcher, always returns true
 func True() Matcher { return &trueMatcher{} }
 
@@ -153,3 +217,6 @@ func Or(matchers ...Matcher) Matcher { return &or{children: matchers} }
 
 // And matcher, checks if all of the given matchers matches the record
 func And(matchers ...Matcher) Matcher { return &and{children: matchers} }
+
+// Not matcher, checks if all of the given matchers return false
+func Not(matchers ...Matcher) Matcher { return &not{children: matchers} }

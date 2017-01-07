@@ -99,6 +99,42 @@ func TestStrictEq(t *testing.T) {
 	assert.True(t, ok)
 }
 
+func TestIn(t *testing.T) {
+	a := A{
+		Age: 10,
+	}
+
+	q := In("Age", []int{1, 5, 10, 3})
+	ok, err := q.Match(&a)
+	assert.NoError(t, err)
+	assert.True(t, ok)
+
+	q = In("Age", []int{1, 5, 3})
+	ok, err = q.Match(&a)
+	assert.NoError(t, err)
+	assert.False(t, ok)
+
+	q = In("Age", []int{})
+	ok, err = q.Match(&a)
+	assert.NoError(t, err)
+	assert.False(t, ok)
+
+	q = In("Age", nil)
+	ok, err = q.Match(&a)
+	assert.NoError(t, err)
+	assert.False(t, ok)
+
+	q = In("Age", []float64{1.0, 5.0, 10.0, 3.0})
+	ok, err = q.Match(&a)
+	assert.NoError(t, err)
+	assert.True(t, ok)
+
+	q = In("Age", 10)
+	ok, err = q.Match(&a)
+	assert.NoError(t, err)
+	assert.False(t, ok)
+}
+
 func TestAnd(t *testing.T) {
 	a := A{
 		Age:  10,
@@ -143,6 +179,47 @@ func TestOr(t *testing.T) {
 	ok, err = q.Match(&b)
 	assert.NoError(t, err)
 	assert.True(t, ok)
+}
+
+func TestNot(t *testing.T) {
+	q := Not(
+		Eq("Age", 10),
+	)
+	ok, err := q.Match(&A{
+		Age: 11,
+	})
+	assert.NoError(t, err)
+	assert.True(t, ok)
+
+	ok, err = q.Match(&A{
+		Age: 10,
+	})
+	assert.NoError(t, err)
+	assert.False(t, ok)
+
+	q = Not(
+		Gt("Age", 10),
+		Eq("Name", "John"),
+	)
+	ok, err = q.Match(&A{
+		Age: 8,
+	})
+	assert.NoError(t, err)
+	assert.True(t, ok)
+
+	ok, err = q.Match(&A{
+		Age:  11,
+		Name: "Jack",
+	})
+	assert.NoError(t, err)
+	assert.False(t, ok)
+
+	ok, err = q.Match(&A{
+		Age:  5,
+		Name: "John",
+	})
+	assert.NoError(t, err)
+	assert.False(t, ok)
 }
 
 func TestAndOr(t *testing.T) {
