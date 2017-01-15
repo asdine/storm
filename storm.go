@@ -152,6 +152,16 @@ func (s *DB) Delete(bucketName string, key interface{}) error {
 	return s.root.Delete(bucketName, key)
 }
 
+// GetBytes gets a raw value from a bucket.
+func (s *DB) GetBytes(bucketName string, key interface{}) ([]byte, error) {
+	return s.root.GetBytes(bucketName, key)
+}
+
+// SetBytes sets a raw value into a bucket.
+func (s *DB) SetBytes(bucketName string, key interface{}, value []byte) error {
+	return s.root.SetBytes(bucketName, key, value)
+}
+
 // Save a structure
 func (s *DB) Save(data interface{}) error {
 	return s.root.Save(data)

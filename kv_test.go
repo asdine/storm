@@ -53,6 +53,21 @@ func TestGet(t *testing.T) {
 	assert.Equal(t, ErrNotFound, err)
 }
 
+func TestGetBytes(t *testing.T) {
+	db, cleanup := createDB(t)
+	defer cleanup()
+
+	err := db.SetBytes("trash", "a", []byte("hi"))
+	assert.NoError(t, err)
+
+	val, err := db.GetBytes("trash", "a")
+	assert.NoError(t, err)
+	assert.Equal(t, []byte("hi"), val)
+
+	val, err = db.GetBytes("trash", "b")
+	assert.Equal(t, ErrNotFound, err)
+}
+
 func TestSet(t *testing.T) {
 	db, cleanup := createDB(t)
 	defer cleanup()
