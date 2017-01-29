@@ -6,6 +6,12 @@ import (
 	"github.com/boltdb/bolt"
 )
 
+// Select a list of records that match a list of matchers. Doesn't use indexes.
+func (n *node) Select(matchers ...q.Matcher) Query {
+	tree := q.And(matchers...)
+	return newQuery(n, tree)
+}
+
 // Query is the low level query engine used by Storm. It allows to operate searches through an entire bucket.
 type Query interface {
 	// Skip matching records by the given number
@@ -38,8 +44,11 @@ type Query interface {
 	// Returns all the records without decoding them
 	Raw() ([][]byte, error)
 
-	// Execute the given function for each element
+	// Execute the given function for each raw element
 	RawEach(func([]byte, []byte) error) error
+
+	// Execute the given function for each element
+	Each(interface{}, func(interface{}) error) error
 }
 
 func newQuery(n *node, tree q.Matcher) *query {
@@ -154,6 +163,19 @@ func (q *query) Raw() ([][]byte, error) {
 
 func (q *query) RawEach(fn func([]byte, []byte) error) error {
 	sink := newRawSink()
+
+	sink.limit = q.limit
+	sink.skip = q.skip
+	sink.execFn = fn
+
+	return q.runQuery(sink)
+}
+
+func (q *query) Each(kind interface{}, fn func(interface{}) error) error {
+	sink, err := newEachSink(kind)
+	if err != nil {
+		return err
+	}
 
 	sink.limit = q.limit
 	sink.skip = q.skip

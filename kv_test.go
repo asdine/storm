@@ -64,7 +64,7 @@ func TestGetBytes(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, []byte("hi"), val)
 
-	val, err = db.GetBytes("trash", "b")
+	_, err = db.GetBytes("trash", "b")
 	assert.Equal(t, ErrNotFound, err)
 }
 

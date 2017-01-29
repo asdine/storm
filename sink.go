@@ -425,3 +425,56 @@ func (r *rawSink) bucketName() string {
 func (r *rawSink) flush() error {
 	return nil
 }
+
+func newEachSink(to interface{}) (*eachSink, error) {
+	ref := reflect.ValueOf(to)
+
+	if !ref.IsValid() || ref.Kind() != reflect.Ptr || ref.Elem().Kind() != reflect.Struct {
+		return nil, ErrStructPtrNeeded
+	}
+
+	return &eachSink{
+		ref: ref,
+	}, nil
+}
+
+type eachSink struct {
+	skip   int
+	limit  int
+	ref    reflect.Value
+	execFn func(interface{}) error
+}
+
+func (e *eachSink) elem() reflect.Value {
+	return reflect.New(reflect.Indirect(e.ref).Type())
+}
+
+func (e *eachSink) bucketName() string {
+	return reflect.Indirect(e.ref).Type().Name()
+}
+
+func (e *eachSink) add(i *item) (bool, error) {
+	if e.limit == 0 {
+		return true, nil
+	}
+
+	if e.skip > 0 {
+		e.skip--
+		return false, nil
+	}
+
+	if e.limit > 0 {
+		e.limit--
+	}
+
+	err := e.execFn(i.value.Interface())
+	if err != nil {
+		return false, err
+	}
+
+	return e.limit == 0, nil
+}
+
+func (e *eachSink) flush() error {
+	return nil
+}
