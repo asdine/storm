@@ -315,12 +315,6 @@ func (n *node) All(to interface{}, options ...func(*index.Options)) error {
 	return nil
 }
 
-// Select a list of records that match a list of matchers. Doesn't use indexes.
-func (n *node) Select(matchers ...q.Matcher) Query {
-	tree := q.And(matchers...)
-	return newQuery(n, tree)
-}
-
 // Range returns one or more records by the specified index within the specified range
 func (n *node) Range(fieldName string, min, max, to interface{}, options ...func(*index.Options)) error {
 	sink, err := newListSink(n, to)
