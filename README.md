@@ -284,7 +284,85 @@ Useful when the structure has changed
 
 ### Advanced queries
 
-For more complex queries, you can use `Select` and the `q` package.
+For more complex queries, you can use the `Select` method.
+`Select` takes any number of [`Matcher`](https://godoc.org/github.com/asdine/storm/q#Matcher) from the [`q`](https://godoc.org/github.com/asdine/storm/q) package.
+
+Here are some common Matchers:
+
+```go
+// Equality
+q.Eq("Name", John)
+
+// Strictly greater than
+q.Gt("Age", 7)
+
+// Lesser than or equal to
+q.Lte("Age", 77)
+
+// Regex with name that starts with the letter D
+q.Re("Name", "^D")
+
+// In the given slice of values
+q.In("Group", []string{"Staff", "Admin"})
+```
+
+Matchers can also be combined with `And`, `Or` and `Not`:
+
+```go
+
+// Match if all match
+q.And(
+  q.Gt("Age", 7),
+  q.Re("Name", "^D")
+)
+
+// Match if one matches
+q.Or(
+  q.Re("Name", "^A"),
+  q.Not(
+    q.Re("Name", "^B")
+  ),
+  q.Re("Name", "^C"),
+  q.In("Group", []string{"Staff", "Admin"}),
+  q.And(
+    q.StrictEq("Password", []byte(password)),
+    q.Eq("Registered", true)
+  )
+)
+```
+
+You can find the complete list in the [documentation](https://godoc.org/github.com/asdine/storm/q#Matcher).
+
+`Select` takes any number of matchers and wraps them into a `q.And()` so it's not necessary to specify it. It returns a [`Query`](https://godoc.org/github.com/asdine/storm#Query) type.
+
+```go
+query := db.Select(q.Gte("Age", 7), q.Lte("Age", 77))
+```
+
+The `Query` type contains methods to filter and order the records.
+
+```go
+// Limit
+query = query.Limit(10)
+
+// Skip
+query = query.Skip(20)
+
+// Calls can also be chained
+query = query.Limit(10).Skip(20).OrderBy("Age").Reverse()
+```
+
+But also to specify how to fetch them.
+
+```go
+var users []User
+err = query.Find(&users)
+
+var user User
+err = query.First(&user)
+```
+
+Examples with `Select`:
 
 ```go
 // Find all users with an ID between 10 and 100
@@ -299,33 +377,33 @@ err = db.Select(q.Or(
     q.Gte("Age", 21),
   ),
 )).Find(&users)
-```
 
-`db.Select` takes a list of `q.Matcher`. See the [`q`](https://godoc.org/github.com/asdine/storm/q#Matcher) package for more informations.
-
-`db.Select` returns a [`Query`](https://godoc.org/github.com/asdine/storm#Query) that contains useful methods that can be chained.
-
-```go
-
-query := db.Select(q.True()).Limit(10).Skip(5).Reverse().OrderBy("Age")
+query := db.Select(q.Gte("ID", 10), q.Lte("ID", 100)).Limit(10).Skip(5).Reverse().OrderBy("Age")
 
 // Find multiple records
 err = query.Find(&users)
 // or
-err = db.Select(q.True()).Limit(10).Skip(5).Reverse().OrderBy("Age").Find(&users)
+err = db.Selectq.Gte("ID", 10), q.Lte("ID", 100)).Limit(10).Skip(5).Reverse().OrderBy("Age").Find(&users)
 
 // Find first record
 err = query.First(&user)
 // or
-err = db.Select(q.True()).Limit(10).Skip(5).Reverse().OrderBy("Age").First(&user)
+err = db.Select(q.Gte("ID", 10), q.Lte("ID", 100)).Limit(10).Skip(5).Reverse().OrderBy("Age").First(&user)
 
 // Delete all matching records
-err = query.Delete(&User{})
-...
+err = query.Delete(new(User))
+
+// Fetching records one by one (useful when the bucket contains a lot of records)
+query = db.Select(q.Gte("ID", 10),q.Lte("ID", 100)).OrderBy("Age")
+
+err = query.Each(new(User), func(record interface{}) error) {
+  u := record.(*User)
+  ...
+  return nil
+}
 ```
 
 See the [documentation](https://godoc.org/github.com/asdine/storm#Query) for a complete list of methods.
-
 
 ### Transactions
 
