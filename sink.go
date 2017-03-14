@@ -1,6 +1,7 @@
 package storm
 
 import (
+	"encoding/binary"
 	"reflect"
 
 	"github.com/asdine/storm/index"
@@ -29,9 +30,12 @@ type sorter struct {
 	rbTree  *rbt.Tree
 	orderBy string
 	reverse bool
+	counter int64
 }
 
 func (s *sorter) filter(snk sink, tree q.Matcher, bucket *bolt.Bucket, k, v []byte) (bool, error) {
+	s.counter++
+
 	rsnk, ok := snk.(reflectSink)
 	if !ok {
 		return snk.add(&item{
@@ -72,7 +76,13 @@ func (s *sorter) filter(snk sink, tree q.Matcher, bucket *bolt.Bucket, k, v []by
 			if err != nil {
 				return false, err
 			}
-			s.rbTree.Put(string(raw), &it)
+
+			key := make([]byte, len(raw)+8)
+			for i := 0; i < len(raw); i++ {
+				key[i] = raw[i]
+			}
+			binary.PutVarint(key[len(raw):], s.counter)
+			s.rbTree.Put(string(key), &it)
 			return false, nil
 		}
 

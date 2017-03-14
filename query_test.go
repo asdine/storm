@@ -210,15 +210,21 @@ func TestSelectFindOrderBy(t *testing.T) {
 		ID  int `storm:"increment"`
 		Str string
 		Int int
+		Rnd int
 	}
 
 	strs := []string{"e", "b", "a", "c", "d"}
 	ints := []int{2, 3, 1, 4, 5}
 	for i := 0; i < 5; i++ {
-		err := db.Save(&T{
+		record := T{
 			Str: strs[i],
 			Int: ints[i],
-		})
+		}
+		if i == 3 {
+			record.Rnd = 3
+		}
+
+		err := db.Save(&record)
 		assert.NoError(t, err)
 	}
 
@@ -243,6 +249,15 @@ func TestSelectFindOrderBy(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		assert.Equal(t, i+1, list[i].Int)
 	}
+
+	err = db.Select().OrderBy("Rnd").Find(&list)
+	assert.NoError(t, err)
+	assert.Len(t, list, 5)
+	assert.Equal(t, 1, list[0].ID)
+	assert.Equal(t, 2, list[1].ID)
+	assert.Equal(t, 3, list[2].ID)
+	assert.Equal(t, 5, list[3].ID)
+	assert.Equal(t, 4, list[4].ID)
 
 	err = db.Select().OrderBy("Int").Reverse().Find(&list)
 	assert.NoError(t, err)
