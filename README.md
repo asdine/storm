@@ -383,7 +383,7 @@ query := db.Select(q.Gte("ID", 10), q.Lte("ID", 100)).Limit(10).Skip(5).Reverse(
 // Find multiple records
 err = query.Find(&users)
 // or
-err = db.Selectq.Gte("ID", 10), q.Lte("ID", 100)).Limit(10).Skip(5).Reverse().OrderBy("Age").Find(&users)
+err = db.Select(q.Gte("ID", 10), q.Lte("ID", 100)).Limit(10).Skip(5).Reverse().OrderBy("Age").Find(&users)
 
 // Find first record
 err = query.First(&user)
