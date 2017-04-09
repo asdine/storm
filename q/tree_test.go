@@ -67,6 +67,12 @@ func TestCmp(t *testing.T) {
 	ok, err = q.Match(&b)
 	assert.NoError(t, err)
 	assert.True(t, ok)
+
+	// Unknown field
+	q = Gt("Unknown", 15)
+	ok, err = q.Match(&a)
+	assert.Equal(t, err, ErrUnknownField)
+	assert.False(t, ok)
 }
 
 func TestStrictEq(t *testing.T) {

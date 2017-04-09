@@ -1,8 +1,12 @@
 package q
 
 import (
+	"errors"
 	"reflect"
 )
+
+// ErrUnknownField is returned when an unknown field is passed.
+var ErrUnknownField = errors.New("unknown field")
 
 type fieldMatcherDelegate struct {
 	FieldMatcher
@@ -27,6 +31,9 @@ func (r fieldMatcherDelegate) Match(i interface{}) (bool, error) {
 }
 
 func (r fieldMatcherDelegate) MatchValue(v *reflect.Value) (bool, error) {
-	field := v.FieldByName(r.Field).Interface()
-	return r.MatchField(field)
+	field := v.FieldByName(r.Field)
+	if !field.IsValid() {
+		return false, ErrUnknownField
+	}
+	return r.MatchField(field.Interface())
 }
