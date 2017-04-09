@@ -471,6 +471,8 @@ var serealDb, _ = storm.Open("sereal.db", storm.Codec(sereal.Codec))
 var protobufDb, _ = storm.Open("protobuf.db", storm.Codec(protobuf.Codec))
 ```
 
+**Tip**: Adding Storm tags to generated Protobuf files can be tricky. A good solution is to use [this tool](https://github.com/favadi/protoc-go-inject-tag) to inject the tags during the compilation.
+
 #### Use existing Bolt connection
 
 You can use an existing connection and pass it to Storm
@@ -521,6 +523,7 @@ enemies := chars.From("enemies")
 items := db.From("items")
 potions := items.From("consumables").From("medicine").From("potions")
 ```
+
 You can even pass the entire hierarchy as arguments to `From`:
 
 ```go
