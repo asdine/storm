@@ -124,6 +124,7 @@ type sink interface {
 	bucketName() string
 	flush() error
 	add(*item) (bool, error)
+	readOnly() bool
 }
 
 type reflectSink interface {
@@ -221,6 +222,10 @@ func (l *listSink) flush() error {
 	return ErrNotFound
 }
 
+func (l *listSink) readOnly() bool {
+	return true
+}
+
 func newFirstSink(node Node, to interface{}) (*firstSink, error) {
 	ref := reflect.ValueOf(to)
 
@@ -266,6 +271,10 @@ func (f *firstSink) flush() error {
 	}
 
 	return nil
+}
+
+func (f *firstSink) readOnly() bool {
+	return true
 }
 
 func newDeleteSink(node Node, kind interface{}) (*deleteSink, error) {
@@ -342,6 +351,10 @@ func (d *deleteSink) flush() error {
 	return nil
 }
 
+func (d *deleteSink) readOnly() bool {
+	return false
+}
+
 func newCountSink(node Node, kind interface{}) (*countSink, error) {
 	ref := reflect.ValueOf(kind)
 
@@ -389,6 +402,10 @@ func (c *countSink) flush() error {
 	return nil
 }
 
+func (c *countSink) readOnly() bool {
+	return true
+}
+
 func newRawSink() *rawSink {
 	return &rawSink{
 		limit: -1,
@@ -434,6 +451,10 @@ func (r *rawSink) bucketName() string {
 
 func (r *rawSink) flush() error {
 	return nil
+}
+
+func (r *rawSink) readOnly() bool {
+	return true
 }
 
 func newEachSink(to interface{}) (*eachSink, error) {
@@ -487,4 +508,8 @@ func (e *eachSink) add(i *item) (bool, error) {
 
 func (e *eachSink) flush() error {
 	return nil
+}
+
+func (e *eachSink) readOnly() bool {
+	return true
 }
