@@ -454,7 +454,7 @@ db := storm.Open("my.db", storm.Codec(myCodec))
 
 You can easily implement your own `MarshalUnmarshaler`, but Storm comes with built-in support for [JSON](https://godoc.org/github.com/asdine/storm/codec/json) (default), [GOB](https://godoc.org/github.com/asdine/storm/codec/gob),  [Sereal](https://godoc.org/github.com/asdine/storm/codec/sereal) and [Protocol Buffers](https://godoc.org/github.com/asdine/storm/codec/protobuf)
 
-These can be used by importing the relevant package and use that codec to configure Storm. The example below shows all three (without proper error handling):
+These can be used by importing the relevant package and use that codec to configure Storm. The example below shows all variants (without proper error handling):
 
 ```go
 import (
