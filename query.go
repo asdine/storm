@@ -185,17 +185,17 @@ func (q *query) Each(kind interface{}, fn func(interface{}) error) error {
 }
 
 func (q *query) runQuery(sink sink) error {
-	var err error
-
 	if q.node.tx != nil {
-		err = q.query(q.node.tx, sink)
-	} else {
-		err = q.node.s.Bolt.Update(func(tx *bolt.Tx) error {
+		return q.query(q.node.tx, sink)
+	}
+	if sink.readOnly() {
+		return q.node.s.Bolt.View(func(tx *bolt.Tx) error {
 			return q.query(tx, sink)
 		})
 	}
-
-	return err
+	return q.node.s.Bolt.Update(func(tx *bolt.Tx) error {
+		return q.query(tx, sink)
+	})
 }
 
 func (q *query) query(tx *bolt.Tx, sink sink) error {
