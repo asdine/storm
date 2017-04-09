@@ -40,6 +40,9 @@ type Node interface {
 
 	// WithBatch returns a new Storm Node with the batch mode enabled.
 	WithBatch(enabled bool) Node
+
+	// Transaction returns the transaction (if any) from the node.
+	Transaction() *bolt.Tx
 }
 
 // A Node in Storm represents the API to a BoltDB bucket.
@@ -82,6 +85,11 @@ func (n node) WithCodec(codec codec.MarshalUnmarshaler) Node {
 func (n node) WithBatch(enabled bool) Node {
 	n.batchMode = enabled
 	return &n
+}
+
+// Transaction returns the transaction (if any) from the node.
+func (n node) Transaction() *bolt.Tx {
+	return n.tx
 }
 
 // Bucket returns the bucket name as a slice from the root.
