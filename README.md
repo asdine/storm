@@ -5,7 +5,7 @@
 [![GoDoc](https://godoc.org/github.com/asdine/storm?status.svg)](https://godoc.org/github.com/asdine/storm)
 [![Go Report Card](https://goreportcard.com/badge/github.com/asdine/storm)](https://goreportcard.com/report/github.com/asdine/storm)
 
-Storm is a simple and powerful ORM for [BoltDB](https://github.com/boltdb/bolt). The goal of this project is to provide a simple way to save any object in BoltDB and to easily retrieve it.
+Storm is a simple and powerful toolkit for [BoltDB](https://github.com/boltdb/bolt). Basically, Storm provides indexes, a wide range of methods to store and fetch data, an advanced query system, and much more.
 
 In addition to the examples below, see also the [examples in the GoDoc](https://godoc.org/github.com/asdine/storm#pkg-examples).
 
@@ -16,7 +16,7 @@ In addition to the examples below, see also the [examples in the GoDoc](https://
 - [Getting Started](#getting-started)
 - [Import Storm](#import-storm)
 - [Open a database](#open-a-database)
-- [Simple ORM](#simple-orm)
+- [Simple CRUD system](#simple-crud-system)
 	- [Declare your structures](#declare-your-structures)
 	- [Save your object](#save-your-object)
 		- [Auto Increment](#auto-increment)
@@ -73,7 +73,7 @@ defer db.Close()
 
 `Open` can receive multiple options to customize the way it behaves. See [Options](#options) below
 
-## Simple ORM
+## Simple CRUD system
 
 ### Declare your structures
 
