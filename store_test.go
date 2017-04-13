@@ -559,7 +559,7 @@ func TestUpdateField(t *testing.T) {
 	err = db.UpdateField(&User{ID: 11}, "Address", "Jack")
 	assert.Equal(t, ErrNotFound, err)
 
-	// Uncompatible value
+	// Incompatible value
 	err = db.UpdateField(&User{ID: 10}, "Name", 50)
 	assert.Equal(t, ErrIncompatibleValue, err)
 

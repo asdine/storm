@@ -2,7 +2,7 @@
 package msgpack
 
 import (
-    mp "gopkg.in/vmihailenco/msgpack.v2"
+	mp "gopkg.in/vmihailenco/msgpack.v2"
 )
 
 const name = "msgpack"

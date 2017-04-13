@@ -7,6 +7,7 @@ import (
 
 const name = "sereal"
 
+// Codec that encodes to and decodes using Sereal.
 // The Sereal codec has some interesting features, one of them being
 // serialization of object references, including circular references.
 // See https://github.com/Sereal/Sereal

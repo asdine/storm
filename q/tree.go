@@ -136,7 +136,7 @@ func (i *in) MatchField(v interface{}) (bool, error) {
 			return false, err
 		}
 		if ok {
-      return true, nil
+			return true, nil
 		}
 	}
 
