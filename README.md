@@ -378,23 +378,23 @@ err = db.Select(q.Or(
   ),
 )).Find(&users)
 
-query := db.Select(q.Gte("ID", 10), q.Lte("ID", 100)).Limit(10).Skip(5).Reverse().OrderBy("Age")
+query := db.Select(q.Gte("ID", 10), q.Lte("ID", 100)).Limit(10).Skip(5).Reverse().OrderBy("Age", "Name")
 
 // Find multiple records
 err = query.Find(&users)
 // or
-err = db.Select(q.Gte("ID", 10), q.Lte("ID", 100)).Limit(10).Skip(5).Reverse().OrderBy("Age").Find(&users)
+err = db.Select(q.Gte("ID", 10), q.Lte("ID", 100)).Limit(10).Skip(5).Reverse().OrderBy("Age", "Name").Find(&users)
 
 // Find first record
 err = query.First(&user)
 // or
-err = db.Select(q.Gte("ID", 10), q.Lte("ID", 100)).Limit(10).Skip(5).Reverse().OrderBy("Age").First(&user)
+err = db.Select(q.Gte("ID", 10), q.Lte("ID", 100)).Limit(10).Skip(5).Reverse().OrderBy("Age", "Name").First(&user)
 
 // Delete all matching records
 err = query.Delete(new(User))
 
 // Fetching records one by one (useful when the bucket contains a lot of records)
-query = db.Select(q.Gte("ID", 10),q.Lte("ID", 100)).OrderBy("Age")
+query = db.Select(q.Gte("ID", 10),q.Lte("ID", 100)).OrderBy("Age", "Name")
 
 err = query.Each(new(User), func(record interface{}) error) {
   u := record.(*User)

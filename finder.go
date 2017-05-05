@@ -175,9 +175,6 @@ func (n *node) find(tx *bolt.Tx, bucketName, fieldName string, cfg *structConfig
 	if bucket == nil {
 		return ErrNotFound
 	}
-
-	sorter := newSorter(n)
-
 	idx, err := getIndex(bucket, cfg.Fields[fieldName].Index, fieldName)
 	if err != nil {
 		return err
@@ -193,19 +190,19 @@ func (n *node) find(tx *bolt.Tx, bucketName, fieldName string, cfg *structConfig
 
 	sink.results = reflect.MakeSlice(reflect.Indirect(sink.ref).Type(), len(list), len(list))
 
+	sorter := newSorter(n, sink, nil, nil, false)
 	for i := range list {
 		raw := bucket.Get(list[i])
 		if raw == nil {
 			return ErrNotFound
 		}
 
-		_, err = sorter.filter(sink, nil, bucket, list[i], raw)
-		if err != nil {
+		if _, err := sorter.filter(bucket, list[i], raw); err != nil {
 			return err
 		}
 	}
 
-	return sink.flush()
+	return sorter.flush()
 }
 
 // AllByIndex gets all the records of a bucket that are indexed in the specified index
@@ -381,8 +378,6 @@ func (n *node) rnge(tx *bolt.Tx, bucketName, fieldName string, cfg *structConfig
 		return nil
 	}
 
-	sorter := newSorter(n)
-
 	idx, err := getIndex(bucket, cfg.Fields[fieldName].Index, fieldName)
 	if err != nil {
 		return err
@@ -394,20 +389,19 @@ func (n *node) rnge(tx *bolt.Tx, bucketName, fieldName string, cfg *structConfig
 	}
 
 	sink.results = reflect.MakeSlice(reflect.Indirect(sink.ref).Type(), len(list), len(list))
-
+	sorter := newSorter(n, sink, nil, nil, false)
 	for i := range list {
 		raw := bucket.Get(list[i])
 		if raw == nil {
 			return ErrNotFound
 		}
 
-		_, err = sorter.filter(sink, nil, bucket, list[i], raw)
-		if err != nil {
+		if _, err := sorter.filter(bucket, list[i], raw); err != nil {
 			return err
 		}
 	}
 
-	return sink.flush()
+	return sorter.flush()
 }
 
 // Count counts all the records of a bucket

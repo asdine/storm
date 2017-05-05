@@ -1,14 +1,12 @@
 package storm
 
 import (
-	"encoding/binary"
 	"reflect"
+	"sort"
 
 	"github.com/asdine/storm/index"
 	"github.com/asdine/storm/q"
 	"github.com/boltdb/bolt"
-
-	rbt "github.com/emirpasic/gods/trees/redblacktree"
 )
 
 type item struct {
@@ -18,97 +16,190 @@ type item struct {
 	v      []byte
 }
 
-func newSorter(node Node) *sorter {
+func newSorter(n Node, snk sink, tree q.Matcher, orderBy []string, reverse bool) *sorter {
 	return &sorter{
-		node:   node,
-		rbTree: rbt.NewWithStringComparator(),
+		node:    n,
+		sink:    snk,
+		tree:    tree,
+		orderBy: orderBy,
+		reverse: reverse,
+		list:    make([]*item, 0),
+		err:     make(chan error),
+		done:    make(chan struct{}),
 	}
 }
 
 type sorter struct {
 	node    Node
-	rbTree  *rbt.Tree
-	orderBy string
+	sink    sink
+	tree    q.Matcher
+	list    []*item
+	orderBy []string
 	reverse bool
-	counter int64
+	err     chan error
+	done    chan struct{}
 }
 
-func (s *sorter) filter(snk sink, tree q.Matcher, bucket *bolt.Bucket, k, v []byte) (bool, error) {
-	s.counter++
-
-	rsnk, ok := snk.(reflectSink)
+func (s *sorter) filter(bucket *bolt.Bucket, k, v []byte) (bool, error) {
+	rsink, ok := s.sink.(reflectSink)
 	if !ok {
-		return snk.add(&item{
+		return s.sink.add(&item{
 			bucket: bucket,
 			k:      k,
 			v:      v,
 		})
 	}
 
-	newElem := rsnk.elem()
-	err := s.node.Codec().Unmarshal(v, newElem.Interface())
-	if err != nil {
+	newElem := rsink.elem()
+	if err := s.node.Codec().Unmarshal(v, newElem.Interface()); err != nil {
 		return false, err
 	}
 
-	ok = tree == nil
-	if !ok {
-		ok, err = tree.Match(newElem.Interface())
+	itm := &item{
+		bucket: bucket,
+		value:  &newElem,
+		k:      k,
+		v:      v,
+	}
+
+	if s.tree == nil {
+		if len(s.orderBy) == 0 {
+			return s.sink.add(itm)
+		}
+	} else {
+		ok, err := s.tree.Match(newElem.Interface())
 		if err != nil {
 			return false, err
 		}
-	}
-
-	if ok {
-		it := item{
-			bucket: bucket,
-			value:  &newElem,
-			k:      k,
-			v:      v,
-		}
-
-		if s.orderBy != "" {
-			elm := reflect.Indirect(newElem).FieldByName(s.orderBy)
-			if !elm.IsValid() {
-				return false, ErrNotFound
-			}
-			raw, err := toBytes(elm.Interface(), s.node.Codec())
-			if err != nil {
-				return false, err
-			}
-
-			key := make([]byte, len(raw)+8)
-			for i := 0; i < len(raw); i++ {
-				key[i] = raw[i]
-			}
-			binary.PutVarint(key[len(raw):], s.counter)
-			s.rbTree.Put(string(key), &it)
+		if !ok {
 			return false, nil
 		}
-
-		return snk.add(&it)
 	}
+
+	if len(s.orderBy) == 0 {
+		return s.sink.add(itm)
+	}
+
+	s.list = append(s.list, itm)
 
 	return false, nil
 }
 
-func (s *sorter) flush(snk sink) error {
-	if s.orderBy == "" {
-		return snk.flush()
+func (s *sorter) compareValue(left reflect.Value, right reflect.Value) int {
+	if !left.IsValid() || !right.IsValid() {
+		if left.IsValid() {
+			return 1
+		}
+		return -1
 	}
-	s.orderBy = ""
-	var err error
-	var stop bool
 
-	it := s.rbTree.Iterator()
-	if s.reverse {
-		it.End()
-	} else {
-		it.Begin()
+	switch left.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		l, r := left.Int(), right.Int()
+		if l < r {
+			return -1
+		}
+		if l > r {
+			return 1
+		}
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		l, r := left.Uint(), right.Uint()
+		if l < r {
+			return -1
+		}
+		if l > r {
+			return 1
+		}
+	case reflect.Float32, reflect.Float64:
+		l, r := left.Float(), right.Float()
+		if l < r {
+			return -1
+		}
+		if l > r {
+			return 1
+		}
+	case reflect.String:
+		l, r := left.String(), right.String()
+		if l < r {
+			return -1
+		}
+		if l > r {
+			return 1
+		}
+	default:
+		rawLeft, err := toBytes(left.Interface(), s.node.Codec())
+		if err != nil {
+			return -1
+		}
+		rawRight, err := toBytes(right.Interface(), s.node.Codec())
+		if err != nil {
+			return 1
+		}
+
+		l, r := string(rawLeft), string(rawRight)
+		if l < r {
+			return -1
+		}
+		if l > r {
+			return 1
+		}
 	}
-	for (s.reverse && it.Prev()) || (!s.reverse && it.Next()) {
-		item := it.Value().(*item)
-		stop, err = snk.add(item)
+
+	return 0
+}
+
+func (s *sorter) less(leftElem reflect.Value, rightElem reflect.Value) bool {
+	for _, orderBy := range s.orderBy {
+		leftField := reflect.Indirect(leftElem).FieldByName(orderBy)
+		if !leftField.IsValid() {
+			s.err <- ErrNotFound
+			return false
+		}
+		rightField := reflect.Indirect(rightElem).FieldByName(orderBy)
+		if !rightField.IsValid() {
+			s.err <- ErrNotFound
+			return false
+		}
+
+		direction := 1
+		if s.reverse {
+			direction = -1
+		}
+
+		switch s.compareValue(leftField, rightField) * direction {
+		case -1:
+			return true
+		case 1:
+			return false
+		default:
+			continue
+		}
+	}
+
+	return false
+}
+
+func (s *sorter) flush() error {
+	if len(s.orderBy) == 0 {
+		return s.sink.flush()
+	}
+
+	go func() {
+		sort.Sort(s)
+		close(s.err)
+	}()
+	err := <-s.err
+	close(s.done)
+
+	if err != nil {
+		return err
+	}
+
+	for _, itm := range s.list {
+		if itm == nil {
+			break
+		}
+		stop, err := s.sink.add(itm)
 		if err != nil {
 			return err
 		}
@@ -117,7 +208,38 @@ func (s *sorter) flush(snk sink) error {
 		}
 	}
 
-	return snk.flush()
+	return s.sink.flush()
+}
+
+func (s *sorter) Len() int {
+	// skip if we encountered an earlier error
+	select {
+	case <-s.done:
+		return 0
+	default:
+		return len(s.list)
+	}
+}
+
+func (s *sorter) Swap(i, j int) {
+	// skip if we encountered an earlier error
+	select {
+	case <-s.done:
+		return
+	default:
+		s.list[i], s.list[j] = s.list[j], s.list[i]
+	}
+}
+
+func (s *sorter) Less(i, j int) bool {
+	// skip if we encountered an earlier error
+	select {
+	case <-s.done:
+		return false
+	default:
+	}
+
+	return s.less(*s.list[i].value, *s.list[j].value)
 }
 
 type sink interface {
@@ -156,6 +278,7 @@ func newListSink(node Node, to interface{}) (*listSink, error) {
 		elemType: elemType,
 		name:     elemType.Name(),
 		limit:    -1,
+		results:  reflect.MakeSlice(reflect.Indirect(ref).Type(), 0, 0),
 	}, nil
 }
 
@@ -190,10 +313,6 @@ func (l *listSink) add(i *item) (bool, error) {
 	if l.skip > 0 {
 		l.skip--
 		return false, nil
-	}
-
-	if !l.results.IsValid() {
-		l.results = reflect.MakeSlice(reflect.Indirect(l.ref).Type(), 0, 0)
 	}
 
 	if l.limit > 0 {
