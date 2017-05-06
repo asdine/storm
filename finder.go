@@ -58,6 +58,7 @@ func (n *node) One(fieldName string, value interface{}, to interface{}) error {
 	field, ok := cfg.Fields[fieldName]
 	if !ok || (!field.IsID && field.Index == "") {
 		query := newQuery(n, q.StrictEq(fieldName, value))
+		query.Limit(1)
 
 		if n.tx != nil {
 			err = query.query(n.tx, sink)
@@ -141,9 +142,8 @@ func (n *node) Find(fieldName string, value interface{}, to interface{}, options
 
 	field, ok := cfg.Fields[fieldName]
 	if !ok || (!field.IsID && (field.Index == "" || value == nil)) {
-		sink.limit = opts.Limit
-		sink.skip = opts.Skip
 		query := newQuery(n, q.Eq(fieldName, value))
+		query.Skip(opts.Skip).Limit(opts.Limit)
 
 		if opts.Reverse {
 			query.Reverse()
@@ -190,14 +190,14 @@ func (n *node) find(tx *bolt.Tx, bucketName, fieldName string, cfg *structConfig
 
 	sink.results = reflect.MakeSlice(reflect.Indirect(sink.ref).Type(), len(list), len(list))
 
-	sorter := newSorter(n, sink, nil, nil, false)
+	sorter := newSorter(n, sink)
 	for i := range list {
 		raw := bucket.Get(list[i])
 		if raw == nil {
 			return ErrNotFound
 		}
 
-		if _, err := sorter.filter(bucket, list[i], raw); err != nil {
+		if _, err := sorter.filter(nil, bucket, list[i], raw); err != nil {
 			return err
 		}
 	}
@@ -337,9 +337,8 @@ func (n *node) Range(fieldName string, min, max, to interface{}, options ...func
 
 	field, ok := cfg.Fields[fieldName]
 	if !ok || (!field.IsID && field.Index == "") {
-		sink.limit = opts.Limit
-		sink.skip = opts.Skip
 		query := newQuery(n, q.And(q.Gte(fieldName, min), q.Lte(fieldName, max)))
+		query.Skip(opts.Skip).Limit(opts.Limit)
 
 		if opts.Reverse {
 			query.Reverse()
@@ -389,14 +388,14 @@ func (n *node) rnge(tx *bolt.Tx, bucketName, fieldName string, cfg *structConfig
 	}
 
 	sink.results = reflect.MakeSlice(reflect.Indirect(sink.ref).Type(), len(list), len(list))
-	sorter := newSorter(n, sink, nil, nil, false)
+	sorter := newSorter(n, sink)
 	for i := range list {
 		raw := bucket.Get(list[i])
 		if raw == nil {
 			return ErrNotFound
 		}
 
-		if _, err := sorter.filter(bucket, list[i], raw); err != nil {
+		if _, err := sorter.filter(nil, bucket, list[i], raw); err != nil {
 			return err
 		}
 	}
