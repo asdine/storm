@@ -20,8 +20,8 @@ type Query interface {
 	// Limit the results by the given number
 	Limit(int) Query
 
-	// Order by the given field.
-	OrderBy(string) Query
+	// Order by the given fields, in descending precedence, left-to-right.
+	OrderBy(...string) Query
 
 	// Reverse the order of the results
 	Reverse() Query
@@ -53,11 +53,10 @@ type Query interface {
 
 func newQuery(n *node, tree q.Matcher) *query {
 	return &query{
-		skip:   0,
-		limit:  -1,
-		node:   n,
-		tree:   tree,
-		sorter: newSorter(n),
+		skip:  0,
+		limit: -1,
+		node:  n,
+		tree:  tree,
 	}
 }
 
@@ -68,7 +67,7 @@ type query struct {
 	tree    q.Matcher
 	node    *node
 	bucket  string
-	sorter  *sorter
+	orderBy []string
 }
 
 func (q *query) Skip(nb int) Query {
@@ -81,14 +80,13 @@ func (q *query) Limit(nb int) Query {
 	return q
 }
 
-func (q *query) OrderBy(field string) Query {
-	q.sorter.orderBy = field
+func (q *query) OrderBy(field ...string) Query {
+	q.orderBy = field
 	return q
 }
 
 func (q *query) Reverse() Query {
 	q.reverse = true
-	q.sorter.reverse = true
 	return q
 }
 
@@ -103,8 +101,6 @@ func (q *query) Find(to interface{}) error {
 		return err
 	}
 
-	sink.limit = q.limit
-	sink.skip = q.skip
 	return q.runQuery(sink)
 }
 
@@ -114,7 +110,7 @@ func (q *query) First(to interface{}) error {
 		return err
 	}
 
-	sink.skip = q.skip
+	q.limit = 1
 	return q.runQuery(sink)
 }
 
@@ -124,9 +120,6 @@ func (q *query) Delete(kind interface{}) error {
 		return err
 	}
 
-	sink.limit = q.limit
-	sink.skip = q.skip
-
 	return q.runQuery(sink)
 }
 
@@ -135,9 +128,6 @@ func (q *query) Count(kind interface{}) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-
-	sink.limit = q.limit
-	sink.skip = q.skip
 
 	err = q.runQuery(sink)
 	if err != nil {
@@ -150,9 +140,6 @@ func (q *query) Count(kind interface{}) (int, error) {
 func (q *query) Raw() ([][]byte, error) {
 	sink := newRawSink()
 
-	sink.limit = q.limit
-	sink.skip = q.skip
-
 	err := q.runQuery(sink)
 	if err != nil {
 		return nil, err
@@ -164,8 +151,6 @@ func (q *query) Raw() ([][]byte, error) {
 func (q *query) RawEach(fn func([]byte, []byte) error) error {
 	sink := newRawSink()
 
-	sink.limit = q.limit
-	sink.skip = q.skip
 	sink.execFn = fn
 
 	return q.runQuery(sink)
@@ -177,8 +162,6 @@ func (q *query) Each(kind interface{}, fn func(interface{}) error) error {
 		return err
 	}
 
-	sink.limit = q.limit
-	sink.skip = q.skip
 	sink.execFn = fn
 
 	return q.runQuery(sink)
@@ -206,9 +189,14 @@ func (q *query) query(tx *bolt.Tx, sink sink) error {
 	bucket := q.node.GetBucket(tx, bucketName)
 
 	if q.limit == 0 {
-		return q.sorter.flush(sink)
+		return sink.flush()
 	}
 
+	sorter := newSorter(q.node, sink)
+	sorter.orderBy = q.orderBy
+	sorter.reverse = q.reverse
+	sorter.skip = q.skip
+	sorter.limit = q.limit
 	if bucket != nil {
 		c := internal.Cursor{C: bucket.Cursor(), Reverse: q.reverse}
 		for k, v := c.First(); k != nil; k, v = c.Next() {
@@ -216,7 +204,7 @@ func (q *query) query(tx *bolt.Tx, sink sink) error {
 				continue
 			}
 
-			stop, err := q.sorter.filter(sink, q.tree, bucket, k, v)
+			stop, err := sorter.filter(q.tree, bucket, k, v)
 			if err != nil {
 				return err
 			}
@@ -227,5 +215,5 @@ func (q *query) query(tx *bolt.Tx, sink sink) error {
 		}
 	}
 
-	return q.sorter.flush(sink)
+	return sorter.flush()
 }

@@ -213,9 +213,9 @@ func TestSelectFindOrderBy(t *testing.T) {
 		Rnd int
 	}
 
-	strs := []string{"e", "b", "a", "c", "d"}
-	ints := []int{2, 3, 1, 4, 5}
-	for i := 0; i < 5; i++ {
+	strs := []string{"e", "b", "d", "a", "c", "d"}
+	ints := []int{2, 3, 5, 4, 2, 1}
+	for i := 0; i < 6; i++ {
 		record := T{
 			Str: strs[i],
 			Int: ints[i],
@@ -231,39 +231,52 @@ func TestSelectFindOrderBy(t *testing.T) {
 	var list []T
 	err := db.Select().OrderBy("ID").Find(&list)
 	assert.NoError(t, err)
-	assert.Len(t, list, 5)
-	for i := 0; i < 5; i++ {
+	assert.Len(t, list, 6)
+	for i, j := 0, 0; i < 6; i, j = i+1, j+1 {
+		if i == 2 {
+			j--
+		}
 		assert.Equal(t, i+1, list[i].ID)
 	}
 
 	err = db.Select().OrderBy("Str").Find(&list)
 	assert.NoError(t, err)
-	assert.Len(t, list, 5)
-	for i := 0; i < 5; i++ {
-		assert.Equal(t, string([]byte{'a' + byte(i)}), list[i].Str)
+	assert.Len(t, list, 6)
+	for i, j := 0, 0; i < 6; i, j = i+1, j+1 {
+		if i == 4 {
+			j--
+		}
+		assert.Equal(t, string([]byte{'a' + byte(j)}), list[i].Str)
 	}
 
 	err = db.Select().OrderBy("Int").Find(&list)
 	assert.NoError(t, err)
-	assert.Len(t, list, 5)
-	for i := 0; i < 5; i++ {
-		assert.Equal(t, i+1, list[i].Int)
+	assert.Len(t, list, 6)
+	for i, j := 0, 0; i < 6; i, j = i+1, j+1 {
+		if i == 2 {
+			j--
+		}
+		assert.Equal(t, j+1, list[i].Int)
 	}
 
 	err = db.Select().OrderBy("Rnd").Find(&list)
 	assert.NoError(t, err)
-	assert.Len(t, list, 5)
+	assert.Len(t, list, 6)
 	assert.Equal(t, 1, list[0].ID)
 	assert.Equal(t, 2, list[1].ID)
 	assert.Equal(t, 3, list[2].ID)
 	assert.Equal(t, 5, list[3].ID)
-	assert.Equal(t, 4, list[4].ID)
+	assert.Equal(t, 6, list[4].ID)
+	assert.Equal(t, 4, list[5].ID)
 
 	err = db.Select().OrderBy("Int").Reverse().Find(&list)
 	assert.NoError(t, err)
-	assert.Len(t, list, 5)
-	for i := 0; i < 5; i++ {
-		assert.Equal(t, 5-i, list[i].Int)
+	assert.Len(t, list, 6)
+	for i, j := 0, 0; i < 6; i, j = i+1, j+1 {
+		if i == 4 {
+			j--
+		}
+		assert.Equal(t, 5-j, list[i].Int)
 	}
 
 	err = db.Select().OrderBy("Int").Reverse().Limit(2).Find(&list)
@@ -275,15 +288,34 @@ func TestSelectFindOrderBy(t *testing.T) {
 
 	err = db.Select().OrderBy("Int").Reverse().Skip(2).Find(&list)
 	assert.NoError(t, err)
-	assert.Len(t, list, 3)
-	for i := 0; i < 2; i++ {
-		assert.Equal(t, 3-i, list[i].Int)
+	assert.Len(t, list, 4)
+	for i, j := 0, 0; i < 3; i, j = i+1, j+1 {
+		if i == 2 {
+			j--
+		}
+		assert.Equal(t, 3-j, list[i].Int)
 	}
 
-	err = db.Select().OrderBy("Int").Reverse().Skip(4).Limit(2).Find(&list)
+	err = db.Select().OrderBy("Int").Reverse().Skip(5).Limit(2).Find(&list)
 	assert.NoError(t, err)
 	assert.Len(t, list, 1)
 	assert.Equal(t, 1, list[0].Int)
+
+	err = db.Select().OrderBy("Str", "Int").Find(&list)
+	assert.NoError(t, err)
+	assert.Len(t, list, 6)
+	assert.Equal(t, "a", list[0].Str)
+	assert.Equal(t, 4, list[0].Int)
+	assert.Equal(t, "b", list[1].Str)
+	assert.Equal(t, 3, list[1].Int)
+	assert.Equal(t, "c", list[2].Str)
+	assert.Equal(t, 2, list[2].Int)
+	assert.Equal(t, "d", list[3].Str)
+	assert.Equal(t, 1, list[3].Int)
+	assert.Equal(t, "d", list[4].Str)
+	assert.Equal(t, 5, list[4].Int)
+	assert.Equal(t, "e", list[5].Str)
+	assert.Equal(t, 2, list[5].Int)
 }
 
 func TestSelectFirst(t *testing.T) {
