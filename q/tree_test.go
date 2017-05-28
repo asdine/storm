@@ -41,6 +41,12 @@ func TestCompare(t *testing.T) {
 	assert.True(t, compare(t1, t3, token.GTR))
 	assert.False(t, compare(&A{Name: "John"}, t1, token.EQL))
 	assert.False(t, compare(&A{Name: "John"}, t1, token.LEQ))
+	assert.True(t, compare(uint32(10), uint32(5), token.GTR))
+	assert.False(t, compare(uint32(5), uint32(10), token.GTR))
+	assert.True(t, compare(uint32(10), int32(5), token.GTR))
+	assert.True(t, compare(uint32(10), float32(5), token.GTR))
+	assert.True(t, compare(int32(10), uint32(5), token.GTR))
+	assert.True(t, compare(float32(10), uint32(5), token.GTR))
 }
 
 func TestCmp(t *testing.T) {
