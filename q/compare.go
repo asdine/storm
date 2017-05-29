@@ -24,6 +24,10 @@ func compare(a, b interface{}, tok token.Token) bool {
 			return constant.Compare(constant.MakeInt64(vala.Int()), tok, constant.MakeInt64(valb.Int()))
 		}
 
+		if bk >= reflect.Uint && bk <= reflect.Uint64 {
+			return constant.Compare(constant.MakeInt64(vala.Int()), tok, constant.MakeInt64(int64(valb.Uint())))
+		}
+
 		if bk == reflect.Float32 || bk == reflect.Float64 {
 			return constant.Compare(constant.MakeFloat64(float64(vala.Int())), tok, constant.MakeFloat64(valb.Float()))
 		}
@@ -36,6 +40,27 @@ func compare(a, b interface{}, tok token.Token) bool {
 
 			return constant.Compare(constant.MakeFloat64(float64(vala.Int())), tok, constant.MakeFloat64(bla))
 		}
+	case ak >= reflect.Uint && ak <= reflect.Uint64:
+		if bk >= reflect.Uint && bk <= reflect.Uint64 {
+			return constant.Compare(constant.MakeUint64(vala.Uint()), tok, constant.MakeUint64(valb.Uint()))
+		}
+
+		if bk >= reflect.Int && bk <= reflect.Int64 {
+			return constant.Compare(constant.MakeUint64(vala.Uint()), tok, constant.MakeUint64(uint64(valb.Int())))
+		}
+
+		if bk == reflect.Float32 || bk == reflect.Float64 {
+			return constant.Compare(constant.MakeFloat64(float64(vala.Uint())), tok, constant.MakeFloat64(valb.Float()))
+		}
+
+		if bk == reflect.String {
+			bla, err := strconv.ParseFloat(valb.String(), 64)
+			if err != nil {
+				return false
+			}
+
+			return constant.Compare(constant.MakeFloat64(float64(vala.Uint())), tok, constant.MakeFloat64(bla))
+		}
 	case ak == reflect.Float32 || ak == reflect.Float64:
 		if bk == reflect.Float32 || bk == reflect.Float64 {
 			return constant.Compare(constant.MakeFloat64(vala.Float()), tok, constant.MakeFloat64(valb.Float()))
@@ -43,6 +68,10 @@ func compare(a, b interface{}, tok token.Token) bool {
 
 		if bk >= reflect.Int && bk <= reflect.Int64 {
 			return constant.Compare(constant.MakeFloat64(vala.Float()), tok, constant.MakeFloat64(float64(valb.Int())))
+		}
+
+		if bk >= reflect.Uint && bk <= reflect.Uint64 {
+			return constant.Compare(constant.MakeFloat64(vala.Float()), tok, constant.MakeFloat64(float64(valb.Uint())))
 		}
 
 		if bk == reflect.String {
