@@ -137,6 +137,11 @@ func (s *DB) WithBatch(enabled bool) Node {
 	return n
 }
 
+// Transaction returns the transaction (if any) from the node.
+func (s *DB) Transaction() *bolt.Tx {
+	return s.root.tx
+}
+
 // Get a value from a bucket
 func (s *DB) Get(bucketName string, key interface{}, to interface{}) error {
 	return s.root.Get(bucketName, key, to)

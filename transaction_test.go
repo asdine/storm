@@ -22,6 +22,7 @@ func TestTransaction(t *testing.T) {
 	ntx, ok := tx.(*node)
 	assert.True(t, ok)
 	assert.NotNil(t, ntx.tx)
+	assert.Equal(t, tx.Transaction(), ntx.tx)
 
 	err = tx.Init(&SimpleUser{})
 	assert.NoError(t, err)
