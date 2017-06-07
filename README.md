@@ -452,7 +452,7 @@ db := storm.Open("my.db", storm.Codec(myCodec))
 
 ##### Provided Codecs
 
-You can easily implement your own `MarshalUnmarshaler`, but Storm comes with built-in support for [JSON](https://godoc.org/github.com/asdine/storm/codec/json) (default), [GOB](https://godoc.org/github.com/asdine/storm/codec/gob),  [Sereal](https://godoc.org/github.com/asdine/storm/codec/sereal) and [Protocol Buffers](https://godoc.org/github.com/asdine/storm/codec/protobuf)
+You can easily implement your own `MarshalUnmarshaler`, but Storm comes with built-in support for [JSON](https://godoc.org/github.com/asdine/storm/codec/json) (default), [GOB](https://godoc.org/github.com/asdine/storm/codec/gob),  [Sereal](https://godoc.org/github.com/asdine/storm/codec/sereal), [Protocol Buffers](https://godoc.org/github.com/asdine/storm/codec/protobuf) and [MessagePack](https://godoc.org/github.com/asdine/storm/codec/msgpack).
 
 These can be used by importing the relevant package and use that codec to configure Storm. The example below shows all variants (without proper error handling):
 
@@ -463,12 +463,14 @@ import (
 	"github.com/asdine/storm/codec/json"
 	"github.com/asdine/storm/codec/sereal"
 	"github.com/asdine/storm/codec/protobuf"
+	"github.com/asdine/storm/codec/msgpack"
 )
 
 var gobDb, _ = storm.Open("gob.db", storm.Codec(gob.Codec))
 var jsonDb, _ = storm.Open("json.db", storm.Codec(json.Codec))
 var serealDb, _ = storm.Open("sereal.db", storm.Codec(sereal.Codec))
 var protobufDb, _ = storm.Open("protobuf.db", storm.Codec(protobuf.Codec))
+var msgpackDb, _ = storm.Open("msgpack.db", storm.Codec(msgpack.Codec))
 ```
 
 **Tip**: Adding Storm tags to generated Protobuf files can be tricky. A good solution is to use [this tool](https://github.com/favadi/protoc-go-inject-tag) to inject the tags during the compilation.
