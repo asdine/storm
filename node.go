@@ -2,6 +2,7 @@ package storm
 
 import (
 	"github.com/asdine/storm/codec"
+	"github.com/asdine/storm/id"
 	"github.com/boltdb/bolt"
 )
 
@@ -35,8 +36,14 @@ type Node interface {
 	// Codec used by this instance of Storm
 	Codec() codec.MarshalUnmarshaler
 
+	// IDProvider used by this instance of Storm
+	IDProvider() id.New
+
 	// WithCodec returns a New Storm Node that will use the given Codec.
 	WithCodec(codec codec.MarshalUnmarshaler) Node
+
+	// IDProvider returns a New Storm Node that will use the given IDProvider.
+	WithIDProvider(id.New) Node
 
 	// WithBatch returns a new Storm Node with the batch mode enabled.
 	WithBatch(enabled bool) Node
@@ -54,6 +61,9 @@ type node struct {
 
 	// Codec of this node
 	codec codec.MarshalUnmarshaler
+
+	// IDProvider of this node
+	id id.New
 
 	// Enable batch mode for read-write transaction, instead of update mode
 	batchMode bool
@@ -78,6 +88,12 @@ func (n node) WithCodec(codec codec.MarshalUnmarshaler) Node {
 	return &n
 }
 
+// WithIDProvider returns a new Storm Node that will use the given IDProvider.
+func (n node) WithIDProvider(id id.New) Node {
+	n.id = id
+	return &n
+}
+
 // WithBatch returns a new Storm Node with the batch mode enabled.
 func (n node) WithBatch(enabled bool) Node {
 	n.batchMode = enabled
@@ -93,6 +109,11 @@ func (n *node) Bucket() []string {
 // Codec returns the EncodeDecoder used by this instance of Storm
 func (n *node) Codec() codec.MarshalUnmarshaler {
 	return n.codec
+}
+
+// IDProvider returns the IDProvider used by this instance of Storm
+func (n *node) IDProvider() id.New {
+	return n.id
 }
 
 // Detects if already in transaction or runs a read write transaction.

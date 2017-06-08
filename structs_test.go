@@ -3,6 +3,8 @@ package storm
 import (
 	"io"
 	"time"
+
+	"github.com/oklog/ulid"
 )
 
 type ClassicNoTags struct {
@@ -102,6 +104,11 @@ type UserWithUint64IDField struct {
 
 type UserWithStringIDField struct {
 	ID   string
+	Name string
+}
+
+type UserWithUlidIDField struct {
+	ID   ulid.ULID `storm:"id,increment"`
 	Name string
 }
 

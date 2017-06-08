@@ -3,6 +3,7 @@ package storm
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"io/ioutil"
 	"math"
 	"os"
@@ -12,6 +13,7 @@ import (
 	"time"
 
 	"github.com/asdine/storm/codec/json"
+	"github.com/asdine/storm/id/ulid"
 	"github.com/boltdb/bolt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -37,6 +39,9 @@ func TestNewStorm(t *testing.T) {
 	assert.Equal(t, file, db.Path)
 	assert.NotNil(t, db.Bolt)
 	assert.Equal(t, defaultCodec, db.Codec())
+	next, err := db.IDProvider()(int64(2))(nil)
+	require.NoError(t, err)
+	assert.Equal(t, int64(2), next)
 
 	var v string
 	err = db.Get(dbinfo, "version", &v)
@@ -121,6 +126,30 @@ func TestCodec(t *testing.T) {
 	if !reflect.DeepEqual(u1, u2) {
 		t.Fatal("Codec mismatch")
 	}
+}
+
+func TestIDProvider(t *testing.T) {
+	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
+	defer os.RemoveAll(dir)
+	db, _ := Open(filepath.Join(dir, "storm.db"), IDProvider(ulid.New))
+	defer db.Close()
+
+	for i := 0; i < 2; i++ {
+		u := UserWithUlidIDField{Name: "John"}
+
+		require.NoError(t, db.Save(&u))
+
+		fmt.Println(">>", u.ID)
+
+		var uReloaded UserWithUlidIDField
+
+		require.NoError(t, db.One("ID", u.ID, &uReloaded))
+
+		fmt.Println(">>", uReloaded.ID)
+
+		require.Equal(t, u.ID, uReloaded.ID)
+	}
+
 }
 
 func TestToBytes(t *testing.T) {
