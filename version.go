@@ -1,4 +1,4 @@
 package storm
 
 // Version of Storm
-const Version = "0.8.1"
+const Version = "1.0.0"
