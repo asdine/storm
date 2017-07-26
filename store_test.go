@@ -523,6 +523,16 @@ func TestUpdate(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "Jack", u.Name)
 	assert.Equal(t, uint64(5), u.Age)
+
+	// indexed field with zero value #170
+	err = db.Update(&User{ID: 10, Group: "Staff"})
+	assert.NoError(t, err)
+
+	err = db.One("Name", "Jack", &u)
+	assert.NoError(t, err)
+	assert.Equal(t, "Jack", u.Name)
+	assert.Equal(t, uint64(5), u.Age)
+	assert.Equal(t, "Staff", u.Group)
 }
 
 func TestUpdateField(t *testing.T) {

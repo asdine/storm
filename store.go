@@ -158,11 +158,11 @@ func (n *node) Save(data interface{}) error {
 	}
 
 	return n.readWriteTx(func(tx *bolt.Tx) error {
-		return n.save(tx, cfg, data, true)
+		return n.save(tx, cfg, data, false)
 	})
 }
 
-func (n *node) save(tx *bolt.Tx, cfg *structConfig, data interface{}, edit bool) error {
+func (n *node) save(tx *bolt.Tx, cfg *structConfig, data interface{}, update bool) error {
 	bucket, err := n.CreateBucketIfNotExists(tx, cfg.Name)
 	if err != nil {
 		return err
@@ -187,7 +187,7 @@ func (n *node) save(tx *bolt.Tx, cfg *structConfig, data interface{}, edit bool)
 	}
 
 	for fieldName, fieldCfg := range cfg.Fields {
-		if edit && !fieldCfg.IsID && fieldCfg.Increment && fieldCfg.IsInteger && fieldCfg.IsZero {
+		if !update && !fieldCfg.IsID && fieldCfg.Increment && fieldCfg.IsInteger && fieldCfg.IsZero {
 			err = meta.increment(fieldCfg)
 			if err != nil {
 				return err
@@ -201,6 +201,10 @@ func (n *node) save(tx *bolt.Tx, cfg *structConfig, data interface{}, edit bool)
 		idx, err := getIndex(bucket, fieldCfg.Index, fieldName)
 		if err != nil {
 			return err
+		}
+
+		if update && fieldCfg.IsZero && !fieldCfg.ForceUpdate {
+			continue
 		}
 
 		if fieldCfg.IsZero {
@@ -298,6 +302,7 @@ func (n *node) UpdateField(data interface{}, fieldName string, value interface{}
 		if ok {
 			idxInfo.Value = &f
 			idxInfo.IsZero = isZero(idxInfo.Value)
+			idxInfo.ForceUpdate = true
 		}
 		return nil
 	})
@@ -334,7 +339,7 @@ func (n *node) update(data interface{}, fn func(*reflect.Value, *reflect.Value, 
 			return err
 		}
 
-		return n.save(tx, cfg, current.Interface(), false)
+		return n.save(tx, cfg, current.Interface(), true)
 	})
 }
 

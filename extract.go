@@ -29,6 +29,7 @@ type fieldConfig struct {
 	IncrementStart int64
 	IsInteger      bool
 	Value          *reflect.Value
+	ForceUpdate    bool
 }
 
 // structConfig is a structure gathering all the relevant informations about a model
