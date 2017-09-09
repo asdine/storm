@@ -1,6 +1,10 @@
 package internal
 
-import "github.com/boltdb/bolt"
+import (
+	"bytes"
+
+	"github.com/boltdb/bolt"
+)
 
 // Cursor that can be reversed
 type Cursor struct {
@@ -60,4 +64,49 @@ func (c *RangeCursor) Continue(val []byte) bool {
 	}
 
 	return val != nil && c.CompareFn(val, c.Max) <= 0
+}
+
+// PrefixCursor that can be reversed
+type PrefixCursor struct {
+	C       *bolt.Cursor
+	Reverse bool
+	Prefix  []byte
+}
+
+// First element
+func (c *PrefixCursor) First() ([]byte, []byte) {
+	var k, v []byte
+
+	for k, v = c.C.First(); k != nil && !bytes.HasPrefix(k, c.Prefix); k, v = c.C.Next() {
+	}
+
+	if k == nil {
+		return nil, nil
+	}
+
+	if c.Reverse {
+		kc, vc := k, v
+		for ; kc != nil && bytes.HasPrefix(kc, c.Prefix); kc, vc = c.C.Next() {
+			k, v = kc, vc
+		}
+		if kc != nil {
+			k, v = c.C.Prev()
+		}
+	}
+
+	return k, v
+}
+
+// Next element
+func (c *PrefixCursor) Next() ([]byte, []byte) {
+	if c.Reverse {
+		return c.C.Prev()
+	}
+
+	return c.C.Next()
+}
+
+// Continue tells if the loop needs to continue
+func (c *PrefixCursor) Continue(val []byte) bool {
+	return val != nil && bytes.HasPrefix(val, c.Prefix)
 }

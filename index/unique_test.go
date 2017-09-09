@@ -1,6 +1,7 @@
 package index_test
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -186,6 +187,77 @@ func TestUniqueIndexRange(t *testing.T) {
 		require.Len(t, list, 2)
 		require.NoError(t, err)
 		assertEncodedIntListEqual(t, []int{5, 4}, list)
+		return nil
+	})
+}
+
+func TestUniqueIndexPrefix(t *testing.T) {
+	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
+	defer os.RemoveAll(dir)
+	db, _ := storm.Open(filepath.Join(dir, "storm.db"))
+	defer db.Close()
+
+	db.Bolt.Update(func(tx *bolt.Tx) error {
+		b, err := tx.CreateBucket([]byte("test"))
+		require.NoError(t, err)
+
+		idx, err := index.NewUniqueIndex(b, []byte("uindex1"))
+		require.NoError(t, err)
+
+		for i := 0; i < 10; i++ {
+			val := []byte(fmt.Sprintf("a%d", i))
+			err = idx.Add(val, val)
+			require.NoError(t, err)
+		}
+
+		for i := 0; i < 10; i++ {
+			val := []byte(fmt.Sprintf("b%d", i))
+			err = idx.Add(val, val)
+			require.NoError(t, err)
+		}
+
+		list, err := idx.Prefix([]byte("a"), nil)
+		require.Len(t, list, 10)
+		require.NoError(t, err)
+
+		list, err = idx.Prefix([]byte("b"), nil)
+		require.Len(t, list, 10)
+		require.NoError(t, err)
+		require.Equal(t, []byte("b0"), list[0])
+		require.Equal(t, []byte("b9"), list[9])
+
+		opts := index.NewOptions()
+		opts.Reverse = true
+		list, err = idx.Prefix([]byte("a"), opts)
+		require.Len(t, list, 10)
+		require.NoError(t, err)
+		require.Equal(t, []byte("a9"), list[0])
+		require.Equal(t, []byte("a0"), list[9])
+
+		opts = index.NewOptions()
+		opts.Reverse = true
+		list, err = idx.Prefix([]byte("b"), opts)
+		require.Len(t, list, 10)
+		require.NoError(t, err)
+		require.Equal(t, []byte("b9"), list[0])
+		require.Equal(t, []byte("b0"), list[9])
+
+		opts = index.NewOptions()
+		opts.Skip = 9
+		opts.Limit = 5
+		list, err = idx.Prefix([]byte("a"), opts)
+		require.Len(t, list, 1)
+		require.NoError(t, err)
+		require.Equal(t, []byte("a9"), list[0])
+
+		opts = index.NewOptions()
+		opts.Reverse = true
+		opts.Skip = 9
+		opts.Limit = 5
+		list, err = idx.Prefix([]byte("a"), opts)
+		require.Len(t, list, 1)
+		require.NoError(t, err)
+		require.Equal(t, []byte("a0"), list[0])
 		return nil
 	})
 }
