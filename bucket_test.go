@@ -3,7 +3,7 @@ package storm
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestBucket(t *testing.T) {
@@ -16,13 +16,13 @@ func TestBucket(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assert.Nil(t, db.root.GetBucket(readTx, "none"))
+	require.Nil(t, db.root.GetBucket(readTx, "none"))
 
 	b, err := db.root.CreateBucketIfNotExists(readTx, "new")
 
 	// Cannot create buckets in a read transaction
-	assert.Error(t, err)
-	assert.Nil(t, b)
+	require.Error(t, err)
+	require.Nil(t, b)
 
 	// Read transactions in Bolt needs a rollback and not a commit
 	readTx.Rollback()
@@ -36,18 +36,18 @@ func TestBucket(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assert.Nil(t, db.root.GetBucket(writeTx, "none"))
+	require.Nil(t, db.root.GetBucket(writeTx, "none"))
 
 	b, err = db.root.CreateBucketIfNotExists(writeTx, "new")
 
-	assert.NoError(t, err)
-	assert.NotNil(t, b)
+	require.NoError(t, err)
+	require.NotNil(t, b)
 
 	n2 := db.From("a", "b")
 	b, err = n2.CreateBucketIfNotExists(writeTx, "c")
 
-	assert.NoError(t, err)
-	assert.NotNil(t, b)
+	require.NoError(t, err)
+	require.NotNil(t, b)
 
 	writeTx.Commit()
 
@@ -59,9 +59,9 @@ func TestBucket(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assert.NotNil(t, db.root.GetBucket(readTx, "new"))
-	assert.Nil(t, db.root.GetBucket(readTx, "c"))
-	assert.NotNil(t, n2.GetBucket(readTx, "c"))
+	require.NotNil(t, db.root.GetBucket(readTx, "new"))
+	require.Nil(t, db.root.GetBucket(readTx, "c"))
+	require.NotNil(t, n2.GetBucket(readTx, "c"))
 
 	readTx.Rollback()
 	// End read tx
