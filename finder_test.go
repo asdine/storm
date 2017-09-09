@@ -617,3 +617,71 @@ func TestRange(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, users, 60)
 }
+
+func TestPrefix(t *testing.T) {
+	db, cleanup := createDB(t)
+	defer cleanup()
+
+	for i := 0; i < 50; i++ {
+		w := User{
+			ID: i + 1,
+		}
+
+		if i%5 == 0 {
+			w.Name = "John"
+			w.Group = "group100"
+		} else {
+			w.Name = "Jack"
+			w.Group = "group200"
+		}
+
+		err := db.Save(&w)
+		require.NoError(t, err)
+	}
+
+	var users []User
+	err := db.Prefix("Name", "Jo", users)
+	require.Equal(t, ErrSlicePtrNeeded, err)
+
+	// Using indexes
+	err = db.Prefix("Name", "Jo", &users)
+	require.NoError(t, err)
+	require.Len(t, users, 10)
+	require.Equal(t, 1, users[0].ID)
+	require.Equal(t, 46, users[9].ID)
+
+	err = db.Prefix("Name", "Ja", &users)
+	require.NoError(t, err)
+	require.Len(t, users, 40)
+	require.Equal(t, 2, users[0].ID)
+	require.Equal(t, 50, users[39].ID)
+
+	err = db.Prefix("Name", "Ja", &users, Limit(10), Skip(20), Reverse())
+	require.NoError(t, err)
+	require.Len(t, users, 10)
+	require.Equal(t, 25, users[0].ID)
+	require.Equal(t, 14, users[9].ID)
+
+	// Using Select
+	err = db.Prefix("Group", "group1", &users)
+	require.NoError(t, err)
+	require.Len(t, users, 10)
+	require.Equal(t, 1, users[0].ID)
+	require.Equal(t, 46, users[9].ID)
+
+	err = db.Prefix("Group", "group2", &users)
+	require.NoError(t, err)
+	require.Len(t, users, 40)
+	require.Equal(t, 2, users[0].ID)
+	require.Equal(t, 50, users[39].ID)
+
+	err = db.Prefix("Group", "group2", &users, Limit(10), Skip(20), Reverse())
+	require.NoError(t, err)
+	require.Len(t, users, 10)
+	require.Equal(t, 25, users[0].ID)
+	require.Equal(t, 14, users[9].ID)
+
+	// Bad value
+	err = db.Prefix("Group", "group3", &users)
+	require.Equal(t, ErrNotFound, err)
+}

@@ -187,6 +187,11 @@ func (s *DB) Range(fieldName string, min, max, to interface{}, options ...func(*
 	return s.root.Range(fieldName, min, max, to, options...)
 }
 
+// Prefix returns one or more records whose given field starts with the specified prefix.
+func (s *DB) Prefix(fieldName string, prefix string, to interface{}, options ...func(*index.Options)) error {
+	return s.root.Prefix(fieldName, prefix, to, options...)
+}
+
 // AllByIndex gets all the records of a bucket that are indexed in the specified index
 func (s *DB) AllByIndex(fieldName string, to interface{}, options ...func(*index.Options)) error {
 	return s.root.AllByIndex(fieldName, to, options...)
