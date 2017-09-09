@@ -238,6 +238,39 @@ func (idx *ListIndex) Range(min []byte, max []byte, opts *Options) ([][]byte, er
 	return list, nil
 }
 
+// Prefix returns the ids whose values have the given prefix.
+func (idx *ListIndex) Prefix(prefix []byte, opts *Options) ([][]byte, error) {
+	var list [][]byte
+
+	c := internal.PrefixCursor{
+		C:       idx.IndexBucket.Cursor(),
+		Reverse: opts != nil && opts.Reverse,
+		Prefix:  prefix,
+	}
+
+	for k, id := c.First(); k != nil && c.Continue(k); k, id = c.Next() {
+		if id == nil || bytes.Equal(k, []byte("storm__ids")) {
+			continue
+		}
+
+		if opts != nil && opts.Skip > 0 {
+			opts.Skip--
+			continue
+		}
+
+		if opts != nil && opts.Limit == 0 {
+			break
+		}
+
+		if opts != nil && opts.Limit > 0 {
+			opts.Limit--
+		}
+
+		list = append(list, id)
+	}
+	return list, nil
+}
+
 func generatePrefix(value []byte) []byte {
 	prefix := make([]byte, len(value)+2)
 	var i int

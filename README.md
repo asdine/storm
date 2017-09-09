@@ -11,44 +11,41 @@ In addition to the examples below, see also the [examples in the GoDoc](https://
 
 ## Table of Contents
 
-<!-- TOC depthFrom:2 depthTo:6 withLinks:1 updateOnSave:0 orderedList:0 -->
-
 - [Getting Started](#getting-started)
 - [Import Storm](#import-storm)
 - [Open a database](#open-a-database)
 - [Simple CRUD system](#simple-crud-system)
-	- [Declare your structures](#declare-your-structures)
-	- [Save your object](#save-your-object)
-		- [Auto Increment](#auto-increment)
-	- [Simple queries](#simple-queries)
-		- [Fetch one object](#fetch-one-object)
-		- [Fetch multiple objects](#fetch-multiple-objects)
-		- [Fetch all objects](#fetch-all-objects)
-		- [Fetch all objects sorted by index](#fetch-all-objects-sorted-by-index)
-		- [Fetch a range of objects](#fetch-a-range-of-objects)
-		- [Skip, Limit and Reverse](#skip-limit-and-reverse)
-		- [Delete an object](#delete-an-object)
-		- [Update an object](#update-an-object)
-		- [Initialize buckets and indexes before saving an object](#initialize-buckets-and-indexes-before-saving-an-object)
-		- [Drop a bucket](#drop-a-bucket)
-		- [Re-index a bucket](#re-index-a-bucket)
-	- [Advanced queries](#advanced-queries)
-	- [Transactions](#transactions)
-	- [Options](#options)
-		- [BoltOptions](#boltoptions)
-		- [MarshalUnmarshaler](#marshalunmarshaler)
-			- [Provided Codecs](#provided-codecs)
-		- [Use existing Bolt connection](#use-existing-bolt-connection)
-		- [Batch mode](#batch-mode)
+  - [Declare your structures](#declare-your-structures)
+  - [Save your object](#save-your-object)
+    - [Auto Increment](#auto-increment)
+  - [Simple queries](#simple-queries)
+    - [Fetch one object](#fetch-one-object)
+    - [Fetch multiple objects](#fetch-multiple-objects)
+    - [Fetch all objects](#fetch-all-objects)
+    - [Fetch all objects sorted by index](#fetch-all-objects-sorted-by-index)
+    - [Fetch a range of objects](#fetch-a-range-of-objects)
+    - [Fetch objects by prefix](#fetch-objects-by-prefix)
+    - [Skip, Limit and Reverse](#skip-limit-and-reverse)
+    - [Delete an object](#delete-an-object)
+    - [Update an object](#update-an-object)
+    - [Initialize buckets and indexes before saving an object](#initialize-buckets-and-indexes-before-saving-an-object)
+    - [Drop a bucket](#drop-a-bucket)
+    - [Re-index a bucket](#re-index-a-bucket)
+  - [Advanced queries](#advanced-queries)
+  - [Transactions](#transactions)
+  - [Options](#options)
+    - [BoltOptions](#boltoptions)
+    - [MarshalUnmarshaler](#marshalunmarshaler)
+      - [Provided Codecs](#provided-codecs)
+    - [Use existing Bolt connection](#use-existing-bolt-connection)
+    - [Batch mode](#batch-mode)
 - [Nodes and nested buckets](#nodes-and-nested-buckets)
-	- [Node options](#node-options)
+  - [Node options](#node-options)
 - [Simple Key/Value store](#simple-keyvalue-store)
 - [BoltDB](#boltdb)
 - [Migrations](#migrations)
 - [License](#license)
 - [Credits](#credits)
-
-<!-- /TOC -->
 
 ## Getting Started
 
@@ -220,6 +217,13 @@ err := db.AllByIndex("CreatedAt", &users)
 ```go
 var users []User
 err := db.Range("Age", 10, 21, &users)
+```
+
+#### Fetch objects by prefix
+
+```go
+var users []User
+err := db.Prefix("Name", "Jo", &users)
 ```
 
 #### Skip, Limit and Reverse

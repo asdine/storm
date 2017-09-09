@@ -10,4 +10,5 @@ type Index interface {
 	All(value []byte, opts *Options) ([][]byte, error)
 	AllRecords(opts *Options) ([][]byte, error)
 	Range(min []byte, max []byte, opts *Options) ([][]byte, error)
+	Prefix(prefix []byte, opts *Options) ([][]byte, error)
 }

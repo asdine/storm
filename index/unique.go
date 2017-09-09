@@ -143,6 +143,35 @@ func (idx *UniqueIndex) Range(min []byte, max []byte, opts *Options) ([][]byte, 
 	return list, nil
 }
 
+// Prefix returns the ids whose values have the given prefix.
+func (idx *UniqueIndex) Prefix(prefix []byte, opts *Options) ([][]byte, error) {
+	var list [][]byte
+
+	c := internal.PrefixCursor{
+		C:       idx.IndexBucket.Cursor(),
+		Reverse: opts != nil && opts.Reverse,
+		Prefix:  prefix,
+	}
+
+	for val, ident := c.First(); val != nil && c.Continue(val); val, ident = c.Next() {
+		if opts != nil && opts.Skip > 0 {
+			opts.Skip--
+			continue
+		}
+
+		if opts != nil && opts.Limit == 0 {
+			break
+		}
+
+		if opts != nil && opts.Limit > 0 {
+			opts.Limit--
+		}
+
+		list = append(list, ident)
+	}
+	return list, nil
+}
+
 // first returns the first ID of this index
 func (idx *UniqueIndex) first() []byte {
 	c := idx.IndexBucket.Cursor()
