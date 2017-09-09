@@ -137,10 +137,15 @@ func (idx *ListIndex) All(value []byte, opts *Options) ([][]byte, error) {
 	k, id := c.Seek(prefix)
 	if cur.Reverse {
 		var count int
-		for ; bytes.HasPrefix(k, prefix) && k != nil; k, _ = c.Next() {
+		kc := k
+		idc := id
+		for ; kc != nil && bytes.HasPrefix(kc, prefix); kc, idc = c.Next() {
 			count++
+			k, id = kc, idc
 		}
-		k, id = c.Prev()
+		if kc != nil {
+			k, id = c.Prev()
+		}
 		list = make([][]byte, 0, count)
 	}
 

@@ -148,6 +148,48 @@ func TestListIndex(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func TestListIndexReverse(t *testing.T) {
+	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
+	defer os.RemoveAll(dir)
+	db, _ := storm.Open(filepath.Join(dir, "storm.db"))
+	defer db.Close()
+
+	err := db.Bolt.Update(func(tx *bolt.Tx) error {
+		b, err := tx.CreateBucket([]byte("test"))
+		assert.NoError(t, err)
+
+		idx, err := index.NewListIndex(b, []byte("lindex1"))
+		assert.NoError(t, err)
+
+		err = idx.Add([]byte("hello"), []byte("id1"))
+		assert.NoError(t, err)
+
+		opts := index.NewOptions()
+		ids, err := idx.All([]byte("hello"), opts)
+		assert.Len(t, ids, 1)
+		assert.Equal(t, []byte("id1"), ids[0])
+
+		opts = index.NewOptions()
+		opts.Reverse = true
+		ids, err = idx.All([]byte("hello"), opts)
+		assert.Len(t, ids, 1)
+		assert.Equal(t, []byte("id1"), ids[0])
+
+		err = idx.Add([]byte("hello"), []byte("id2"))
+		assert.NoError(t, err)
+
+		opts = index.NewOptions()
+		opts.Reverse = true
+		ids, err = idx.All([]byte("hello"), opts)
+		assert.Len(t, ids, 2)
+		assert.Equal(t, []byte("id2"), ids[0])
+		assert.Equal(t, []byte("id1"), ids[1])
+		return nil
+	})
+
+	assert.NoError(t, err)
+}
+
 func TestListIndexAddRemoveID(t *testing.T) {
 	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
 	defer os.RemoveAll(dir)
