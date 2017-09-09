@@ -2,6 +2,7 @@ package index_test
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -379,6 +380,81 @@ func TestListIndexRange(t *testing.T) {
 		require.Len(t, list, 2)
 		require.NoError(t, err)
 		assertEncodedIntListEqual(t, []int{5, 4}, list)
+		return nil
+	})
+}
+
+func TestListIndexPrefix(t *testing.T) {
+	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
+	defer os.RemoveAll(dir)
+	db, _ := storm.Open(filepath.Join(dir, "storm.db"))
+	defer db.Close()
+
+	db.Bolt.Update(func(tx *bolt.Tx) error {
+		b, err := tx.CreateBucket([]byte("test"))
+		require.NoError(t, err)
+
+		idx, err := index.NewListIndex(b, []byte("lindex1"))
+		require.NoError(t, err)
+
+		for i := 0; i < 10; i++ {
+			val := []byte(fmt.Sprintf("a%d", i%2))
+			id := []byte(fmt.Sprintf("%d", i))
+			err = idx.Add(val, id)
+			require.NoError(t, err)
+		}
+
+		for i := 10; i < 20; i++ {
+			val := []byte(fmt.Sprintf("b%d", i%2))
+			id := []byte(fmt.Sprintf("%d", i))
+			err = idx.Add(val, id)
+			require.NoError(t, err)
+		}
+
+		list, err := idx.Prefix([]byte("a"), nil)
+		require.Len(t, list, 10)
+		require.NoError(t, err)
+		require.Equal(t, []byte("0"), list[0])
+		require.Equal(t, []byte("9"), list[9])
+
+		list, err = idx.Prefix([]byte("b"), nil)
+		require.Len(t, list, 10)
+		require.NoError(t, err)
+		require.Equal(t, []byte("10"), list[0])
+		require.Equal(t, []byte("19"), list[9])
+
+		opts := index.NewOptions()
+		opts.Reverse = true
+		list, err = idx.Prefix([]byte("a"), opts)
+		require.Len(t, list, 10)
+		require.NoError(t, err)
+		require.Equal(t, []byte("9"), list[0])
+		require.Equal(t, []byte("0"), list[9])
+
+		opts = index.NewOptions()
+		opts.Reverse = true
+		list, err = idx.Prefix([]byte("b"), opts)
+		require.Len(t, list, 10)
+		require.NoError(t, err)
+		require.Equal(t, []byte("19"), list[0])
+		require.Equal(t, []byte("10"), list[9])
+
+		opts = index.NewOptions()
+		opts.Skip = 9
+		opts.Limit = 5
+		list, err = idx.Prefix([]byte("a"), opts)
+		require.Len(t, list, 1)
+		require.NoError(t, err)
+		require.Equal(t, []byte("9"), list[0])
+
+		opts = index.NewOptions()
+		opts.Reverse = true
+		opts.Skip = 9
+		opts.Limit = 5
+		list, err = idx.Prefix([]byte("a"), opts)
+		require.Len(t, list, 1)
+		require.NoError(t, err)
+		require.Equal(t, []byte("0"), list[0])
 		return nil
 	})
 }
