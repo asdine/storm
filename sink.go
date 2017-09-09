@@ -214,19 +214,24 @@ func (s *sorter) flush() error {
 		if !ssink.slice().IsValid() {
 			return s.sink.flush()
 		}
-		skip := s.skip
 		if s.skip >= ssink.slice().Len() {
 			ssink.reset()
 			return s.sink.flush()
 		}
-		if skip < 0 {
-			skip = 0
+		leftBound := s.skip
+		if leftBound < 0 {
+			leftBound = 0
 		}
 		limit := s.limit
-		if skip+limit > ssink.slice().Len() || limit < 1 {
-			limit = ssink.slice().Len()
+		if s.limit < 0 {
+			limit = 0
 		}
-		ssink.setSlice(ssink.slice().Slice(skip, limit))
+
+		rightBound := leftBound + limit
+		if rightBound > ssink.slice().Len() || rightBound == leftBound {
+			rightBound = ssink.slice().Len()
+		}
+		ssink.setSlice(ssink.slice().Slice(leftBound, rightBound))
 		return s.sink.flush()
 	}
 

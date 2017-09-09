@@ -239,6 +239,7 @@ func TestSelectFindOrderBy(t *testing.T) {
 		assert.Equal(t, i+1, list[i].ID)
 	}
 
+	list = nil
 	err = db.Select().OrderBy("Str").Find(&list)
 	assert.NoError(t, err)
 	assert.Len(t, list, 6)
@@ -249,6 +250,7 @@ func TestSelectFindOrderBy(t *testing.T) {
 		assert.Equal(t, string([]byte{'a' + byte(j)}), list[i].Str)
 	}
 
+	list = nil
 	err = db.Select().OrderBy("Int").Find(&list)
 	assert.NoError(t, err)
 	assert.Len(t, list, 6)
@@ -259,6 +261,7 @@ func TestSelectFindOrderBy(t *testing.T) {
 		assert.Equal(t, j+1, list[i].Int)
 	}
 
+	list = nil
 	err = db.Select().OrderBy("Rnd").Find(&list)
 	assert.NoError(t, err)
 	assert.Len(t, list, 6)
@@ -269,6 +272,7 @@ func TestSelectFindOrderBy(t *testing.T) {
 	assert.Equal(t, 6, list[4].ID)
 	assert.Equal(t, 4, list[5].ID)
 
+	list = nil
 	err = db.Select().OrderBy("Int").Reverse().Find(&list)
 	assert.NoError(t, err)
 	assert.Len(t, list, 6)
@@ -279,6 +283,7 @@ func TestSelectFindOrderBy(t *testing.T) {
 		assert.Equal(t, 5-j, list[i].Int)
 	}
 
+	list = nil
 	err = db.Select().OrderBy("Int").Reverse().Limit(2).Find(&list)
 	assert.NoError(t, err)
 	assert.Len(t, list, 2)
@@ -286,6 +291,7 @@ func TestSelectFindOrderBy(t *testing.T) {
 		assert.Equal(t, 5-i, list[i].Int)
 	}
 
+	list = nil
 	err = db.Select().OrderBy("Int").Reverse().Skip(2).Find(&list)
 	assert.NoError(t, err)
 	assert.Len(t, list, 4)
@@ -296,11 +302,13 @@ func TestSelectFindOrderBy(t *testing.T) {
 		assert.Equal(t, 3-j, list[i].Int)
 	}
 
+	list = nil
 	err = db.Select().OrderBy("Int").Reverse().Skip(5).Limit(2).Find(&list)
 	assert.NoError(t, err)
 	assert.Len(t, list, 1)
 	assert.Equal(t, 1, list[0].Int)
 
+	list = nil
 	err = db.Select().OrderBy("Str", "Int").Find(&list)
 	assert.NoError(t, err)
 	assert.Len(t, list, 6)
