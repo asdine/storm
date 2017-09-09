@@ -8,6 +8,7 @@ import (
 
 	"github.com/asdine/storm/codec"
 	"github.com/asdine/storm/codec/json"
+	"github.com/asdine/storm/id"
 	"github.com/asdine/storm/index"
 	"github.com/asdine/storm/q"
 	"github.com/boltdb/bolt"
@@ -28,6 +29,7 @@ func Open(path string, stormOptions ...func(*DB) error) (*DB, error) {
 	s := &DB{
 		Path:  path,
 		codec: defaultCodec,
+		id:    defaultIDProvider,
 	}
 
 	for _, option := range stormOptions {
@@ -44,7 +46,7 @@ func Open(path string, stormOptions ...func(*DB) error) (*DB, error) {
 		s.boltOptions = &bolt.Options{Timeout: 1 * time.Second}
 	}
 
-	s.root = &node{s: s, rootBucket: s.rootBucket, codec: s.codec, batchMode: s.batchMode}
+	s.root = &node{s: s, rootBucket: s.rootBucket, codec: s.codec, id: s.id, batchMode: s.batchMode}
 
 	// skip if UseDB option is used
 	if s.Bolt == nil {
@@ -70,6 +72,9 @@ type DB struct {
 
 	// Handles encoding and decoding of objects
 	codec codec.MarshalUnmarshaler
+
+	// Creates ID providers.
+	id id.New
 
 	// Bolt is still easily accessible
 	Bolt *bolt.DB
@@ -123,10 +128,22 @@ func (s *DB) Codec() codec.MarshalUnmarshaler {
 	return s.codec
 }
 
+// IDProvider returns the IDProvider used by this instance of Storm
+func (s *DB) IDProvider() id.New {
+	return s.id
+}
+
 // WithCodec returns a New Storm Node that will use the given Codec.
 func (s *DB) WithCodec(codec codec.MarshalUnmarshaler) Node {
 	n := s.From().(*node)
 	n.codec = codec
+	return n
+}
+
+// WithIDProvider returns a new Storm Node that will use the given IDProvider.
+func (s *DB) WithIDProvider(id id.New) Node {
+	n := s.From().(*node)
+	n.id = id
 	return n
 }
 

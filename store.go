@@ -152,7 +152,9 @@ func (n *node) Save(data interface{}) error {
 	}
 
 	if cfg.ID.IsZero {
-		if !cfg.ID.IsInteger || (!n.s.autoIncrement && !cfg.ID.Increment) {
+		// TODO(bep) id
+		//!cfg.ID.IsInteger ||
+		if !n.s.autoIncrement && !cfg.ID.Increment {
 			return ErrZeroID
 		}
 	}

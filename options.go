@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/asdine/storm/codec"
+	"github.com/asdine/storm/id"
 	"github.com/asdine/storm/index"
 	"github.com/boltdb/bolt"
 )
@@ -21,6 +22,14 @@ func BoltOptions(mode os.FileMode, options *bolt.Options) func(*DB) error {
 func Codec(c codec.MarshalUnmarshaler) func(*DB) error {
 	return func(d *DB) error {
 		d.codec = c
+		return nil
+	}
+}
+
+// IDProvider used to set a ID provider. The default increments by one.
+func IDProvider(idProvider id.New) func(*DB) error {
+	return func(d *DB) error {
+		d.id = idProvider
 		return nil
 	}
 }
