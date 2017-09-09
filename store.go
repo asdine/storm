@@ -310,7 +310,6 @@ func (n *node) UpdateField(data interface{}, fieldName string, value interface{}
 
 func (n *node) update(data interface{}, fn func(*reflect.Value, *reflect.Value, *structConfig) error) error {
 	ref := reflect.ValueOf(data)
-
 	if !ref.IsValid() || ref.Kind() != reflect.Ptr || ref.Elem().Kind() != reflect.Struct {
 		return ErrStructPtrNeeded
 	}
@@ -332,7 +331,7 @@ func (n *node) update(data interface{}, fn func(*reflect.Value, *reflect.Value, 
 			return err
 		}
 
-		ref = ref.Elem()
+		ref := reflect.ValueOf(data).Elem()
 		cref := current.Elem()
 		err = fn(&ref, &cref, cfg)
 		if err != nil {
