@@ -80,9 +80,6 @@ type DB struct {
 	// Bolt options
 	boltOptions *bolt.Options
 
-	// Enable auto increment on empty integer fields
-	autoIncrement bool
-
 	// The root node that points to the root bucket.
 	root *node
 

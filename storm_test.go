@@ -48,9 +48,8 @@ func TestNewStormWithStormOptions(t *testing.T) {
 	defer os.RemoveAll(dir)
 
 	dc := new(dummyCodec)
-	db1, _ := Open(filepath.Join(dir, "storm1.db"), BoltOptions(0660, &bolt.Options{Timeout: 10 * time.Second}), Codec(dc), AutoIncrement(), Root("a", "b"))
+	db1, _ := Open(filepath.Join(dir, "storm1.db"), BoltOptions(0660, &bolt.Options{Timeout: 10 * time.Second}), Codec(dc), Root("a", "b"))
 	require.Equal(t, dc, db1.Codec())
-	require.True(t, db1.autoIncrement)
 	require.Equal(t, os.FileMode(0660), db1.boltMode)
 	require.Equal(t, 10*time.Second, db1.boltOptions.Timeout)
 	require.Equal(t, []string{"a", "b"}, db1.rootBucket)

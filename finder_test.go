@@ -110,7 +110,7 @@ func TestFind(t *testing.T) {
 }
 
 func TestFindNil(t *testing.T) {
-	db, cleanup := createDB(t, AutoIncrement())
+	db, cleanup := createDB(t)
 	defer cleanup()
 
 	type User struct {
@@ -150,11 +150,11 @@ func TestFindNil(t *testing.T) {
 }
 
 func TestFindIntIndex(t *testing.T) {
-	db, cleanup := createDB(t, AutoIncrement())
+	db, cleanup := createDB(t)
 	defer cleanup()
 
 	type Score struct {
-		ID    int
+		ID    int    `storm:"increment"`
 		Score uint64 `storm:"index"`
 	}
 

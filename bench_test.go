@@ -7,7 +7,7 @@ import (
 )
 
 func BenchmarkFindWithIndex(b *testing.B) {
-	db, cleanup := createDB(b, AutoIncrement())
+	db, cleanup := createDB(b)
 	defer cleanup()
 
 	var users []User
@@ -37,7 +37,7 @@ func BenchmarkFindWithIndex(b *testing.B) {
 }
 
 func BenchmarkFindWithoutIndex(b *testing.B) {
-	db, cleanup := createDB(b, AutoIncrement())
+	db, cleanup := createDB(b)
 	defer cleanup()
 
 	var users []User
@@ -67,7 +67,7 @@ func BenchmarkFindWithoutIndex(b *testing.B) {
 }
 
 func BenchmarkOneWithIndex(b *testing.B) {
-	db, cleanup := createDB(b, AutoIncrement())
+	db, cleanup := createDB(b)
 	defer cleanup()
 
 	var u User
@@ -89,7 +89,7 @@ func BenchmarkOneWithIndex(b *testing.B) {
 }
 
 func BenchmarkOneByID(b *testing.B) {
-	db, cleanup := createDB(b, AutoIncrement())
+	db, cleanup := createDB(b)
 	defer cleanup()
 
 	type User struct {
@@ -120,7 +120,7 @@ func BenchmarkOneByID(b *testing.B) {
 }
 
 func BenchmarkOneWithoutIndex(b *testing.B) {
-	db, cleanup := createDB(b, AutoIncrement())
+	db, cleanup := createDB(b)
 	defer cleanup()
 
 	var u User
@@ -142,7 +142,7 @@ func BenchmarkOneWithoutIndex(b *testing.B) {
 }
 
 func BenchmarkSave(b *testing.B) {
-	db, cleanup := createDB(b, AutoIncrement())
+	db, cleanup := createDB(b)
 	defer cleanup()
 
 	w := User{Name: "John"}

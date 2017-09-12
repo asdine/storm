@@ -33,15 +33,6 @@ func Batch() func(*DB) error {
 	}
 }
 
-// AutoIncrement used to enable bolt.NextSequence on empty integer ids.
-// Deprecated: Set the increment tag to the id field instead.
-func AutoIncrement() func(*DB) error {
-	return func(d *DB) error {
-		d.autoIncrement = true
-		return nil
-	}
-}
-
 // Root used to set the root bucket. See also the From method.
 func Root(root ...string) func(*DB) error {
 	return func(d *DB) error {
