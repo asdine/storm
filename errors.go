@@ -43,9 +43,6 @@ var (
 	// ErrNotInTransaction is returned when trying to rollback or commit when not in transaction.
 	ErrNotInTransaction = errors.New("not in transaction")
 
-	// ErrUnAddressable is returned when a struct or an exported field of a struct is unaddressable
-	ErrUnAddressable = errors.New("unaddressable value")
-
 	// ErrIncompatibleValue is returned when trying to set a value with a different type than the chosen field
 	ErrIncompatibleValue = errors.New("incompatible value")
 

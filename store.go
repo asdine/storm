@@ -32,10 +32,6 @@ type TypeStore interface {
 
 	// DeleteStruct deletes a structure from the associated bucket
 	DeleteStruct(data interface{}) error
-
-	// Remove deletes a structure from the associated bucket
-	// Deprecated: Use DeleteStruct instead.
-	Remove(data interface{}) error
 }
 
 // Init creates the indexes and buckets for a given structure
@@ -426,10 +422,4 @@ func (n *node) deleteStruct(tx *bolt.Tx, cfg *structConfig, id []byte) error {
 	}
 
 	return bucket.Delete(id)
-}
-
-// Remove deletes a structure from the associated bucket
-// Deprecated: Use DeleteStruct instead.
-func (n *node) Remove(data interface{}) error {
-	return n.DeleteStruct(data)
 }

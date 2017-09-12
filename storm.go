@@ -209,12 +209,6 @@ func (s *DB) DeleteStruct(data interface{}) error {
 	return s.root.DeleteStruct(data)
 }
 
-// Remove deletes a structure from the associated bucket
-// Deprecated: Use DeleteStruct instead.
-func (s *DB) Remove(data interface{}) error {
-	return s.root.DeleteStruct(data)
-}
-
 // Drop a bucket
 func (s *DB) Drop(data interface{}) error {
 	return s.root.Drop(data)
