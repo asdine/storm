@@ -11,7 +11,7 @@ import (
 	"github.com/asdine/storm"
 	"github.com/asdine/storm/codec/gob"
 	"github.com/asdine/storm/index"
-	"github.com/boltdb/bolt"
+	"github.com/coreos/bbolt"
 	"github.com/stretchr/testify/require"
 )
 

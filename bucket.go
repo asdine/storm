@@ -1,6 +1,6 @@
 package storm
 
-import "github.com/boltdb/bolt"
+import "github.com/coreos/bbolt"
 
 // CreateBucketIfNotExists creates the bucket below the current node if it doesn't
 // already exist.

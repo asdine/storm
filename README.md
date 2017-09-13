@@ -5,7 +5,7 @@
 [![GoDoc](https://godoc.org/github.com/asdine/storm?status.svg)](https://godoc.org/github.com/asdine/storm)
 [![Go Report Card](https://goreportcard.com/badge/github.com/asdine/storm)](https://goreportcard.com/report/github.com/asdine/storm)
 
-Storm is a simple and powerful toolkit for [BoltDB](https://github.com/boltdb/bolt). Basically, Storm provides indexes, a wide range of methods to store and fetch data, an advanced query system, and much more.
+Storm is a simple and powerful toolkit for [BoltDB](https://github.com/coreos/bbolt). Basically, Storm provides indexes, a wide range of methods to store and fetch data, an advanced query system, and much more.
 
 In addition to the examples below, see also the [examples in the GoDoc](https://godoc.org/github.com/asdine/storm#pkg-examples).
 
@@ -490,7 +490,7 @@ db := storm.Open("my.db", storm.UseDB(bDB))
 
 #### Batch mode
 
-Batch mode can be enabled to speed up concurrent writes (see [Batch read-write transactions](https://github.com/boltdb/bolt#batch-read-write-transactions))
+Batch mode can be enabled to speed up concurrent writes (see [Batch read-write transactions](https://github.com/coreos/bbolt#batch-read-write-transactions))
 
 ```go
 db := storm.Open("my.db", storm.Batch())

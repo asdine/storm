@@ -7,7 +7,7 @@ import (
 
 	"github.com/asdine/storm/codec"
 	"github.com/asdine/storm/codec/json"
-	"github.com/boltdb/bolt"
+	"github.com/coreos/bbolt"
 )
 
 const (
