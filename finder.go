@@ -79,7 +79,7 @@ func (n *node) One(fieldName string, value interface{}, to interface{}) error {
 		return sink.flush()
 	}
 
-	val, err := toBytes(value, n.s.codec)
+	val, err := toBytes(value, n.codec)
 	if err != nil {
 		return err
 	}
@@ -119,7 +119,7 @@ func (n *node) one(tx *bolt.Tx, bucketName, fieldName string, cfg *structConfig,
 		return ErrNotFound
 	}
 
-	return n.s.codec.Unmarshal(raw, to)
+	return n.codec.Unmarshal(raw, to)
 }
 
 // Find returns one or more records by the specified index
@@ -164,7 +164,7 @@ func (n *node) Find(fieldName string, value interface{}, to interface{}, options
 		return sink.flush()
 	}
 
-	val, err := toBytes(value, n.s.codec)
+	val, err := toBytes(value, n.codec)
 	if err != nil {
 		return err
 	}
@@ -280,7 +280,7 @@ func (n *node) allByIndex(tx *bolt.Tx, fieldName string, cfg *structConfig, ref 
 			return ErrNotFound
 		}
 
-		err = n.s.codec.Unmarshal(raw, results.Index(i).Addr().Interface())
+		err = n.codec.Unmarshal(raw, results.Index(i).Addr().Interface())
 		if err != nil {
 			return err
 		}
@@ -359,12 +359,12 @@ func (n *node) Range(fieldName string, min, max, to interface{}, options ...func
 		return sink.flush()
 	}
 
-	mn, err := toBytes(min, n.s.codec)
+	mn, err := toBytes(min, n.codec)
 	if err != nil {
 		return err
 	}
 
-	mx, err := toBytes(max, n.s.codec)
+	mx, err := toBytes(max, n.codec)
 	if err != nil {
 		return err
 	}
@@ -450,7 +450,7 @@ func (n *node) Prefix(fieldName string, prefix string, to interface{}, options .
 		return sink.flush()
 	}
 
-	prfx, err := toBytes(prefix, n.s.codec)
+	prfx, err := toBytes(prefix, n.codec)
 	if err != nil {
 		return err
 	}

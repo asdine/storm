@@ -22,7 +22,7 @@ type KeyValueStore interface {
 
 // GetBytes gets a raw value from a bucket.
 func (n *node) GetBytes(bucketName string, key interface{}) ([]byte, error) {
-	id, err := toBytes(key, n.s.codec)
+	id, err := toBytes(key, n.codec)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +61,7 @@ func (n *node) SetBytes(bucketName string, key interface{}, value []byte) error 
 		return ErrNilParam
 	}
 
-	id, err := toBytes(key, n.s.codec)
+	id, err := toBytes(key, n.codec)
 	if err != nil {
 		return err
 	}
@@ -94,7 +94,7 @@ func (n *node) Get(bucketName string, key interface{}, to interface{}) error {
 		return ErrPtrNeeded
 	}
 
-	id, err := toBytes(key, n.s.codec)
+	id, err := toBytes(key, n.codec)
 	if err != nil {
 		return err
 	}
@@ -105,7 +105,7 @@ func (n *node) Get(bucketName string, key interface{}, to interface{}) error {
 			return err
 		}
 
-		return n.s.codec.Unmarshal(raw, to)
+		return n.codec.Unmarshal(raw, to)
 	})
 }
 
@@ -114,7 +114,7 @@ func (n *node) Set(bucketName string, key interface{}, value interface{}) error 
 	var data []byte
 	var err error
 	if value != nil {
-		data, err = n.s.codec.Marshal(value)
+		data, err = n.codec.Marshal(value)
 		if err != nil {
 			return err
 		}
@@ -125,7 +125,7 @@ func (n *node) Set(bucketName string, key interface{}, value interface{}) error 
 
 // Delete deletes a key from a bucket
 func (n *node) Delete(bucketName string, key interface{}) error {
-	id, err := toBytes(key, n.s.codec)
+	id, err := toBytes(key, n.codec)
 	if err != nil {
 		return err
 	}

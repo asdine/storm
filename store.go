@@ -181,7 +181,7 @@ func (n *node) save(tx *bolt.Tx, cfg *structConfig, data interface{}, update boo
 		}
 	}
 
-	id, err := toBytes(cfg.ID.Value.Interface(), n.s.codec)
+	id, err := toBytes(cfg.ID.Value.Interface(), n.codec)
 	if err != nil {
 		return err
 	}
@@ -215,7 +215,7 @@ func (n *node) save(tx *bolt.Tx, cfg *structConfig, data interface{}, update boo
 			continue
 		}
 
-		value, err := toBytes(fieldCfg.Value.Interface(), n.s.codec)
+		value, err := toBytes(fieldCfg.Value.Interface(), n.codec)
 		if err != nil {
 			return err
 		}
@@ -250,7 +250,7 @@ func (n *node) save(tx *bolt.Tx, cfg *structConfig, data interface{}, update boo
 		}
 	}
 
-	raw, err := n.s.codec.Marshal(data)
+	raw, err := n.codec.Marshal(data)
 	if err != nil {
 		return err
 	}
@@ -385,7 +385,7 @@ func (n *node) DeleteStruct(data interface{}) error {
 		return err
 	}
 
-	id, err := toBytes(cfg.ID.Value.Interface(), n.s.codec)
+	id, err := toBytes(cfg.ID.Value.Interface(), n.codec)
 	if err != nil {
 		return err
 	}
