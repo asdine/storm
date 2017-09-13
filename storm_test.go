@@ -33,7 +33,6 @@ func TestNewStorm(t *testing.T) {
 	require.Implements(t, (*Node)(nil), db)
 
 	require.NoError(t, err)
-	require.Equal(t, file, db.Path)
 	require.NotNil(t, db.Bolt)
 	require.Equal(t, defaultCodec, db.Codec())
 
@@ -50,10 +49,7 @@ func TestNewStormWithStormOptions(t *testing.T) {
 	dc := new(dummyCodec)
 	db1, _ := Open(filepath.Join(dir, "storm1.db"), BoltOptions(0660, &bolt.Options{Timeout: 10 * time.Second}), Codec(dc), Root("a", "b"))
 	require.Equal(t, dc, db1.Codec())
-	require.Equal(t, os.FileMode(0660), db1.boltMode)
-	require.Equal(t, 10*time.Second, db1.boltOptions.Timeout)
-	require.Equal(t, []string{"a", "b"}, db1.rootBucket)
-	require.Equal(t, []string{"a", "b"}, db1.root.rootBucket)
+	require.Equal(t, []string{"a", "b"}, db1.Node.(*node).rootBucket)
 
 	err := db1.Save(&SimpleUser{ID: 1})
 	require.NoError(t, err)
@@ -69,7 +65,7 @@ func TestNewStormWithBatch(t *testing.T) {
 	db1, _ := Open(filepath.Join(dir, "storm1.db"), Batch())
 	defer db1.Close()
 
-	require.True(t, db1.root.batchMode)
+	require.True(t, db1.Node.(*node).batchMode)
 	n := db1.From().(*node)
 	require.True(t, n.batchMode)
 	n = db1.WithBatch(true).(*node)
@@ -162,7 +158,7 @@ func TestToBytes(t *testing.T) {
 	}
 }
 
-func createDB(t errorHandler, opts ...func(*DB) error) (*DB, func()) {
+func createDB(t errorHandler, opts ...func(*Options) error) (*DB, func()) {
 	dir, err := ioutil.TempDir(os.TempDir(), "storm")
 	if err != nil {
 		t.Error(err)

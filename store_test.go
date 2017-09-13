@@ -154,7 +154,7 @@ func TestSave(t *testing.T) {
 		val := bucket.Get(i)
 		require.NotNil(t, val)
 
-		content, err := db.codec.Marshal(&v)
+		content, err := db.Codec().Marshal(&v)
 		require.NoError(t, err)
 		require.Equal(t, content, val)
 		return nil
@@ -347,7 +347,7 @@ func TestSaveDifferentBucketRoot(t *testing.T) {
 	db, cleanup := createDB(t)
 	defer cleanup()
 
-	require.Len(t, db.rootBucket, 0)
+	require.Len(t, db.Node.(*node).rootBucket, 0)
 
 	dbSub := db.From("sub").(*node)
 
