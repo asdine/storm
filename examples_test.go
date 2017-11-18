@@ -19,7 +19,7 @@ func ExampleDB_Save() {
 	defer os.RemoveAll(dir)
 
 	type User struct {
-		ID        int    `storm:"id,increment"`
+		ID        int    `storm:"id,increment"` // the increment tag will auto-increment integer IDs without existing values.
 		Group     string `storm:"index"`
 		Email     string `storm:"unique"`
 		Name      string
@@ -28,7 +28,6 @@ func ExampleDB_Save() {
 	}
 
 	// Open takes an optional list of options as the last argument.
-	// AutoIncrement will auto-increment integer IDs without existing values.
 	db, _ := storm.Open(filepath.Join(dir, "storm.db"), storm.Codec(gob.Codec))
 	defer db.Close()
 

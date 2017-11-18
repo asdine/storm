@@ -21,7 +21,6 @@ func BoltOptions(mode os.FileMode, options *bolt.Options) func(*Options) error {
 func Codec(c codec.MarshalUnmarshaler) func(*Options) error {
 	return func(opts *Options) error {
 		opts.codec = c
-		// d.root.codec = c
 		return nil
 	}
 }
@@ -30,7 +29,6 @@ func Codec(c codec.MarshalUnmarshaler) func(*Options) error {
 func Batch() func(*Options) error {
 	return func(opts *Options) error {
 		opts.batchMode = true
-		// d.root.batchMode = true
 		return nil
 	}
 }
@@ -39,7 +37,6 @@ func Batch() func(*Options) error {
 func Root(root ...string) func(*Options) error {
 	return func(opts *Options) error {
 		opts.rootBucket = root
-		// d.root.rootBucket = root
 		return nil
 	}
 }
