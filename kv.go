@@ -6,8 +6,8 @@ import (
 	"github.com/coreos/bbolt"
 )
 
-// KeyValueStore can store and fetch values by key
-type KeyValueStore interface {
+// keyValueStore can store and fetch values by key
+type keyValueStore interface {
 	// Get a value from a bucket
 	Get(bucketName string, key interface{}, to interface{}) error
 	// Set a key/value pair into a bucket

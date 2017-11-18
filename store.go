@@ -9,9 +9,9 @@ import (
 	"github.com/coreos/bbolt"
 )
 
-// TypeStore stores user defined types in BoltDB
-type TypeStore interface {
-	Finder
+// typeStore stores user defined types in BoltDB
+type typeStore interface {
+	finder
 	// Init creates the indexes and buckets for a given structure
 	Init(data interface{}) error
 

@@ -7,10 +7,10 @@ import (
 
 // A Node in Storm represents the API to a BoltDB bucket.
 type Node interface {
-	Tx
-	TypeStore
-	KeyValueStore
-	BucketScanner
+	tx
+	typeStore
+	keyValueStore
+	bucketScanner
 	// From returns a new Storm node with a new bucket root below the current.
 	// All DB operations on the new node will be executed relative to this bucket.
 	From(addend ...string) Node
