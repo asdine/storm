@@ -10,7 +10,8 @@ import (
 	"time"
 
 	"github.com/asdine/storm"
-	"github.com/boltdb/bolt"
+	"github.com/asdine/storm/codec/gob"
+	"github.com/coreos/bbolt"
 )
 
 func ExampleDB_Save() {
@@ -18,7 +19,7 @@ func ExampleDB_Save() {
 	defer os.RemoveAll(dir)
 
 	type User struct {
-		ID        int    `storm:"id"`
+		ID        int    `storm:"id,increment"` // the increment tag will auto-increment integer IDs without existing values.
 		Group     string `storm:"index"`
 		Email     string `storm:"unique"`
 		Name      string
@@ -27,8 +28,7 @@ func ExampleDB_Save() {
 	}
 
 	// Open takes an optional list of options as the last argument.
-	// AutoIncrement will auto-increment integer IDs without existing values.
-	db, _ := storm.Open(filepath.Join(dir, "storm.db"), storm.AutoIncrement())
+	db, _ := storm.Open(filepath.Join(dir, "storm.db"), storm.Codec(gob.Codec))
 	defer db.Close()
 
 	user := User{
@@ -497,7 +497,7 @@ func ExampleNode_RangeScan() {
 }
 
 type User struct {
-	ID        int    `storm:"id"`
+	ID        int    `storm:"id,increment"`
 	Group     string `storm:"index"`
 	Email     string `storm:"unique"`
 	Name      string
@@ -506,7 +506,7 @@ type User struct {
 }
 
 type Account struct {
-	ID     int   `storm:"id"`
+	ID     int   `storm:"id,increment"`
 	Amount int64 // amount in cents
 }
 
@@ -517,7 +517,7 @@ type Note struct {
 
 func prepareDB() (string, *storm.DB) {
 	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
-	db, _ := storm.Open(filepath.Join(dir, "storm.db"), storm.AutoIncrement())
+	db, _ := storm.Open(filepath.Join(dir, "storm.db"))
 
 	for i, name := range []string{"John", "Eric", "Dilbert"} {
 		email := strings.ToLower(name + "@provider.com")

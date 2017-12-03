@@ -7,7 +7,7 @@ import (
 
 	"github.com/asdine/storm/codec/gob"
 	"github.com/asdine/storm/codec/json"
-	"github.com/boltdb/bolt"
+	"github.com/coreos/bbolt"
 	"github.com/stretchr/testify/require"
 )
 

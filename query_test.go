@@ -10,12 +10,12 @@ import (
 )
 
 type Score struct {
-	ID    int
+	ID    int `storm:"increment"`
 	Value int
 }
 
 func prepareScoreDB(t *testing.T) (*DB, func()) {
-	db, cleanup := createDB(t, AutoIncrement())
+	db, cleanup := createDB(t)
 
 	for i := 0; i < 20; i++ {
 		err := db.Save(&Score{
@@ -492,7 +492,7 @@ func TestSelectCount(t *testing.T) {
 }
 
 func TestSelectRaw(t *testing.T) {
-	db, cleanup := createDB(t, AutoIncrement(), Codec(json.Codec))
+	db, cleanup := createDB(t, Codec(json.Codec))
 	defer cleanup()
 
 	for i := 0; i < 20; i++ {
@@ -520,7 +520,7 @@ func TestSelectRaw(t *testing.T) {
 }
 
 func TestSelectEach(t *testing.T) {
-	db, cleanup := createDB(t, AutoIncrement(), Codec(json.Codec))
+	db, cleanup := createDB(t, Codec(json.Codec))
 	defer cleanup()
 
 	for i := 0; i < 20; i++ {

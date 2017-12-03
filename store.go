@@ -6,12 +6,12 @@ import (
 
 	"github.com/asdine/storm/index"
 	"github.com/asdine/storm/q"
-	"github.com/boltdb/bolt"
+	"github.com/coreos/bbolt"
 )
 
-// TypeStore stores user defined types in BoltDB
-type TypeStore interface {
-	Finder
+// typeStore stores user defined types in BoltDB
+type typeStore interface {
+	finder
 	// Init creates the indexes and buckets for a given structure
 	Init(data interface{}) error
 
@@ -32,10 +32,6 @@ type TypeStore interface {
 
 	// DeleteStruct deletes a structure from the associated bucket
 	DeleteStruct(data interface{}) error
-
-	// Remove deletes a structure from the associated bucket
-	// Deprecated: Use DeleteStruct instead.
-	Remove(data interface{}) error
 }
 
 // Init creates the indexes and buckets for a given structure
@@ -152,7 +148,7 @@ func (n *node) Save(data interface{}) error {
 	}
 
 	if cfg.ID.IsZero {
-		if !cfg.ID.IsInteger || (!n.s.autoIncrement && !cfg.ID.Increment) {
+		if !cfg.ID.IsInteger || !cfg.ID.Increment {
 			return ErrZeroID
 		}
 	}
@@ -426,10 +422,4 @@ func (n *node) deleteStruct(tx *bolt.Tx, cfg *structConfig, id []byte) error {
 	}
 
 	return bucket.Delete(id)
-}
-
-// Remove deletes a structure from the associated bucket
-// Deprecated: Use DeleteStruct instead.
-func (n *node) Remove(data interface{}) error {
-	return n.DeleteStruct(data)
 }

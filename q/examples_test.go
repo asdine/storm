@@ -37,7 +37,7 @@ func ExampleRe() {
 }
 
 type User struct {
-	ID        int    `storm:"id"`
+	ID        int    `storm:"id,increment"`
 	Group     string `storm:"index"`
 	Email     string `storm:"unique"`
 	Name      string
@@ -47,7 +47,7 @@ type User struct {
 
 func prepareDB() (string, *storm.DB) {
 	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
-	db, _ := storm.Open(filepath.Join(dir, "storm.db"), storm.AutoIncrement())
+	db, _ := storm.Open(filepath.Join(dir, "storm.db"))
 
 	for i, name := range []string{"John", "Norm", "Donald", "Eric", "Dilbert"} {
 		email := strings.ToLower(name + "@provider.com")

@@ -6,11 +6,11 @@ import (
 
 	"github.com/asdine/storm/index"
 	"github.com/asdine/storm/q"
-	"github.com/boltdb/bolt"
+	"github.com/coreos/bbolt"
 )
 
-// A Finder can fetch types from BoltDB
-type Finder interface {
+// A finder can fetch types from BoltDB
+type finder interface {
 	// One returns one record by the specified index
 	One(fieldName string, value interface{}, to interface{}) error
 

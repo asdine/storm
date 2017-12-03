@@ -9,7 +9,7 @@ import (
 	"github.com/asdine/storm/codec/gob"
 	"github.com/asdine/storm/codec/json"
 	"github.com/asdine/storm/q"
-	"github.com/boltdb/bolt"
+	"github.com/coreos/bbolt"
 	"github.com/stretchr/testify/require"
 )
 
@@ -154,7 +154,7 @@ func TestSave(t *testing.T) {
 		val := bucket.Get(i)
 		require.NotNil(t, val)
 
-		content, err := db.codec.Marshal(&v)
+		content, err := db.Codec().Marshal(&v)
 		require.NoError(t, err)
 		require.Equal(t, content, val)
 		return nil
@@ -312,43 +312,8 @@ func TestSaveEmptyValues(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestSaveAutoIncrement(t *testing.T) {
-	db, cleanup := createDB(t, AutoIncrement())
-	defer cleanup()
-
-	for i := 1; i < 10; i++ {
-		s := SimpleUser{Name: "John"}
-		err := db.Save(&s)
-		require.NoError(t, err)
-		require.Equal(t, i, s.ID)
-	}
-
-	u := UserWithUint64IDField{Name: "John"}
-	err := db.Save(&u)
-	require.NoError(t, err)
-	require.Equal(t, uint64(1), u.ID)
-	v := UserWithUint64IDField{}
-	err = db.One("ID", uint64(1), &v)
-	require.NoError(t, err)
-	require.Equal(t, u, v)
-
-	ui := UserWithIDField{Name: "John"}
-	err = db.Save(&ui)
-	require.NoError(t, err)
-	require.Equal(t, 1, ui.ID)
-	vi := UserWithIDField{}
-	err = db.One("ID", 1, &vi)
-	require.NoError(t, err)
-	require.Equal(t, ui, vi)
-
-	us := UserWithStringIDField{Name: "John"}
-	err = db.Save(&us)
-	require.Error(t, err)
-	require.Equal(t, ErrZeroID, err)
-}
-
 func TestSaveIncrement(t *testing.T) {
-	db, cleanup := createDB(t, AutoIncrement())
+	db, cleanup := createDB(t)
 	defer cleanup()
 
 	type User struct {
@@ -382,7 +347,7 @@ func TestSaveDifferentBucketRoot(t *testing.T) {
 	db, cleanup := createDB(t)
 	defer cleanup()
 
-	require.Len(t, db.rootBucket, 0)
+	require.Len(t, db.Node.(*node).rootBucket, 0)
 
 	dbSub := db.From("sub").(*node)
 
@@ -413,10 +378,9 @@ func TestSaveDifferentBucketRoot(t *testing.T) {
 func TestSaveEmbedded(t *testing.T) {
 	db, cleanup := createDB(t)
 	defer cleanup()
-	AutoIncrement()(db)
 
 	type Base struct {
-		ID int `storm:"id"`
+		ID int `storm:"id,increment"`
 	}
 
 	type User struct {

@@ -4,7 +4,7 @@ import (
 	"bytes"
 
 	"github.com/asdine/storm/internal"
-	"github.com/boltdb/bolt"
+	"github.com/coreos/bbolt"
 )
 
 // NewUniqueIndex loads a UniqueIndex

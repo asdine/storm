@@ -1,11 +1,10 @@
 # Storm
 
-[![Join the chat at https://gitter.im/asdine/storm](https://badges.gitter.im/asdine/storm.svg)](https://gitter.im/asdine/storm?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Build Status](https://travis-ci.org/asdine/storm.svg)](https://travis-ci.org/asdine/storm)
 [![GoDoc](https://godoc.org/github.com/asdine/storm?status.svg)](https://godoc.org/github.com/asdine/storm)
 [![Go Report Card](https://goreportcard.com/badge/github.com/asdine/storm)](https://goreportcard.com/report/github.com/asdine/storm)
 
-Storm is a simple and powerful toolkit for [BoltDB](https://github.com/boltdb/bolt). Basically, Storm provides indexes, a wide range of methods to store and fetch data, an advanced query system, and much more.
+Storm is a simple and powerful toolkit for [BoltDB](https://github.com/coreos/bbolt). Basically, Storm provides indexes, a wide range of methods to store and fetch data, an advanced query system, and much more.
 
 In addition to the examples below, see also the [examples in the GoDoc](https://godoc.org/github.com/asdine/storm#pkg-examples).
 
@@ -43,7 +42,6 @@ In addition to the examples below, see also the [examples in the GoDoc](https://
   - [Node options](#node-options)
 - [Simple Key/Value store](#simple-keyvalue-store)
 - [BoltDB](#boltdb)
-- [Migrations](#migrations)
 - [License](#license)
 - [Credits](#credits)
 
@@ -62,6 +60,7 @@ import "github.com/asdine/storm"
 ## Open a database
 
 Quick way of opening a database
+
 ```go
 db, err := storm.Open("my.db")
 
@@ -103,11 +102,11 @@ type Base struct {
 }
 
 type User struct {
-	Base      `storm:"inline"`
-	Group     string `storm:"index"`
-	Email     string `storm:"unique"`
-	Name      string
-	CreatedAt time.Time `storm:"index"`
+  Base      `storm:"inline"`
+  Group     string `storm:"index"`
+  Email     string `storm:"unique"`
+  Name      string
+  CreatedAt time.Time `storm:"index"`
 }
 ```
 
@@ -142,11 +141,11 @@ Storm can auto increment integer values so you don't have to worry about that wh
 ```go
 
 type Product struct {
-	Pk                  int `storm:"id,increment"` // primary key with auto increment
-	Name                string
-	IntegerField        uint64 `storm:"increment"`
-	IndexedIntegerField uint32 `storm:"index,increment"`
-	UniqueIntegerField  int16  `storm:"unique,increment=100"` // the starting value can be set
+  Pk                  int `storm:"id,increment"` // primary key with auto increment
+  Name                string
+  IntegerField        uint64 `storm:"increment"`
+  IndexedIntegerField uint32 `storm:"index,increment"`
+  UniqueIntegerField  int16  `storm:"unique,increment=100"` // the starting value can be set
 }
 
 p := Product{Name: "Vaccum Cleaner"}
@@ -175,7 +174,7 @@ fmt.Println(p.UniqueIntegerField)
 
 ### Simple queries
 
-Any object can be fetched, indexed or not. Storm uses indexes when available, otherwhise it uses the [query system](#advanced-queries).
+Any object can be fetched, indexed or not. Storm uses indexes when available, otherwise it uses the [query system](#advanced-queries).
 
 #### Fetch one object
 
@@ -433,6 +432,7 @@ if err != nil {
 
 return tx.Commit()
 ```
+
 ### Options
 
 Storm options are functions that can be passed when constructing you Storm instance. You can pass it any number of options.
@@ -462,12 +462,12 @@ These can be used by importing the relevant package and use that codec to config
 
 ```go
 import (
-	"github.com/asdine/storm"
-	"github.com/asdine/storm/codec/gob"
-	"github.com/asdine/storm/codec/json"
-	"github.com/asdine/storm/codec/sereal"
-	"github.com/asdine/storm/codec/protobuf"
-	"github.com/asdine/storm/codec/msgpack"
+  "github.com/asdine/storm"
+  "github.com/asdine/storm/codec/gob"
+  "github.com/asdine/storm/codec/json"
+  "github.com/asdine/storm/codec/sereal"
+  "github.com/asdine/storm/codec/protobuf"
+  "github.com/asdine/storm/codec/msgpack"
 )
 
 var gobDb, _ = storm.Open("gob.db", storm.Codec(gob.Codec))
@@ -490,7 +490,7 @@ db := storm.Open("my.db", storm.UseDB(bDB))
 
 #### Batch mode
 
-Batch mode can be enabled to speed up concurrent writes (see [Batch read-write transactions](https://github.com/boltdb/bolt#batch-read-write-transactions))
+Batch mode can be enabled to speed up concurrent writes (see [Batch read-write transactions](https://github.com/coreos/bbolt#batch-read-write-transactions))
 
 ```go
 db := storm.Open("my.db", storm.Batch())
@@ -546,16 +546,19 @@ n := db.From("my-node")
 ```
 
 Give a bolt.Tx transaction to the Node
+
 ```go
 n = n.WithTransaction(tx)
 ```
 
 Enable batch mode
+
 ```go
 n = n.WithBatch(true)
 ```
 
 Use a Codec
+
 ```go
 n = n.WithCodec(gob.Codec)
 ```
@@ -566,6 +569,7 @@ Storm can be used as a simple, robust, key/value store that can store anything.
 The key and the value can be of any type as long as the key is not a zero value.
 
 Saving data :
+
 ```go
 db.Set("logs", time.Now(), "I'm eating my breakfast man")
 db.Set("sessions", bson.NewObjectId(), &someUser)
@@ -576,6 +580,7 @@ db.Set("weird storage", "754-3010", map[string]interface{}{
 ```
 
 Fetching data :
+
 ```go
 user := User{}
 db.Get("sessions", someObjectId, &user)
@@ -587,6 +592,7 @@ db.Get("sessions", someObjectId, &details)
 ```
 
 Deleting data :
+
 ```go
 db.Delete("sessions", someObjectId)
 db.Delete("weird storage", "754-3010")
@@ -616,11 +622,6 @@ db.Bolt.Update(func(tx *bolt.Tx) error {
   return nil
 })
 ```
-
-## Migrations
-
-You can use the migration tool to migrate databases that use older version of Storm.
-See this [README](https://github.com/asdine/storm-migrator) for more informations.
 
 ## License
 

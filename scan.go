@@ -3,11 +3,11 @@ package storm
 import (
 	"bytes"
 
-	"github.com/boltdb/bolt"
+	"github.com/coreos/bbolt"
 )
 
-// A BucketScanner scans a Node for a list of buckets
-type BucketScanner interface {
+// A bucketScanner scans a Node for a list of buckets
+type bucketScanner interface {
 	// PrefixScan scans the root buckets for keys matching the given prefix.
 	PrefixScan(prefix string) []Node
 	// PrefixScan scans the buckets in this node for keys matching the given prefix.

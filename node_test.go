@@ -5,7 +5,7 @@ import (
 
 	"github.com/asdine/storm/codec/gob"
 	"github.com/asdine/storm/codec/json"
-	"github.com/boltdb/bolt"
+	"github.com/coreos/bbolt"
 	"github.com/stretchr/testify/require"
 )
 
@@ -17,13 +17,13 @@ func TestNode(t *testing.T) {
 	node1, ok := n1.(*node)
 	require.True(t, ok)
 	require.Equal(t, db, node1.s)
-	require.NotEqual(t, db.root, n1)
-	require.Equal(t, []string{"a"}, db.root.rootBucket)
-	require.Equal(t, []string{"b", "c"}, node1.rootBucket)
+	require.NotEqual(t, db.Node, n1)
+	require.Equal(t, []string{"a"}, db.Node.(*node).rootBucket)
+	require.Equal(t, []string{"a", "b", "c"}, node1.rootBucket)
 	n2 := n1.From("d", "e")
 	node2, ok := n2.(*node)
 	require.True(t, ok)
-	require.Equal(t, []string{"b", "c", "d", "e"}, node2.rootBucket)
+	require.Equal(t, []string{"a", "b", "c", "d", "e"}, node2.rootBucket)
 }
 
 func TestNodeWithTransaction(t *testing.T) {
