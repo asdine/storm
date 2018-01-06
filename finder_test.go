@@ -685,3 +685,20 @@ func TestPrefix(t *testing.T) {
 	err = db.Prefix("Group", "group3", &users)
 	require.Equal(t, ErrNotFound, err)
 }
+
+func TestPrefixWithID(t *testing.T) {
+	db, cleanup := createDB(t)
+	defer cleanup()
+
+	type User struct {
+		ID string
+	}
+
+	require.NoError(t, db.Save(&User{ID: "1"}))
+	require.NoError(t, db.Save(&User{ID: "10"}))
+
+	var users []User
+
+	require.NoError(t, db.Prefix("ID", "1", &users))
+	require.Len(t, users, 2)
+}

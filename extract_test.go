@@ -45,7 +45,7 @@ func TestExtractUniqueTags(t *testing.T) {
 	require.False(t, infos.ID.IsZero)
 	require.Equal(t, "ClassicUnique", infos.Name)
 	require.Len(t, allByType(infos, "index"), 0)
-	require.Len(t, allByType(infos, "unique"), 4)
+	require.Len(t, allByType(infos, "unique"), 5)
 }
 
 func TestExtractIndexTags(t *testing.T) {
@@ -58,7 +58,7 @@ func TestExtractIndexTags(t *testing.T) {
 	require.False(t, infos.ID.IsZero)
 	require.Equal(t, "ClassicIndex", infos.Name)
 	require.Len(t, allByType(infos, "index"), 5)
-	require.Len(t, allByType(infos, "unique"), 0)
+	require.Len(t, allByType(infos, "unique"), 1)
 }
 
 func TestExtractInlineWithIndex(t *testing.T) {
@@ -70,7 +70,7 @@ func TestExtractInlineWithIndex(t *testing.T) {
 	require.NotNil(t, infos.ID)
 	require.Equal(t, "ClassicInline", infos.Name)
 	require.Len(t, allByType(infos, "index"), 3)
-	require.Len(t, allByType(infos, "unique"), 2)
+	require.Len(t, allByType(infos, "unique"), 3)
 }
 
 func TestExtractMultipleTags(t *testing.T) {
@@ -90,7 +90,7 @@ func TestExtractMultipleTags(t *testing.T) {
 	require.NotNil(t, infos.ID)
 	require.Equal(t, "User", infos.Name)
 	require.Len(t, allByType(infos, "index"), 2)
-	require.Len(t, allByType(infos, "unique"), 1)
+	require.Len(t, allByType(infos, "unique"), 2)
 
 	require.True(t, infos.Fields["Age"].Increment)
 	require.Equal(t, int64(1), infos.Fields["Age"].IncrementStart)
