@@ -79,6 +79,14 @@ func TestCmp(t *testing.T) {
 	ok, err = q.Match(&a)
 	require.Equal(t, err, ErrUnknownField)
 	require.False(t, ok)
+
+	q = EqF("Age", "Age")
+	ok, err = q.Match(&a)
+	require.NoError(t, err)
+	require.True(t, ok)
+	ok, err = q.Match(&b)
+	require.NoError(t, err)
+	require.True(t, ok)	
 }
 
 func TestStrictEq(t *testing.T) {
