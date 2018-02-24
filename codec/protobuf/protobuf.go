@@ -19,7 +19,7 @@ var (
 type protobufCodec int
 
 // Encode value with protocol buffer.
-// If type isn't a Protocol buffer Message, gob encoder will be used instead.
+// If type isn't a Protocol buffer Message, json encoder will be used instead.
 func (c protobufCodec) Marshal(v interface{}) ([]byte, error) {
 	message, ok := v.(proto.Message)
 	if !ok {
