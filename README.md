@@ -295,7 +295,6 @@ Here are some common Matchers:
 ```go
 // Equality
 q.Eq("Name", John)
-q.EqF("NameField", "SecondNameField")
 
 // Strictly greater than
 q.Gt("Age", 7)
@@ -308,6 +307,13 @@ q.Re("Name", "^D")
 
 // In the given slice of values
 q.In("Group", []string{"Staff", "Admin"})
+
+// Comparing fields
+q.EqF("FieldName", "SecondFieldName")
+q.LtF("FieldName", "SecondFieldName")
+q.GtF("FieldName", "SecondFieldName")
+q.LteF("FieldName", "SecondFieldName")
+q.GteF("FieldName", "SecondFieldName")
 ```
 
 Matchers can also be combined with `And`, `Or` and `Not`:

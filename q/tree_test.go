@@ -86,7 +86,7 @@ func TestCmp(t *testing.T) {
 	require.True(t, ok)
 	ok, err = q.Match(&b)
 	require.NoError(t, err)
-	require.True(t, ok)	
+	require.True(t, ok)
 }
 
 func TestStrictEq(t *testing.T) {
