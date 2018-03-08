@@ -295,6 +295,7 @@ Here are some common Matchers:
 ```go
 // Equality
 q.Eq("Name", John)
+q.EqF("NameField", "SecondNameField")
 
 // Strictly greater than
 q.Gt("Age", 7)

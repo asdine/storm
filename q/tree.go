@@ -178,6 +178,11 @@ func Eq(field string, v interface{}) Matcher {
 	return NewFieldMatcher(field, &cmp{value: v, token: token.EQL})
 }
 
+// EqF matcher, checks if the given field is equal to the given field
+func EqF(field1, field2 string) Matcher {
+	return NewField2FieldMatcher(field1, field2, token.EQL)
+}
+
 // StrictEq matcher, checks if the given field is deeply equal to the given value
 func StrictEq(field string, v interface{}) Matcher {
 	return NewFieldMatcher(field, &strictEq{value: v})
@@ -188,9 +193,19 @@ func Gt(field string, v interface{}) Matcher {
 	return NewFieldMatcher(field, &cmp{value: v, token: token.GTR})
 }
 
+// GtF matcher, checks if the given field is greater than the given field
+func GtF(field1, field2 string) Matcher {
+	return NewField2FieldMatcher(field1, field2, token.GTR)
+}
+
 // Gte matcher, checks if the given field is greater than or equal to the given value
 func Gte(field string, v interface{}) Matcher {
 	return NewFieldMatcher(field, &cmp{value: v, token: token.GEQ})
+}
+
+// GteF matcher, checks if the given field is greater than or equal to the given field
+func GteF(field1, field2 string) Matcher {
+	return NewField2FieldMatcher(field1, field2, token.GEQ)
 }
 
 // Lt matcher, checks if the given field is lesser than the given value
@@ -198,9 +213,19 @@ func Lt(field string, v interface{}) Matcher {
 	return NewFieldMatcher(field, &cmp{value: v, token: token.LSS})
 }
 
+// LtF matcher, checks if the given field is lesser than the given field
+func LtF(field1, field2 string) Matcher {
+	return NewField2FieldMatcher(field1, field2, token.LSS)
+}
+
 // Lte matcher, checks if the given field is lesser than or equal to the given value
 func Lte(field string, v interface{}) Matcher {
 	return NewFieldMatcher(field, &cmp{value: v, token: token.LEQ})
+}
+
+// LteF matcher, checks if the given field is lesser than or equal to the given field
+func LteF(field1, field2 string) Matcher {
+	return NewField2FieldMatcher(field1, field2, token.LEQ)
 }
 
 // In matcher, checks if the given field matches one of the value of the given slice.
