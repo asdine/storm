@@ -147,3 +147,28 @@ func TestDelete(t *testing.T) {
 	err = db.Delete("", nil)
 	require.Equal(t, ErrNotFound, err)
 }
+
+func TestKeyExists(t *testing.T) {
+	db, cleanup := createDB(t)
+	defer cleanup()
+
+	err := db.Set("files", "myfile.csv", "a,b,c,d")
+	require.NoError(t, err)
+
+	exists, err := db.KeyExists("files", "myfile.csv")
+	require.NoError(t, err)
+	require.True(t, exists)
+
+	err = db.Delete("files", "myfile.csv")
+	require.NoError(t, err)
+
+	exists, err = db.KeyExists("files", "myfile.csv")
+	require.NoError(t, err)
+	require.False(t, exists)
+
+	exists, err = db.KeyExists("i don't exist", "myfile.csv")
+	require.Equal(t, ErrNotFound, err)
+
+	exists, err = db.KeyExists("", nil)
+	require.Equal(t, ErrNotFound, err)
+}
