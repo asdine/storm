@@ -605,6 +605,8 @@ db.Delete("sessions", someObjectId)
 db.Delete("weird storage", "754-3010")
 ```
 
+You can find other useful methods in the [documentation](https://godoc.org/github.com/asdine/storm#KeyValueStore).
+
 ## BoltDB
 
 BoltDB is still easily accessible and can be used as usual
