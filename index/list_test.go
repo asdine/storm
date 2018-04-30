@@ -380,6 +380,30 @@ func TestListIndexRange(t *testing.T) {
 		require.Len(t, list, 2)
 		require.NoError(t, err)
 		assertEncodedIntListEqual(t, []int{5, 4}, list)
+
+		// issue #218
+		val, _ := gob.Codec.Marshal(8)
+		err = idx.Remove(val)
+		require.NoError(t, err)
+
+		// normal with gaps
+		min, _ = gob.Codec.Marshal(6)
+		max, _ = gob.Codec.Marshal(8)
+		list, err = idx.Range(min, max, nil)
+		require.Len(t, list, 2)
+		require.NoError(t, err)
+		assertEncodedIntListEqual(t, []int{6, 7}, list)
+
+		// reverse with gaps
+		min, _ = gob.Codec.Marshal(6)
+		max, _ = gob.Codec.Marshal(8)
+		opts = index.NewOptions()
+		opts.Reverse = true
+		list, err = idx.Range(min, max, opts)
+		require.Len(t, list, 2)
+		require.NoError(t, err)
+		assertEncodedIntListEqual(t, []int{7, 6}, list)
+
 		return nil
 	})
 }
