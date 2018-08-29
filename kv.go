@@ -3,7 +3,7 @@ package storm
 import (
 	"reflect"
 
-	"github.com/coreos/bbolt"
+	bolt "go.etcd.io/bbolt"
 )
 
 // KeyValueStore can store and fetch values by key

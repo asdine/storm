@@ -1,6 +1,6 @@
 package storm
 
-import "github.com/coreos/bbolt"
+import bolt "go.etcd.io/bbolt"
 
 // Tx is a transaction.
 type Tx interface {

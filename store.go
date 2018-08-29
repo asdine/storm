@@ -6,7 +6,7 @@ import (
 
 	"github.com/asdine/storm/index"
 	"github.com/asdine/storm/q"
-	"github.com/coreos/bbolt"
+	bolt "go.etcd.io/bbolt"
 )
 
 // TypeStore stores user defined types in BoltDB.
