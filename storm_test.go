@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/asdine/storm/codec/json"
-	"github.com/coreos/bbolt"
+	bolt "go.etcd.io/bbolt"
 	"github.com/stretchr/testify/require"
 )
 

@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/asdine/storm/index"
-	"github.com/coreos/bbolt"
+	bolt "go.etcd.io/bbolt"
 )
 
 // Storm tags

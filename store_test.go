@@ -9,7 +9,7 @@ import (
 	"github.com/asdine/storm/codec/gob"
 	"github.com/asdine/storm/codec/json"
 	"github.com/asdine/storm/q"
-	"github.com/coreos/bbolt"
+	bolt "go.etcd.io/bbolt"
 	"github.com/stretchr/testify/require"
 )
 

@@ -1,6 +1,6 @@
 package storm
 
-import "github.com/coreos/bbolt"
+import bolt "go.etcd.io/bbolt"
 
 // CreateBucketIfNotExists creates the bucket below the current node if it doesn't
 // already exist.

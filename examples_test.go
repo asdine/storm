@@ -11,7 +11,7 @@ import (
 
 	"github.com/asdine/storm"
 	"github.com/asdine/storm/codec/gob"
-	"github.com/coreos/bbolt"
+	bolt "go.etcd.io/bbolt"
 )
 
 func ExampleDB_Save() {

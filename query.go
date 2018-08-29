@@ -3,7 +3,7 @@ package storm
 import (
 	"github.com/asdine/storm/internal"
 	"github.com/asdine/storm/q"
-	"github.com/coreos/bbolt"
+	bolt "go.etcd.io/bbolt"
 )
 
 // Select a list of records that match a list of matchers. Doesn't use indexes.
