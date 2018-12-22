@@ -9,8 +9,8 @@ import (
 	"github.com/asdine/storm/codec/gob"
 	"github.com/asdine/storm/codec/json"
 	"github.com/asdine/storm/q"
-	bolt "go.etcd.io/bbolt"
 	"github.com/stretchr/testify/require"
+	bolt "go.etcd.io/bbolt"
 )
 
 func TestInit(t *testing.T) {
@@ -423,11 +423,11 @@ func TestSaveWithBatch(t *testing.T) {
 
 	for i := 0; i < 5; i++ {
 		wg.Add(1)
-		go func() {
+		go func(i int) {
 			defer wg.Done()
 			err := db.Save(&User{ID: i + 1, Name: "John"})
 			require.NoError(t, err)
-		}()
+		}(i)
 	}
 
 	wg.Wait()

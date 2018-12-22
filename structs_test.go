@@ -62,7 +62,7 @@ type ClassicInline struct {
 }
 
 type User struct {
-	ID              int       `storm:"id"`
+	ID              int       `storm:"id,increment"`
 	Name            string    `storm:"index"`
 	Age             int       `storm:"index,increment"`
 	DateOfBirth     time.Time `storm:"index"`
