@@ -88,14 +88,16 @@ func compare(a, b interface{}, tok token.Token) bool {
 		}
 	}
 
-	if reflect.TypeOf(a) != nil && (reflect.TypeOf(a).String() == "time.Time" || reflect.TypeOf(a).String() == "*time.Time") &&
-		reflect.TypeOf(b) != nil && (reflect.TypeOf(b).String() == "time.Time" || reflect.TypeOf(b).String() == "*time.Time") {
+	typea, typeb := reflect.TypeOf(a), reflect.TypeOf(b)
 
-		if reflect.TypeOf(a).String() == "*time.Time" && vala.IsNil() {
+	if typea != nil && (typea.String() == "time.Time" || typea.String() == "*time.Time") &&
+		typeb != nil && (typeb.String() == "time.Time" || typeb.String() == "*time.Time") {
+
+		if typea.String() == "*time.Time" && vala.IsNil() {
 			return true
 		}
 
-		if reflect.TypeOf(b).String() == "*time.Time" {
+		if typeb.String() == "*time.Time" {
 			if valb.IsNil() {
 				return true
 			}
