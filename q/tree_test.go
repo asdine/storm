@@ -56,6 +56,8 @@ func TestCompare(t *testing.T) {
 	require.True(t, compare(t1, tnil, token.EQL))
 	require.True(t, compare(t1, tnil, token.LSS))
 	require.True(t, compare(t1, tnil, token.GTR))
+	require.False(t, compare(nil, t1, token.EQL))
+	require.False(t, compare(t1, nil, token.EQL))
 	require.False(t, compare(&A{Name: "John"}, t1, token.EQL))
 	require.False(t, compare(&A{Name: "John"}, t1, token.LEQ))
 	require.True(t, compare(uint32(10), uint32(5), token.GTR))
