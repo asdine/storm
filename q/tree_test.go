@@ -2,6 +2,7 @@ package q
 
 import (
 	"go/token"
+	"reflect"
 	"testing"
 	"time"
 
@@ -36,9 +37,25 @@ func TestCompare(t *testing.T) {
 	t1 := time.Now()
 	t2 := t1.Add(2 * time.Hour)
 	t3 := t1.Add(-2 * time.Hour)
+	tnil := reflect.Zero(reflect.TypeOf(&t1)).Interface()
 	require.True(t, compare(t1, t1, token.EQL))
 	require.True(t, compare(t1, t2, token.LSS))
 	require.True(t, compare(t1, t3, token.GTR))
+	require.True(t, compare(&t1, t1, token.EQL))
+	require.True(t, compare(&t1, t2, token.LSS))
+	require.True(t, compare(&t1, t3, token.GTR))
+	require.True(t, compare(&t1, &t1, token.EQL))
+	require.True(t, compare(&t1, &t2, token.LSS))
+	require.True(t, compare(&t1, &t3, token.GTR))
+	require.True(t, compare(t1, &t1, token.EQL))
+	require.True(t, compare(t1, &t2, token.LSS))
+	require.True(t, compare(t1, &t3, token.GTR))
+	require.True(t, compare(tnil, t1, token.EQL))
+	require.True(t, compare(tnil, t2, token.LSS))
+	require.True(t, compare(tnil, t3, token.GTR))
+	require.True(t, compare(t1, tnil, token.EQL))
+	require.True(t, compare(t1, tnil, token.LSS))
+	require.True(t, compare(t1, tnil, token.GTR))
 	require.False(t, compare(&A{Name: "John"}, t1, token.EQL))
 	require.False(t, compare(&A{Name: "John"}, t1, token.LEQ))
 	require.True(t, compare(uint32(10), uint32(5), token.GTR))
