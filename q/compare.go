@@ -88,7 +88,22 @@ func compare(a, b interface{}, tok token.Token) bool {
 		}
 	}
 
-	if reflect.TypeOf(a).String() == "time.Time" && reflect.TypeOf(b).String() == "time.Time" {
+	typea, typeb := reflect.TypeOf(a), reflect.TypeOf(b)
+
+	if typea != nil && (typea.String() == "time.Time" || typea.String() == "*time.Time") &&
+		typeb != nil && (typeb.String() == "time.Time" || typeb.String() == "*time.Time") {
+
+		if typea.String() == "*time.Time" && vala.IsNil() {
+			return true
+		}
+
+		if typeb.String() == "*time.Time" {
+			if valb.IsNil() {
+				return true
+			}
+			valb = valb.Elem()
+		}
+
 		var x, y int64
 		x = 1
 		if vala.MethodByName("Equal").Call([]reflect.Value{valb})[0].Bool() {
