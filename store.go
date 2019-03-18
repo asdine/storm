@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"reflect"
 
-	"github.com/asdine/storm/index"
-	"github.com/asdine/storm/q"
+	"github.com/asdine/storm/v2/index"
+	"github.com/asdine/storm/v2/q"
 	bolt "go.etcd.io/bbolt"
 )
 

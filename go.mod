@@ -1,7 +1,8 @@
-module github.com/asdine/storm
+module github.com/asdine/storm/v2
 
 require (
 	github.com/Sereal/Sereal v0.0.0-20181211220259-509a78ddbda3
+	github.com/asdine/storm v2.1.2+incompatible
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/golang/protobuf v1.2.0
 	github.com/golang/snappy v0.0.0-20180518054509-2e65f85255db // indirect
