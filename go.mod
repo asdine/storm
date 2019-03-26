@@ -3,7 +3,6 @@ module github.com/asdine/storm/v2
 require (
 	github.com/DataDog/zstd v1.3.5 // indirect
 	github.com/Sereal/Sereal v0.0.0-20181211220259-509a78ddbda3
-	github.com/asdine/storm v2.1.2+incompatible
 	github.com/boltdb/bolt v1.3.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/golang/protobuf v1.2.0
