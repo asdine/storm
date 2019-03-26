@@ -10,40 +10,42 @@ In addition to the examples below, see also the [examples in the GoDoc](https://
 
 ## Table of Contents
 
-- [Getting Started](#getting-started)
-- [Import Storm](#import-storm)
-- [Open a database](#open-a-database)
-- [Simple CRUD system](#simple-crud-system)
-  - [Declare your structures](#declare-your-structures)
-  - [Save your object](#save-your-object)
-    - [Auto Increment](#auto-increment)
-  - [Simple queries](#simple-queries)
-    - [Fetch one object](#fetch-one-object)
-    - [Fetch multiple objects](#fetch-multiple-objects)
-    - [Fetch all objects](#fetch-all-objects)
-    - [Fetch all objects sorted by index](#fetch-all-objects-sorted-by-index)
-    - [Fetch a range of objects](#fetch-a-range-of-objects)
-    - [Fetch objects by prefix](#fetch-objects-by-prefix)
-    - [Skip, Limit and Reverse](#skip-limit-and-reverse)
-    - [Delete an object](#delete-an-object)
-    - [Update an object](#update-an-object)
-    - [Initialize buckets and indexes before saving an object](#initialize-buckets-and-indexes-before-saving-an-object)
-    - [Drop a bucket](#drop-a-bucket)
-    - [Re-index a bucket](#re-index-a-bucket)
-  - [Advanced queries](#advanced-queries)
-  - [Transactions](#transactions)
-  - [Options](#options)
-    - [BoltOptions](#boltoptions)
-    - [MarshalUnmarshaler](#marshalunmarshaler)
-      - [Provided Codecs](#provided-codecs)
-    - [Use existing Bolt connection](#use-existing-bolt-connection)
-    - [Batch mode](#batch-mode)
-- [Nodes and nested buckets](#nodes-and-nested-buckets)
-  - [Node options](#node-options)
-- [Simple Key/Value store](#simple-keyvalue-store)
-- [BoltDB](#boltdb)
-- [License](#license)
-- [Credits](#credits)
+- [Storm](#storm)
+  - [Table of Contents](#table-of-contents)
+  - [Getting Started](#getting-started)
+  - [Import Storm](#import-storm)
+  - [Open a database](#open-a-database)
+  - [Simple CRUD system](#simple-crud-system)
+    - [Declare your structures](#declare-your-structures)
+    - [Save your object](#save-your-object)
+      - [Auto Increment](#auto-increment)
+    - [Simple queries](#simple-queries)
+      - [Fetch one object](#fetch-one-object)
+      - [Fetch multiple objects](#fetch-multiple-objects)
+      - [Fetch all objects](#fetch-all-objects)
+      - [Fetch all objects sorted by index](#fetch-all-objects-sorted-by-index)
+      - [Fetch a range of objects](#fetch-a-range-of-objects)
+      - [Fetch objects by prefix](#fetch-objects-by-prefix)
+      - [Skip, Limit and Reverse](#skip-limit-and-reverse)
+      - [Delete an object](#delete-an-object)
+      - [Update an object](#update-an-object)
+      - [Initialize buckets and indexes before saving an object](#initialize-buckets-and-indexes-before-saving-an-object)
+      - [Drop a bucket](#drop-a-bucket)
+      - [Re-index a bucket](#re-index-a-bucket)
+    - [Advanced queries](#advanced-queries)
+    - [Transactions](#transactions)
+    - [Options](#options)
+      - [BoltOptions](#boltoptions)
+      - [MarshalUnmarshaler](#marshalunmarshaler)
+        - [Provided Codecs](#provided-codecs)
+      - [Use existing Bolt connection](#use-existing-bolt-connection)
+      - [Batch mode](#batch-mode)
+  - [Nodes and nested buckets](#nodes-and-nested-buckets)
+    - [Node options](#node-options)
+  - [Simple Key/Value store](#simple-keyvalue-store)
+  - [BoltDB](#boltdb)
+  - [License](#license)
+  - [Credits](#credits)
 
 ## Getting Started
 
@@ -469,12 +471,12 @@ These can be used by importing the relevant package and use that codec to config
 
 ```go
 import (
-  "github.com/asdine/storm"
-  "github.com/asdine/storm/codec/gob"
-  "github.com/asdine/storm/codec/json"
-  "github.com/asdine/storm/codec/sereal"
-  "github.com/asdine/storm/codec/protobuf"
-  "github.com/asdine/storm/codec/msgpack"
+  "github.com/asdine/storm/v2"
+  "github.com/asdine/storm/v2/codec/gob"
+  "github.com/asdine/storm/v2/codec/json"
+  "github.com/asdine/storm/v2/codec/sereal"
+  "github.com/asdine/storm/v2/codec/protobuf"
+  "github.com/asdine/storm/v2/codec/msgpack"
 )
 
 var gobDb, _ = storm.Open("gob.db", storm.Codec(gob.Codec))
