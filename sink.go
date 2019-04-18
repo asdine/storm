@@ -3,7 +3,7 @@ package storm
 import (
 	"reflect"
 	"sort"
-
+	"time"
 	"github.com/asdine/storm/index"
 	"github.com/asdine/storm/q"
 	bolt "go.etcd.io/bbolt"
@@ -140,6 +140,18 @@ func (s *sorter) compareValue(left reflect.Value, right reflect.Value) int {
 		}
 		if l > r {
 			return 1
+		}
+	case reflect.Struct:
+		if lt, lok := left.Interface().(time.Time); lok {
+			if rt, rok := right.Interface().(time.Time); rok {
+				if lok && rok {
+					if lt.Before(rt) {
+						return -1
+					} else {
+						return 1
+					}
+				}
+			}
 		}
 	default:
 		rawLeft, err := toBytes(left.Interface(), s.node.Codec())
