@@ -8,6 +8,8 @@ Storm is a simple and powerful toolkit for [BoltDB](https://github.com/coreos/bb
 
 In addition to the examples below, see also the [examples in the GoDoc](https://godoc.org/github.com/asdine/storm#pkg-examples).
 
+_For extended queries and support for [Badger](https://github.com/dgraph-io/badger), see also [Genji](https://github.com/asdine/genji)_
+
 ## Table of Contents
 
 - [Getting Started](#getting-started)
