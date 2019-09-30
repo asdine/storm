@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/asdine/storm"
-	"github.com/asdine/storm/codec/gob"
-	"github.com/asdine/storm/index"
+	"github.com/asdine/storm/v3"
+	"github.com/asdine/storm/v3/codec/gob"
+	"github.com/asdine/storm/v3/index"
 	bolt "go.etcd.io/bbolt"
 	"github.com/stretchr/testify/require"
 )

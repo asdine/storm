@@ -12,8 +12,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/asdine/storm"
-	"github.com/asdine/storm/q"
+	"github.com/asdine/storm/v3"
+	"github.com/asdine/storm/v3/q"
 )
 
 func ExampleRe() {

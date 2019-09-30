@@ -4,7 +4,7 @@ package protobuf
 import (
 	"errors"
 
-	"github.com/asdine/storm/codec/json"
+	"github.com/asdine/storm/v3/codec/json"
 	"github.com/golang/protobuf/proto"
 )
 

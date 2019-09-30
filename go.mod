@@ -1,4 +1,4 @@
-module github.com/asdine/storm
+module github.com/asdine/storm/v3
 
 require (
 	github.com/Sereal/Sereal v0.0.0-20190618215532-0b8ac451a863
@@ -10,3 +10,5 @@ require (
 	github.com/vmihailenco/msgpack v4.0.1+incompatible
 	go.etcd.io/bbolt v1.3.0
 )
+
+go 1.13

@@ -3,7 +3,7 @@ package sereal
 import (
 	"testing"
 
-	"github.com/asdine/storm/codec/internal"
+	"github.com/asdine/storm/v3/codec/internal"
 	"github.com/stretchr/testify/require"
 )
 
