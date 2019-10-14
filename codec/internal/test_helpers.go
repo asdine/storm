@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/asdine/storm/codec"
+	"github.com/asdine/storm/v3/codec"
 )
 
 type testStruct struct {

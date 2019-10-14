@@ -3,7 +3,7 @@ package msgpack
 import (
 	"testing"
 
-	"github.com/asdine/storm/codec/internal"
+	"github.com/asdine/storm/v3/codec/internal"
 )
 
 func TestMsgpack(t *testing.T) {

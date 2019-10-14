@@ -55,7 +55,7 @@ go get -u github.com/asdine/storm
 ## Import Storm
 
 ```go
-import "github.com/asdine/storm"
+import "github.com/asdine/storm/v3"
 ```
 
 ## Open a database
@@ -470,12 +470,12 @@ These can be used by importing the relevant package and use that codec to config
 
 ```go
 import (
-  "github.com/asdine/storm"
-  "github.com/asdine/storm/codec/gob"
-  "github.com/asdine/storm/codec/json"
-  "github.com/asdine/storm/codec/sereal"
-  "github.com/asdine/storm/codec/protobuf"
-  "github.com/asdine/storm/codec/msgpack"
+  "github.com/asdine/storm/v3"
+  "github.com/asdine/storm/v3/codec/gob"
+  "github.com/asdine/storm/v3/codec/json"
+  "github.com/asdine/storm/v3/codec/sereal"
+  "github.com/asdine/storm/v3/codec/protobuf"
+  "github.com/asdine/storm/v3/codec/msgpack"
 )
 
 var gobDb, _ = storm.Open("gob.db", storm.Codec(gob.Codec))
