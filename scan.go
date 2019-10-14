@@ -31,12 +31,15 @@ func (n *node) PrefixScan(prefix string) []Node {
 }
 
 func (n *node) prefixScan(tx *bolt.Tx, prefix string) []Node {
-
 	var (
 		prefixBytes = []byte(prefix)
 		nodes       []Node
 		c           = n.cursor(tx)
 	)
+
+	if c == nil {
+		return nil
+	}
 
 	for k, v := c.Seek(prefixBytes); k != nil && bytes.HasPrefix(k, prefixBytes); k, v = c.Next() {
 		if v != nil {
@@ -86,11 +89,14 @@ func (n *node) rangeScan(tx *bolt.Tx, min, max string) []Node {
 }
 
 func (n *node) cursor(tx *bolt.Tx) *bolt.Cursor {
-
 	var c *bolt.Cursor
 
 	if len(n.rootBucket) > 0 {
-		c = n.GetBucket(tx).Cursor()
+		b := n.GetBucket(tx)
+		if b == nil {
+			return nil
+		}
+		c = b.Cursor()
 	} else {
 		c = tx.Cursor()
 	}

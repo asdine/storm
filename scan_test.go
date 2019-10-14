@@ -13,6 +13,10 @@ func TestPrefixScan(t *testing.T) {
 
 	node := db.From("node")
 
+	// run prefix scan on empty data
+	list := node.PrefixScan("foo")
+	require.Empty(t, list)
+
 	doTestPrefixScan(t, node)
 	doTestPrefixScan(t, db)
 
