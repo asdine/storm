@@ -28,10 +28,10 @@ var (
 	// ErrSlicePtrNeeded is returned when an unexpected value is given, instead of a pointer to slice.
 	ErrSlicePtrNeeded = errors.New("provided target must be a pointer to slice")
 
-	// ErrSlicePtrNeeded is returned when an unexpected value is given, instead of a pointer to struct.
+	// ErrStructPtrNeeded is returned when an unexpected value is given, instead of a pointer to struct.
 	ErrStructPtrNeeded = errors.New("provided target must be a pointer to struct")
 
-	// ErrSlicePtrNeeded is returned when an unexpected value is given, instead of a pointer.
+	// ErrPtrNeeded is returned when an unexpected value is given, instead of a pointer.
 	ErrPtrNeeded = errors.New("provided target must be a pointer to a valid variable")
 
 	// ErrNoName is returned when the specified struct has no name.
