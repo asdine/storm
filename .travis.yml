@@ -10,4 +10,5 @@ go:
   - tip
 
 script:
-  - go test -v ./...
+  - go mod vendor
+  - go test -mod vendor -race -v ./...
