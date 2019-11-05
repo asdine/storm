@@ -3,6 +3,9 @@ language: go
 before_install:
   - go get github.com/stretchr/testify
 
+env:
+  GO111MODULE=on
+
 go:
   - '1.11'
   - '1.12'
