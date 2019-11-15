@@ -27,3 +27,6 @@ _testmain.go
 *.exe
 *.test
 *.prof
+
+# Golang vendor folder
+/vendor/
