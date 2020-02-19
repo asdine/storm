@@ -1,18 +1,16 @@
-# Storm
+# Rainstorm
 
-[![Build Status](https://travis-ci.org/asdine/storm.svg)](https://travis-ci.org/asdine/storm)
-[![GoDoc](https://godoc.org/github.com/asdine/storm?status.svg)](https://godoc.org/github.com/asdine/storm)
+[![GoDoc](https://godoc.org/github.com/AndersonBargas/rainstorm?status.svg)](https://godoc.org/github.com/AndersonBargas/rainstorm)
 
-Storm is a simple and powerful toolkit for [BoltDB](https://github.com/coreos/bbolt). Basically, Storm provides indexes, a wide range of methods to store and fetch data, an advanced query system, and much more.
+Rainstorm is a simple and powerful toolkit for [BoltDB](https://github.com/coreos/bbolt), forked from the great [Storm](https://github.com/asdine/storm).
+Basically, Rainstorm provides indexes, a wide range of methods to store and fetch data, an advanced query system, and much more.
 
-In addition to the examples below, see also the [examples in the GoDoc](https://godoc.org/github.com/asdine/storm#pkg-examples).
-
-_For extended queries and support for [Badger](https://github.com/dgraph-io/badger), see also [Genji](https://github.com/asdine/genji)_
+In addition to the examples below, see also the [examples in the GoDoc](https://godoc.org/github.com/AndersonBargas/rainstorm#pkg-examples).
 
 ## Table of Contents
 
 - [Getting Started](#getting-started)
-- [Import Storm](#import-storm)
+- [Import Rainstorm](#import-rainstorm)
 - [Open a database](#open-a-database)
 - [Simple CRUD system](#simple-crud-system)
   - [Declare your structures](#declare-your-structures)
@@ -49,13 +47,13 @@ _For extended queries and support for [Badger](https://github.com/dgraph-io/badg
 ## Getting Started
 
 ```bash
-go get -u github.com/asdine/storm
+go get -u github.com/AndersonBargas/rainstorm
 ```
 
-## Import Storm
+## Import Rainstorm
 
 ```go
-import "github.com/asdine/storm/v3"
+import storm "github.com/AndersonBargas/rainstorm/v3"
 ```
 
 ## Open a database
@@ -95,7 +93,7 @@ type User struct {
 }
 ```
 
-Storm handles tags in nested structures with the `inline` tag
+Rainstorm handles tags in nested structures with the `inline` tag
 
 ```go
 type Base struct {
@@ -289,7 +287,7 @@ Useful when the structure has changed
 ### Advanced queries
 
 For more complex queries, you can use the `Select` method.
-`Select` takes any number of [`Matcher`](https://godoc.org/github.com/asdine/storm/q#Matcher) from the [`q`](https://godoc.org/github.com/asdine/storm/q) package.
+`Select` takes any number of [`Matcher`](https://godoc.org/github.com/AndersonBargas/rainstorm/q#Matcher) from the [`q`](https://godoc.org/github.com/AndersonBargas/rainstorm/q) package.
 
 Here are some common Matchers:
 
@@ -342,9 +340,9 @@ q.Or(
 )
 ```
 
-You can find the complete list in the [documentation](https://godoc.org/github.com/asdine/storm/q#Matcher).
+You can find the complete list in the [documentation](https://godoc.org/github.com/AndersonBargas/rainstorm/q#Matcher).
 
-`Select` takes any number of matchers and wraps them into a `q.And()` so it's not necessary to specify it. It returns a [`Query`](https://godoc.org/github.com/asdine/storm#Query) type.
+`Select` takes any number of matchers and wraps them into a `q.And()` so it's not necessary to specify it. It returns a [`Query`](https://godoc.org/github.com/AndersonBargas/rainstorm#Query) type.
 
 ```go
 query := db.Select(q.Gte("Age", 7), q.Lte("Age", 77))
@@ -414,7 +412,7 @@ err = query.Each(new(User), func(record interface{}) error) {
 }
 ```
 
-See the [documentation](https://godoc.org/github.com/asdine/storm#Query) for a complete list of methods.
+See the [documentation](https://godoc.org/github.com/AndersonBargas/rainstorm#Query) for a complete list of methods.
 
 ### Transactions
 
@@ -456,7 +454,7 @@ db, err := storm.Open("my.db", storm.BoltOptions(0600, &bolt.Options{Timeout: 1 
 
 #### MarshalUnmarshaler
 
-To store the data in BoltDB, Storm marshals it in JSON by default. If you wish to change this behavior you can pass a codec that implements [`codec.MarshalUnmarshaler`](https://godoc.org/github.com/asdine/storm/codec#MarshalUnmarshaler) via the [`storm.Codec`](https://godoc.org/github.com/asdine/storm#Codec) option:
+To store the data in BoltDB, Storm marshals it in JSON by default. If you wish to change this behavior you can pass a codec that implements [`codec.MarshalUnmarshaler`](https://godoc.org/github.com/AndersonBargas/rainstorm/codec#MarshalUnmarshaler) via the [`rainstorm.Codec`](https://godoc.org/github.com/AndersonBargas/rainstorm#Codec) option:
 
 ```go
 db := storm.Open("my.db", storm.Codec(myCodec))
@@ -464,18 +462,18 @@ db := storm.Open("my.db", storm.Codec(myCodec))
 
 ##### Provided Codecs
 
-You can easily implement your own `MarshalUnmarshaler`, but Storm comes with built-in support for [JSON](https://godoc.org/github.com/asdine/storm/codec/json) (default), [GOB](https://godoc.org/github.com/asdine/storm/codec/gob),  [Sereal](https://godoc.org/github.com/asdine/storm/codec/sereal), [Protocol Buffers](https://godoc.org/github.com/asdine/storm/codec/protobuf) and [MessagePack](https://godoc.org/github.com/asdine/storm/codec/msgpack).
+You can easily implement your own `MarshalUnmarshaler`, but Storm comes with built-in support for [JSON](https://godoc.org/github.com/AndersonBargas/rainstorm/codec/json) (default), [GOB](https://godoc.org/github.com/AndersonBargas/rainstorm/codec/gob),  [Sereal](https://godoc.org/github.com/AndersonBargas/rainstorm/codec/sereal), [Protocol Buffers](https://godoc.org/github.com/AndersonBargas/rainstorm/codec/protobuf) and [MessagePack](https://godoc.org/github.com/AndersonBargas/rainstorm/codec/msgpack).
 
-These can be used by importing the relevant package and use that codec to configure Storm. The example below shows all variants (without proper error handling):
+These can be used by importing the relevant package and use that codec to configure Rainstorm. The example below shows all variants (without proper error handling):
 
 ```go
 import (
-  "github.com/asdine/storm/v3"
-  "github.com/asdine/storm/v3/codec/gob"
-  "github.com/asdine/storm/v3/codec/json"
-  "github.com/asdine/storm/v3/codec/sereal"
-  "github.com/asdine/storm/v3/codec/protobuf"
-  "github.com/asdine/storm/v3/codec/msgpack"
+  storm "github.com/AndersonBargas/storm/v3"
+  "github.com/AndersonBargas/storm/v3/codec/gob"
+  "github.com/AndersonBargas/storm/v3/codec/json"
+  "github.com/AndersonBargas/storm/v3/codec/sereal"
+  "github.com/AndersonBargas/storm/v3/codec/protobuf"
+  "github.com/AndersonBargas/storm/v3/codec/msgpack"
 )
 
 var gobDb, _ = storm.Open("gob.db", storm.Codec(gob.Codec))
@@ -506,9 +504,9 @@ db := storm.Open("my.db", storm.Batch())
 
 ## Nodes and nested buckets
 
-Storm takes advantage of BoltDB nested buckets feature by using `storm.Node`.
-A `storm.Node` is the underlying object used by `storm.DB` to manipulate a bucket.
-To create a nested bucket and use the same API as `storm.DB`, you can use the `DB.From` method.
+Storm takes advantage of BoltDB nested buckets feature by using `rainstorm.Node`.
+A `rainstorm.Node` is the underlying object used by `rainstorm.DB` to manipulate a bucket.
+To create a nested bucket and use the same API as `rainstorm.DB`, you can use the `DB.From` method.
 
 ```go
 repo := db.From("repo")
@@ -606,7 +604,7 @@ db.Delete("sessions", someObjectId)
 db.Delete("weird storage", "754-3010")
 ```
 
-You can find other useful methods in the [documentation](https://godoc.org/github.com/asdine/storm#KeyValueStore).
+You can find other useful methods in the [documentation](https://godoc.org/github.com/AndersonBargas/rainstorm#KeyValueStore).
 
 ## BoltDB
 
