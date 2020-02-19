@@ -1,6 +1,6 @@
 # Rainstorm
 
-[![GoDoc](https://godoc.org/github.com/AndersonBargas/rainstorm?status.svg)](https://godoc.org/github.com/AndersonBargas/rainstorm)
+[![GoDoc](https://godoc.org/github.com/AndersonBargas/rainstorm?status.svg)](https://godoc.org/github.com/AndersonBargas/rainstorm) [![Go Report Card](https://goreportcard.com/badge/github.com/AndersonBargas/rainstorm)](https://goreportcard.com/report/github.com/AndersonBargas/rainstorm)
 
 Rainstorm is a simple and powerful toolkit for [BoltDB](https://github.com/coreos/bbolt), forked from the great [Storm](https://github.com/asdine/storm).
 Basically, Rainstorm provides indexes, a wide range of methods to store and fetch data, an advanced query system, and much more.
