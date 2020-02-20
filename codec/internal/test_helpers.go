@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/asdine/storm/v3/codec"
+	"github.com/AndersonBargas/rainstorm/v3/codec"
 )
 
 type testStruct struct {

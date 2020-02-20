@@ -1,4 +1,4 @@
-package storm
+package rainstorm
 
-// Version of Storm
-const Version = "2.0.0"
+// Version of Rainstorm
+const Version = "3.1.0"

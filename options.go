@@ -1,10 +1,10 @@
-package storm
+package rainstorm
 
 import (
 	"os"
 
-	"github.com/asdine/storm/v3/codec"
-	"github.com/asdine/storm/v3/index"
+	"github.com/AndersonBargas/rainstorm/v3/codec"
+	"github.com/AndersonBargas/rainstorm/v3/index"
 	bolt "go.etcd.io/bbolt"
 )
 
@@ -41,8 +41,8 @@ func Root(root ...string) func(*Options) error {
 	}
 }
 
-// UseDB allows Storm to use an existing open Bolt.DB.
-// Warning: storm.DB.Close() will close the bolt.DB instance.
+// UseDB allows Rainstorm to use an existing open Bolt.DB.
+// Warning: rainstorm.DB.Close() will close the bolt.DB instance.
 func UseDB(b *bolt.DB) func(*Options) error {
 	return func(opts *Options) error {
 		opts.path = b.Path()
@@ -72,7 +72,7 @@ func Reverse() func(*index.Options) {
 	}
 }
 
-// Options are used to customize the way Storm opens a database.
+// Options are used to customize the way Rainstorm opens a database.
 type Options struct {
 	// Handles encoding and decoding of objects
 	codec codec.MarshalUnmarshaler

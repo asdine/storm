@@ -3,7 +3,7 @@ package json
 import (
 	"testing"
 
-	"github.com/asdine/storm/v3/codec/internal"
+	"github.com/AndersonBargas/rainstorm/v3/codec/internal"
 )
 
 func TestJSON(t *testing.T) {

@@ -1,8 +1,8 @@
-package storm
+package rainstorm
 
 import (
-	"github.com/asdine/storm/v3/internal"
-	"github.com/asdine/storm/v3/q"
+	"github.com/AndersonBargas/rainstorm/v3/internal"
+	"github.com/AndersonBargas/rainstorm/v3/q"
 	bolt "go.etcd.io/bbolt"
 )
 
@@ -12,7 +12,7 @@ func (n *node) Select(matchers ...q.Matcher) Query {
 	return newQuery(n, tree)
 }
 
-// Query is the low level query engine used by Storm. It allows to operate searches through an entire bucket.
+// Query is the low level query engine used by Rainstorm. It allows to operate searches through an entire bucket.
 type Query interface {
 	// Skip matching records by the given number
 	Skip(int) Query

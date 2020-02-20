@@ -7,17 +7,17 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/asdine/storm/v3"
-	"github.com/asdine/storm/v3/codec/gob"
-	"github.com/asdine/storm/v3/index"
-	bolt "go.etcd.io/bbolt"
+	"github.com/AndersonBargas/rainstorm/v3"
+	"github.com/AndersonBargas/rainstorm/v3/codec/gob"
+	"github.com/AndersonBargas/rainstorm/v3/index"
 	"github.com/stretchr/testify/require"
+	bolt "go.etcd.io/bbolt"
 )
 
 func TestUniqueIndex(t *testing.T) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
+	dir, _ := ioutil.TempDir(os.TempDir(), "rainstorm")
 	defer os.RemoveAll(dir)
-	db, _ := storm.Open(filepath.Join(dir, "storm.db"))
+	db, _ := rainstorm.Open(filepath.Join(dir, "rainstorm.db"))
 	defer db.Close()
 
 	err := db.Bolt.Update(func(tx *bolt.Tx) error {
@@ -120,9 +120,9 @@ func TestUniqueIndex(t *testing.T) {
 }
 
 func TestUniqueIndexRange(t *testing.T) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
+	dir, _ := ioutil.TempDir(os.TempDir(), "rainstorm")
 	defer os.RemoveAll(dir)
-	db, _ := storm.Open(filepath.Join(dir, "storm.db"))
+	db, _ := rainstorm.Open(filepath.Join(dir, "rainstorm.db"))
 	defer db.Close()
 
 	db.Bolt.Update(func(tx *bolt.Tx) error {
@@ -192,9 +192,9 @@ func TestUniqueIndexRange(t *testing.T) {
 }
 
 func TestUniqueIndexPrefix(t *testing.T) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
+	dir, _ := ioutil.TempDir(os.TempDir(), "rainstorm")
 	defer os.RemoveAll(dir)
-	db, _ := storm.Open(filepath.Join(dir, "storm.db"))
+	db, _ := rainstorm.Open(filepath.Join(dir, "rainstorm.db"))
 	defer db.Close()
 
 	db.Bolt.Update(func(tx *bolt.Tx) error {

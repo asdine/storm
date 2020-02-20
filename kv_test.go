@@ -1,14 +1,14 @@
-package storm
+package rainstorm
 
 import (
 	"net/mail"
 	"testing"
 	"time"
 
-	"github.com/asdine/storm/v3/codec/gob"
-	"github.com/asdine/storm/v3/codec/json"
-	bolt "go.etcd.io/bbolt"
+	"github.com/AndersonBargas/rainstorm/v3/codec/gob"
+	"github.com/AndersonBargas/rainstorm/v3/codec/json"
 	"github.com/stretchr/testify/require"
+	bolt "go.etcd.io/bbolt"
 )
 
 func TestGet(t *testing.T) {

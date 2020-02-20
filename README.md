@@ -53,7 +53,7 @@ go get -u github.com/AndersonBargas/rainstorm
 ## Import Rainstorm
 
 ```go
-import storm "github.com/AndersonBargas/rainstorm/v3"
+import "github.com/AndersonBargas/rainstorm/v3"
 ```
 
 ## Open a database
@@ -61,7 +61,7 @@ import storm "github.com/AndersonBargas/rainstorm/v3"
 Quick way of opening a database
 
 ```go
-db, err := storm.Open("my.db")
+db, err := rainstorm.Open("my.db")
 
 defer db.Close()
 ```
@@ -75,20 +75,20 @@ defer db.Close()
 ```go
 type User struct {
   ID int // primary key
-  Group string `storm:"index"` // this field will be indexed
-  Email string `storm:"unique"` // this field will be indexed with a unique constraint
+  Group string `rainstorm:"index"` // this field will be indexed
+  Email string `rainstorm:"unique"` // this field will be indexed with a unique constraint
   Name string // this field will not be indexed
-  Age int `storm:"index"`
+  Age int `rainstorm:"index"`
 }
 ```
 
-The primary key can be of any type as long as it is not a zero value. Storm will search for the tag `id`, if not present Storm will search for a field named `ID`.
+The primary key can be of any type as long as it is not a zero value. Rainstorm will search for the tag `id`, if not present Rainstorm will search for a field named `ID`.
 
 ```go
 type User struct {
-  ThePrimaryKey string `storm:"id"`// primary key
-  Group string `storm:"index"` // this field will be indexed
-  Email string `storm:"unique"` // this field will be indexed with a unique constraint
+  ThePrimaryKey string `rainstorm:"id"`// primary key
+  Group string `rainstorm:"index"` // this field will be indexed
+  Email string `rainstorm:"unique"` // this field will be indexed with a unique constraint
   Name string // this field will not be indexed
 }
 ```
@@ -97,15 +97,15 @@ Rainstorm handles tags in nested structures with the `inline` tag
 
 ```go
 type Base struct {
-  Ident bson.ObjectId `storm:"id"`
+  Ident bson.ObjectId `rainstorm:"id"`
 }
 
 type User struct {
-  Base      `storm:"inline"`
-  Group     string `storm:"index"`
-  Email     string `storm:"unique"`
+  Base      `rainstorm:"inline"`
+  Group     string `rainstorm:"index"`
+  Email     string `rainstorm:"unique"`
   Name      string
-  CreatedAt time.Time `storm:"index"`
+  CreatedAt time.Time `rainstorm:"index"`
 }
 ```
 
@@ -126,7 +126,7 @@ err := db.Save(&user)
 
 user.ID++
 err = db.Save(&user)
-// err == storm.ErrAlreadyExists
+// err == rainstorm.ErrAlreadyExists
 ```
 
 That's it.
@@ -135,16 +135,16 @@ That's it.
 
 #### Auto Increment
 
-Storm can auto increment integer values so you don't have to worry about that when saving your objects. Also, the new value is automatically inserted in your field.
+Rainstorm can auto increment integer values so you don't have to worry about that when saving your objects. Also, the new value is automatically inserted in your field.
 
 ```go
 
 type Product struct {
-  Pk                  int `storm:"id,increment"` // primary key with auto increment
+  Pk                  int `rainstorm:"id,increment"` // primary key with auto increment
   Name                string
-  IntegerField        uint64 `storm:"increment"`
-  IndexedIntegerField uint32 `storm:"index,increment"`
-  UniqueIntegerField  int16  `storm:"unique,increment=100"` // the starting value can be set
+  IntegerField        uint64 `rainstorm:"increment"`
+  IndexedIntegerField uint32 `rainstorm:"index,increment"`
+  UniqueIntegerField  int16  `rainstorm:"unique,increment=100"` // the starting value can be set
 }
 
 p := Product{Name: "Vaccum Cleaner"}
@@ -173,7 +173,7 @@ fmt.Println(p.UniqueIntegerField)
 
 ### Simple queries
 
-Any object can be fetched, indexed or not. Storm uses indexes when available, otherwise it uses the [query system](#advanced-queries).
+Any object can be fetched, indexed or not. Rainstorm uses indexes when available, otherwise it uses the [query system](#advanced-queries).
 
 #### Fetch one object
 
@@ -186,7 +186,7 @@ err = db.One("Name", "John", &user)
 // err == nil
 
 err = db.One("Name", "Jack", &user)
-// err == storm.ErrNotFound
+// err == rainstorm.ErrNotFound
 ```
 
 #### Fetch multiple objects
@@ -228,14 +228,14 @@ err := db.Prefix("Name", "Jo", &users)
 
 ```go
 var users []User
-err := db.Find("Group", "staff", &users, storm.Skip(10))
-err = db.Find("Group", "staff", &users, storm.Limit(10))
-err = db.Find("Group", "staff", &users, storm.Reverse())
-err = db.Find("Group", "staff", &users, storm.Limit(10), storm.Skip(10), storm.Reverse())
+err := db.Find("Group", "staff", &users, rainstorm.Skip(10))
+err = db.Find("Group", "staff", &users, rainstorm.Limit(10))
+err = db.Find("Group", "staff", &users, rainstorm.Reverse())
+err = db.Find("Group", "staff", &users, rainstorm.Limit(10), rainstorm.Skip(10), rainstorm.Reverse())
 
-err = db.All(&users, storm.Limit(10), storm.Skip(10), storm.Reverse())
-err = db.AllByIndex("CreatedAt", &users, storm.Limit(10), storm.Skip(10), storm.Reverse())
-err = db.Range("Age", 10, 21, &users, storm.Limit(10), storm.Skip(10), storm.Reverse())
+err = db.All(&users, rainstorm.Limit(10), rainstorm.Skip(10), rainstorm.Reverse())
+err = db.AllByIndex("CreatedAt", &users, rainstorm.Limit(10), rainstorm.Skip(10), rainstorm.Reverse())
+err = db.Range("Age", 10, 21, &users, rainstorm.Limit(10), rainstorm.Skip(10), rainstorm.Reverse())
 ```
 
 #### Delete an object
@@ -441,57 +441,57 @@ return tx.Commit()
 
 ### Options
 
-Storm options are functions that can be passed when constructing you Storm instance. You can pass it any number of options.
+Rainstorm options are functions that can be passed when constructing you Rainstorm instance. You can pass it any number of options.
 
 #### BoltOptions
 
-By default, Storm opens a database with the mode `0600` and a timeout of one second.
+By default, Rainstorm opens a database with the mode `0600` and a timeout of one second.
 You can change this behavior by using `BoltOptions`
 
 ```go
-db, err := storm.Open("my.db", storm.BoltOptions(0600, &bolt.Options{Timeout: 1 * time.Second}))
+db, err := rainstorm.Open("my.db", rainstorm.BoltOptions(0600, &bolt.Options{Timeout: 1 * time.Second}))
 ```
 
 #### MarshalUnmarshaler
 
-To store the data in BoltDB, Storm marshals it in JSON by default. If you wish to change this behavior you can pass a codec that implements [`codec.MarshalUnmarshaler`](https://godoc.org/github.com/AndersonBargas/rainstorm/codec#MarshalUnmarshaler) via the [`rainstorm.Codec`](https://godoc.org/github.com/AndersonBargas/rainstorm#Codec) option:
+To store the data in BoltDB, Rainstorm marshals it in JSON by default. If you wish to change this behavior you can pass a codec that implements [`codec.MarshalUnmarshaler`](https://godoc.org/github.com/AndersonBargas/rainstorm/codec#MarshalUnmarshaler) via the [`rainstorm.Codec`](https://godoc.org/github.com/AndersonBargas/rainstorm#Codec) option:
 
 ```go
-db := storm.Open("my.db", storm.Codec(myCodec))
+db := rainstorm.Open("my.db", rainstorm.Codec(myCodec))
 ```
 
 ##### Provided Codecs
 
-You can easily implement your own `MarshalUnmarshaler`, but Storm comes with built-in support for [JSON](https://godoc.org/github.com/AndersonBargas/rainstorm/codec/json) (default), [GOB](https://godoc.org/github.com/AndersonBargas/rainstorm/codec/gob),  [Sereal](https://godoc.org/github.com/AndersonBargas/rainstorm/codec/sereal), [Protocol Buffers](https://godoc.org/github.com/AndersonBargas/rainstorm/codec/protobuf) and [MessagePack](https://godoc.org/github.com/AndersonBargas/rainstorm/codec/msgpack).
+You can easily implement your own `MarshalUnmarshaler`, but Rainstorm comes with built-in support for [JSON](https://godoc.org/github.com/AndersonBargas/rainstorm/codec/json) (default), [GOB](https://godoc.org/github.com/AndersonBargas/rainstorm/codec/gob),  [Sereal](https://godoc.org/github.com/AndersonBargas/rainstorm/codec/sereal), [Protocol Buffers](https://godoc.org/github.com/AndersonBargas/rainstorm/codec/protobuf) and [MessagePack](https://godoc.org/github.com/AndersonBargas/rainstorm/codec/msgpack).
 
 These can be used by importing the relevant package and use that codec to configure Rainstorm. The example below shows all variants (without proper error handling):
 
 ```go
 import (
-  storm "github.com/AndersonBargas/storm/v3"
-  "github.com/AndersonBargas/storm/v3/codec/gob"
-  "github.com/AndersonBargas/storm/v3/codec/json"
-  "github.com/AndersonBargas/storm/v3/codec/sereal"
-  "github.com/AndersonBargas/storm/v3/codec/protobuf"
-  "github.com/AndersonBargas/storm/v3/codec/msgpack"
+  "github.com/AndersonBargas/rainstorm/v3"
+  "github.com/AndersonBargas/rainstorm/v3/codec/gob"
+  "github.com/AndersonBargas/rainstorm/v3/codec/json"
+  "github.com/AndersonBargas/rainstorm/v3/codec/sereal"
+  "github.com/AndersonBargas/rainstorm/v3/codec/protobuf"
+  "github.com/AndersonBargas/rainstorm/v3/codec/msgpack"
 )
 
-var gobDb, _ = storm.Open("gob.db", storm.Codec(gob.Codec))
-var jsonDb, _ = storm.Open("json.db", storm.Codec(json.Codec))
-var serealDb, _ = storm.Open("sereal.db", storm.Codec(sereal.Codec))
-var protobufDb, _ = storm.Open("protobuf.db", storm.Codec(protobuf.Codec))
-var msgpackDb, _ = storm.Open("msgpack.db", storm.Codec(msgpack.Codec))
+var gobDb, _ = rainstorm.Open("gob.db", rainstorm.Codec(gob.Codec))
+var jsonDb, _ = rainstorm.Open("json.db", rainstorm.Codec(json.Codec))
+var serealDb, _ = rainstorm.Open("sereal.db", rainstorm.Codec(sereal.Codec))
+var protobufDb, _ = rainstorm.Open("protobuf.db", rainstorm.Codec(protobuf.Codec))
+var msgpackDb, _ = rainstorm.Open("msgpack.db", rainstorm.Codec(msgpack.Codec))
 ```
 
-**Tip**: Adding Storm tags to generated Protobuf files can be tricky. A good solution is to use [this tool](https://github.com/favadi/protoc-go-inject-tag) to inject the tags during the compilation.
+**Tip**: Adding Rainstorm tags to generated Protobuf files can be tricky. A good solution is to use [this tool](https://github.com/favadi/protoc-go-inject-tag) to inject the tags during the compilation.
 
 #### Use existing Bolt connection
 
-You can use an existing connection and pass it to Storm
+You can use an existing connection and pass it to Rainstorm
 
 ```go
 bDB, _ := bolt.Open(filepath.Join(dir, "bolt.db"), 0600, &bolt.Options{Timeout: 10 * time.Second})
-db := storm.Open("my.db", storm.UseDB(bDB))
+db := rainstorm.Open("my.db", rainstorm.UseDB(bDB))
 ```
 
 #### Batch mode
@@ -499,12 +499,12 @@ db := storm.Open("my.db", storm.UseDB(bDB))
 Batch mode can be enabled to speed up concurrent writes (see [Batch read-write transactions](https://github.com/coreos/bbolt#batch-read-write-transactions))
 
 ```go
-db := storm.Open("my.db", storm.Batch())
+db := rainstorm.Open("my.db", rainstorm.Batch())
 ```
 
 ## Nodes and nested buckets
 
-Storm takes advantage of BoltDB nested buckets feature by using `rainstorm.Node`.
+Rainstorm takes advantage of BoltDB nested buckets feature by using `rainstorm.Node`.
 A `rainstorm.Node` is the underlying object used by `rainstorm.DB` to manipulate a bucket.
 To create a nested bucket and use the same API as `rainstorm.DB`, you can use the `DB.From` method.
 
@@ -571,7 +571,7 @@ n = n.WithCodec(gob.Codec)
 
 ## Simple Key/Value store
 
-Storm can be used as a simple, robust, key/value store that can store anything.
+Rainstorm can be used as a simple, robust, key/value store that can store anything.
 The key and the value can be of any type as long as the key is not a zero value.
 
 Saving data :
@@ -619,7 +619,7 @@ db.Bolt.View(func(tx *bolt.Tx) error {
 })
 ```
 
-A transaction can be also be passed to Storm
+A transaction can be also be passed to Rainstorm
 
 ```go
 db.Bolt.Update(func(tx *bolt.Tx) error {

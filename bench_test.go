@@ -1,4 +1,4 @@
-package storm
+package rainstorm
 
 import (
 	"fmt"
@@ -93,12 +93,12 @@ func BenchmarkOneByID(b *testing.B) {
 	defer cleanup()
 
 	type User struct {
-		ID          int    `storm:"increment"`
-		Name        string `storm:"index"`
+		ID          int    `rainstorm:"increment"`
+		Name        string `rainstorm:"index"`
 		age         int
-		DateOfBirth time.Time `storm:"index"`
+		DateOfBirth time.Time `rainstorm:"index"`
 		Group       string
-		Slug        string `storm:"unique"`
+		Slug        string `rainstorm:"unique"`
 	}
 
 	var u User

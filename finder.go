@@ -1,11 +1,11 @@
-package storm
+package rainstorm
 
 import (
 	"fmt"
 	"reflect"
 
-	"github.com/asdine/storm/v3/index"
-	"github.com/asdine/storm/v3/q"
+	"github.com/AndersonBargas/rainstorm/v3/index"
+	"github.com/AndersonBargas/rainstorm/v3/q"
 	bolt "go.etcd.io/bbolt"
 )
 

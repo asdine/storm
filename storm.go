@@ -1,29 +1,29 @@
-package storm
+package rainstorm
 
 import (
 	"bytes"
 	"encoding/binary"
 	"time"
 
-	"github.com/asdine/storm/v3/codec"
-	"github.com/asdine/storm/v3/codec/json"
+	"github.com/AndersonBargas/rainstorm/v3/codec"
+	"github.com/AndersonBargas/rainstorm/v3/codec/json"
 	bolt "go.etcd.io/bbolt"
 )
 
 const (
-	dbinfo         = "__storm_db"
-	metadataBucket = "__storm_metadata"
+	dbinfo         = "__rainstorm_db"
+	metadataBucket = "__rainstorm_metadata"
 )
 
 // Defaults to json
 var defaultCodec = json.Codec
 
-// Open opens a database at the given path with optional Storm options.
-func Open(path string, stormOptions ...func(*Options) error) (*DB, error) {
+// Open opens a database at the given path with optional Rainstorm options.
+func Open(path string, rainstormOptions ...func(*Options) error) (*DB, error) {
 	var err error
 
 	var opts Options
-	for _, option := range stormOptions {
+	for _, option := range rainstormOptions {
 		if err = option(&opts); err != nil {
 			return nil, err
 		}

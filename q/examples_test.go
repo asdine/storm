@@ -12,8 +12,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/asdine/storm/v3"
-	"github.com/asdine/storm/v3/q"
+	"github.com/AndersonBargas/rainstorm/v3"
+	"github.com/AndersonBargas/rainstorm/v3/q"
 )
 
 func ExampleRe() {
@@ -37,17 +37,17 @@ func ExampleRe() {
 }
 
 type User struct {
-	ID        int    `storm:"id,increment"`
-	Group     string `storm:"index"`
-	Email     string `storm:"unique"`
+	ID        int    `rainstorm:"id,increment"`
+	Group     string `rainstorm:"index"`
+	Email     string `rainstorm:"unique"`
 	Name      string
-	Age       int       `storm:"index"`
-	CreatedAt time.Time `storm:"index"`
+	Age       int       `rainstorm:"index"`
+	CreatedAt time.Time `rainstorm:"index"`
 }
 
-func prepareDB() (string, *storm.DB) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
-	db, _ := storm.Open(filepath.Join(dir, "storm.db"))
+func prepareDB() (string, *rainstorm.DB) {
+	dir, _ := ioutil.TempDir(os.TempDir(), "rainstorm")
+	db, _ := rainstorm.Open(filepath.Join(dir, "rainstorm.db"))
 
 	for i, name := range []string{"John", "Norm", "Donald", "Eric", "Dilbert"} {
 		email := strings.ToLower(name + "@provider.com")

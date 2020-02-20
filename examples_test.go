@@ -1,4 +1,4 @@
-package storm_test
+package rainstorm_test
 
 import (
 	"fmt"
@@ -9,26 +9,26 @@ import (
 	"strings"
 	"time"
 
-	"github.com/asdine/storm/v3"
-	"github.com/asdine/storm/v3/codec/gob"
+	"github.com/AndersonBargas/rainstorm/v3"
+	"github.com/AndersonBargas/rainstorm/v3/codec/gob"
 	bolt "go.etcd.io/bbolt"
 )
 
 func ExampleDB_Save() {
-	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
+	dir, _ := ioutil.TempDir(os.TempDir(), "rainstorm")
 	defer os.RemoveAll(dir)
 
 	type User struct {
-		ID        int    `storm:"id,increment"` // the increment tag will auto-increment integer IDs without existing values.
-		Group     string `storm:"index"`
-		Email     string `storm:"unique"`
+		ID        int    `rainstorm:"id,increment"` // the increment tag will auto-increment integer IDs without existing values.
+		Group     string `rainstorm:"index"`
+		Email     string `rainstorm:"unique"`
 		Name      string
-		Age       int       `storm:"index"`
-		CreatedAt time.Time `storm:"index"`
+		Age       int       `rainstorm:"index"`
+		CreatedAt time.Time `rainstorm:"index"`
 	}
 
 	// Open takes an optional list of options as the last argument.
-	db, _ := storm.Open(filepath.Join(dir, "storm.db"), storm.Codec(gob.Codec))
+	db, _ := rainstorm.Open(filepath.Join(dir, "rainstorm.db"), rainstorm.Codec(gob.Codec))
 	defer db.Close()
 
 	user := User{
@@ -164,7 +164,7 @@ func ExampleLimit() {
 	defer db.Close()
 
 	var users []User
-	err := db.All(&users, storm.Limit(2))
+	err := db.All(&users, rainstorm.Limit(2))
 
 	if err != nil {
 		log.Fatal(err)
@@ -182,7 +182,7 @@ func ExampleSkip() {
 	defer db.Close()
 
 	var users []User
-	err := db.All(&users, storm.Skip(1))
+	err := db.All(&users, rainstorm.Skip(1))
 
 	if err != nil {
 		log.Fatal(err)
@@ -195,7 +195,7 @@ func ExampleSkip() {
 }
 
 func ExampleUseDB() {
-	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
+	dir, _ := ioutil.TempDir(os.TempDir(), "rainstorm")
 	defer os.RemoveAll(dir)
 
 	bDB, err := bolt.Open(filepath.Join(dir, "bolt.db"), 0600, &bolt.Options{Timeout: 10 * time.Second})
@@ -203,7 +203,7 @@ func ExampleUseDB() {
 		log.Fatal(err)
 	}
 
-	db, _ := storm.Open("", storm.UseDB(bDB))
+	db, _ := rainstorm.Open("", rainstorm.UseDB(bDB))
 	defer db.Close()
 
 	err = db.Save(&User{ID: 10})
@@ -497,27 +497,27 @@ func ExampleNode_RangeScan() {
 }
 
 type User struct {
-	ID        int    `storm:"id,increment"`
-	Group     string `storm:"index"`
-	Email     string `storm:"unique"`
+	ID        int    `rainstorm:"id,increment"`
+	Group     string `rainstorm:"index"`
+	Email     string `rainstorm:"unique"`
 	Name      string
-	Age       int       `storm:"index"`
-	CreatedAt time.Time `storm:"index"`
+	Age       int       `rainstorm:"index"`
+	CreatedAt time.Time `rainstorm:"index"`
 }
 
 type Account struct {
-	ID     int   `storm:"id,increment"`
+	ID     int   `rainstorm:"id,increment"`
 	Amount int64 // amount in cents
 }
 
 type Note struct {
-	ID   string `storm:"id"`
+	ID   string `rainstorm:"id"`
 	Text string
 }
 
-func prepareDB() (string, *storm.DB) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
-	db, _ := storm.Open(filepath.Join(dir, "storm.db"))
+func prepareDB() (string, *rainstorm.DB) {
+	dir, _ := ioutil.TempDir(os.TempDir(), "rainstorm")
+	db, _ := rainstorm.Open(filepath.Join(dir, "rainstorm.db"))
 
 	for i, name := range []string{"John", "Eric", "Dilbert"} {
 		email := strings.ToLower(name + "@provider.com")

@@ -3,7 +3,7 @@ package index
 import (
 	"bytes"
 
-	"github.com/asdine/storm/v3/internal"
+	"github.com/AndersonBargas/rainstorm/v3/internal"
 	bolt "go.etcd.io/bbolt"
 )
 
@@ -21,7 +21,7 @@ func NewListIndex(parent *bolt.Bucket, indexName []byte) (*ListIndex, error) {
 		}
 	}
 
-	ids, err := NewUniqueIndex(b, []byte("storm__ids"))
+	ids, err := NewUniqueIndex(b, []byte("rainstorm__ids"))
 	if err != nil {
 		return nil, err
 	}
@@ -176,7 +176,7 @@ func (idx *ListIndex) AllRecords(opts *Options) ([][]byte, error) {
 	c := internal.Cursor{C: idx.IndexBucket.Cursor(), Reverse: opts != nil && opts.Reverse}
 
 	for k, id := c.First(); k != nil; k, id = c.Next() {
-		if id == nil || bytes.Equal(k, []byte("storm__ids")) {
+		if id == nil || bytes.Equal(k, []byte("rainstorm__ids")) {
 			continue
 		}
 
@@ -215,7 +215,7 @@ func (idx *ListIndex) Range(min []byte, max []byte, opts *Options) ([][]byte, er
 	}
 
 	for k, id := c.First(); c.Continue(k); k, id = c.Next() {
-		if id == nil || bytes.Equal(k, []byte("storm__ids")) {
+		if id == nil || bytes.Equal(k, []byte("rainstorm__ids")) {
 			continue
 		}
 
@@ -249,7 +249,7 @@ func (idx *ListIndex) Prefix(prefix []byte, opts *Options) ([][]byte, error) {
 	}
 
 	for k, id := c.First(); k != nil && c.Continue(k); k, id = c.Next() {
-		if id == nil || bytes.Equal(k, []byte("storm__ids")) {
+		if id == nil || bytes.Equal(k, []byte("rainstorm__ids")) {
 			continue
 		}
 

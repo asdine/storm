@@ -1,4 +1,4 @@
-package storm
+package rainstorm
 
 import (
 	"fmt"
@@ -6,18 +6,18 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/asdine/storm/v3/index"
+	"github.com/AndersonBargas/rainstorm/v3/index"
 	bolt "go.etcd.io/bbolt"
 )
 
-// Storm tags
+// Rainstorm tags
 const (
 	tagID        = "id"
 	tagIdx       = "index"
 	tagUniqueIdx = "unique"
 	tagInline    = "inline"
 	tagIncrement = "increment"
-	indexPrefix  = "__storm_index_"
+	indexPrefix  = "__rainstorm_index_"
 )
 
 type fieldConfig struct {
@@ -99,7 +99,7 @@ func extractField(value *reflect.Value, field *reflect.StructField, m *structCon
 	var f *fieldConfig
 	var err error
 
-	tag := field.Tag.Get("storm")
+	tag := field.Tag.Get("rainstorm")
 	if tag != "" {
 		f = &fieldConfig{
 			Name:           field.Name,
