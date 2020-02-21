@@ -1,12 +1,13 @@
 package rainstorm
 
 import (
-	"github.com/AndersonBargas/rainstorm/v4/index"
-	"github.com/AndersonBargas/rainstorm/v4/q"
-	bolt "go.etcd.io/bbolt"
 	"reflect"
 	"sort"
 	"time"
+
+	"github.com/AndersonBargas/rainstorm/v4/index"
+	"github.com/AndersonBargas/rainstorm/v4/q"
+	bolt "go.etcd.io/bbolt"
 )
 
 type item struct {
@@ -147,9 +148,8 @@ func (s *sorter) compareValue(left reflect.Value, right reflect.Value) int {
 				if lok && rok {
 					if lt.Before(rt) {
 						return -1
-					} else {
-						return 1
 					}
+					return 1
 				}
 			}
 		}
