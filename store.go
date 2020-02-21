@@ -64,6 +64,8 @@ func (n *node) init(tx *bolt.Tx, cfg *structConfig) error {
 			continue
 		}
 		switch fieldCfg.Index {
+		case tagID:
+			_, err = index.NewIDIndex(bucket, []byte(indexPrefix+fieldName))
 		case tagUniqueIdx:
 			_, err = index.NewUniqueIndex(bucket, []byte(indexPrefix+fieldName))
 		case tagIdx:

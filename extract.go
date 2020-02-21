@@ -113,9 +113,9 @@ func extractField(value *reflect.Value, field *reflect.StructField, m *structCon
 
 		for _, tag := range tags {
 			switch tag {
-			case "id":
+			case tagID:
 				f.IsID = true
-				f.Index = tagUniqueIdx
+				fallthrough
 			case tagUniqueIdx, tagIdx:
 				f.Index = tag
 			case tagInline:
@@ -164,7 +164,7 @@ func extractField(value *reflect.Value, field *reflect.StructField, m *structCon
 	if m.ID == nil && field.Name == "ID" {
 		if f == nil {
 			f = &fieldConfig{
-				Index:          tagUniqueIdx,
+				Index:          tagID,
 				Name:           field.Name,
 				IsZero:         isZero(value),
 				IsInteger:      isInteger(value),
@@ -203,6 +203,8 @@ func getIndex(bucket *bolt.Bucket, idxKind string, fieldName string) (index.Inde
 	var err error
 
 	switch idxKind {
+	case tagID:
+		idx, err = index.NewIDIndex(bucket, []byte(indexPrefix+fieldName))
 	case tagUniqueIdx:
 		idx, err = index.NewUniqueIndex(bucket, []byte(indexPrefix+fieldName))
 	case tagIdx:
