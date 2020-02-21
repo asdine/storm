@@ -168,7 +168,9 @@ func TestKeyExists(t *testing.T) {
 
 	exists, err = db.KeyExists("i don't exist", "myfile.csv")
 	require.Equal(t, ErrNotFound, err)
+	require.False(t, exists)
 
 	exists, err = db.KeyExists("", nil)
 	require.Equal(t, ErrNotFound, err)
+	require.False(t, exists)
 }

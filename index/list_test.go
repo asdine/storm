@@ -54,16 +54,19 @@ func TestListIndex(t *testing.T) {
 		require.Equal(t, []byte("id1"), ids[0])
 
 		ids, err = idx.All([]byte("goodbye"), nil)
+		require.NoError(t, err)
 		require.Len(t, ids, 1)
 		require.Equal(t, []byte("id2"), ids[0])
 
 		ids, err = idx.All([]byte("yo"), nil)
+		require.NoError(t, err)
 		require.Nil(t, ids)
 
 		err = idx.RemoveID([]byte("id2"))
 		require.NoError(t, err)
 
 		ids, err = idx.All([]byte("goodbye"), nil)
+		require.NoError(t, err)
 		require.Len(t, ids, 0)
 
 		err = idx.RemoveID(nil)
@@ -93,11 +96,14 @@ func TestListIndex(t *testing.T) {
 		require.NoError(t, err)
 
 		ids, err = idx.All([]byte("hello"), nil)
+		require.NoError(t, err)
 		require.Len(t, ids, 1)
 		require.Equal(t, []byte("id1"), ids[0])
 		ids, err = idx.All([]byte("hi"), nil)
+		require.NoError(t, err)
 		require.Len(t, ids, 0)
 		ids, err = idx.All([]byte("yo"), nil)
+		require.NoError(t, err)
 		require.Len(t, ids, 1)
 		require.Equal(t, []byte("id3"), ids[0])
 
@@ -107,20 +113,28 @@ func TestListIndex(t *testing.T) {
 		require.NoError(t, err)
 
 		err = idx.Add([]byte("hey"), []byte("id1"))
+		require.NoError(t, err)
 		err = idx.Add([]byte("hey"), []byte("id2"))
+		require.NoError(t, err)
 		err = idx.Add([]byte("hey"), []byte("id3"))
+		require.NoError(t, err)
 		err = idx.Add([]byte("hey"), []byte("id4"))
+		require.NoError(t, err)
+
 		ids, err = idx.All([]byte("hey"), nil)
+		require.NoError(t, err)
 		require.Len(t, ids, 4)
 
 		opts := index.NewOptions()
 		opts.Limit = 1
 		ids, err = idx.All([]byte("hey"), opts)
+		require.NoError(t, err)
 		require.Len(t, ids, 1)
 
 		opts = index.NewOptions()
 		opts.Skip = 2
 		ids, err = idx.All([]byte("hey"), opts)
+		require.NoError(t, err)
 		require.Len(t, ids, 2)
 
 		opts = index.NewOptions()
@@ -128,6 +142,7 @@ func TestListIndex(t *testing.T) {
 		opts.Limit = 3
 		opts.Reverse = true
 		ids, err = idx.All([]byte("hey"), opts)
+		require.NoError(t, err)
 		require.Len(t, ids, 2)
 		require.Equal(t, []byte("id2"), ids[0])
 
@@ -167,12 +182,14 @@ func TestListIndexReverse(t *testing.T) {
 
 		opts := index.NewOptions()
 		ids, err := idx.All([]byte("hello"), opts)
+		require.NoError(t, err)
 		require.Len(t, ids, 1)
 		require.Equal(t, []byte("id1"), ids[0])
 
 		opts = index.NewOptions()
 		opts.Reverse = true
 		ids, err = idx.All([]byte("hello"), opts)
+		require.NoError(t, err)
 		require.Len(t, ids, 1)
 		require.Equal(t, []byte("id1"), ids[0])
 
@@ -182,6 +199,7 @@ func TestListIndexReverse(t *testing.T) {
 		opts = index.NewOptions()
 		opts.Reverse = true
 		ids, err = idx.All([]byte("hello"), opts)
+		require.NoError(t, err)
 		require.Len(t, ids, 2)
 		require.Equal(t, []byte("id2"), ids[0])
 		require.Equal(t, []byte("id1"), ids[1])
@@ -292,11 +310,13 @@ func TestListIndexAllRecords(t *testing.T) {
 		opts := index.NewOptions()
 		opts.Limit = 1
 		ids, err = idx.AllRecords(opts)
+		require.NoError(t, err)
 		require.Len(t, ids, 1)
 
 		opts = index.NewOptions()
 		opts.Skip = 2
 		ids, err = idx.AllRecords(opts)
+		require.NoError(t, err)
 		require.Len(t, ids, 2)
 
 		opts = index.NewOptions()
