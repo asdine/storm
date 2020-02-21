@@ -12,8 +12,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/AndersonBargas/rainstorm/v3"
-	"github.com/AndersonBargas/rainstorm/v3/q"
+	"github.com/AndersonBargas/rainstorm/v4"
+	"github.com/AndersonBargas/rainstorm/v4/q"
 )
 
 func ExampleRe() {

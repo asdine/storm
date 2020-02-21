@@ -53,7 +53,7 @@ go get -u github.com/AndersonBargas/rainstorm
 ## Import Rainstorm
 
 ```go
-import "github.com/AndersonBargas/rainstorm/v3"
+import "github.com/AndersonBargas/rainstorm/v4"
 ```
 
 ## Open a database
@@ -468,12 +468,12 @@ These can be used by importing the relevant package and use that codec to config
 
 ```go
 import (
-  "github.com/AndersonBargas/rainstorm/v3"
-  "github.com/AndersonBargas/rainstorm/v3/codec/gob"
-  "github.com/AndersonBargas/rainstorm/v3/codec/json"
-  "github.com/AndersonBargas/rainstorm/v3/codec/sereal"
-  "github.com/AndersonBargas/rainstorm/v3/codec/protobuf"
-  "github.com/AndersonBargas/rainstorm/v3/codec/msgpack"
+  "github.com/AndersonBargas/rainstorm/v4"
+  "github.com/AndersonBargas/rainstorm/v4/codec/gob"
+  "github.com/AndersonBargas/rainstorm/v4/codec/json"
+  "github.com/AndersonBargas/rainstorm/v4/codec/sereal"
+  "github.com/AndersonBargas/rainstorm/v4/codec/protobuf"
+  "github.com/AndersonBargas/rainstorm/v4/codec/msgpack"
 )
 
 var gobDb, _ = rainstorm.Open("gob.db", rainstorm.Codec(gob.Codec))

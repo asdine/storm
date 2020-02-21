@@ -1,8 +1,8 @@
 package rainstorm
 
 import (
-	"github.com/AndersonBargas/rainstorm/v3/index"
-	"github.com/AndersonBargas/rainstorm/v3/q"
+	"github.com/AndersonBargas/rainstorm/v4/index"
+	"github.com/AndersonBargas/rainstorm/v4/q"
 	bolt "go.etcd.io/bbolt"
 	"reflect"
 	"sort"

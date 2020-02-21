@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/AndersonBargas/rainstorm/v3/codec/json"
-	"github.com/AndersonBargas/rainstorm/v3/q"
+	"github.com/AndersonBargas/rainstorm/v4/codec/json"
+	"github.com/AndersonBargas/rainstorm/v4/q"
 	"github.com/stretchr/testify/require"
 )
 

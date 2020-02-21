@@ -3,12 +3,12 @@ package codec_test
 import (
 	"fmt"
 
-	"github.com/AndersonBargas/rainstorm/v3"
-	"github.com/AndersonBargas/rainstorm/v3/codec/gob"
-	"github.com/AndersonBargas/rainstorm/v3/codec/json"
-	"github.com/AndersonBargas/rainstorm/v3/codec/msgpack"
-	"github.com/AndersonBargas/rainstorm/v3/codec/protobuf"
-	"github.com/AndersonBargas/rainstorm/v3/codec/sereal"
+	"github.com/AndersonBargas/rainstorm/v4"
+	"github.com/AndersonBargas/rainstorm/v4/codec/gob"
+	"github.com/AndersonBargas/rainstorm/v4/codec/json"
+	"github.com/AndersonBargas/rainstorm/v4/codec/msgpack"
+	"github.com/AndersonBargas/rainstorm/v4/codec/protobuf"
+	"github.com/AndersonBargas/rainstorm/v4/codec/sereal"
 )
 
 func Example() {

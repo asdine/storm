@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/AndersonBargas/rainstorm/v3/index"
+	"github.com/AndersonBargas/rainstorm/v4/index"
 	bolt "go.etcd.io/bbolt"
 )
 

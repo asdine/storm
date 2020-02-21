@@ -1,7 +1,7 @@
 package rainstorm
 
 import (
-	"github.com/AndersonBargas/rainstorm/v3/codec"
+	"github.com/AndersonBargas/rainstorm/v4/codec"
 	bolt "go.etcd.io/bbolt"
 )
 
