@@ -405,11 +405,11 @@ err = query.Delete(new(User))
 // Fetching records one by one (useful when the bucket contains a lot of records)
 query = db.Select(q.Gte("ID", 10),q.Lte("ID", 100)).OrderBy("Age", "Name")
 
-err = query.Each(new(User), func(record interface{}) error) {
+err = query.Each(new(User), func(record interface{}) error {
   u := record.(*User)
   ...
   return nil
-}
+})
 ```
 
 See the [documentation](https://godoc.org/github.com/AndersonBargas/rainstorm#Query) for a complete list of methods.
