@@ -95,7 +95,7 @@ func (idx *IDIndex) Range(min []byte, max []byte, opts *Options) ([][]byte, erro
 		},
 	}
 
-	for val, ident := c.First(); val != nil && c.Continue(val); val, ident = c.Next() {
+	for ident, _ := c.First(); ident != nil && c.Continue(ident); ident, _ = c.Next() {
 		if opts != nil && opts.Skip > 0 {
 			opts.Skip--
 			continue
