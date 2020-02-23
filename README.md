@@ -26,6 +26,7 @@ In addition to the examples below, see also the [examples in the GoDoc](https://
     - [Skip, Limit and Reverse](#skip-limit-and-reverse)
     - [Delete an object](#delete-an-object)
     - [Update an object](#update-an-object)
+    - [Count the objects](#count-the-objects)
     - [Initialize buckets and indexes before saving an object](#initialize-buckets-and-indexes-before-saving-an-object)
     - [Drop a bucket](#drop-a-bucket)
     - [Re-index a bucket](#re-index-a-bucket)
@@ -241,7 +242,7 @@ err = db.Range("Age", 10, 21, &users, rainstorm.Limit(10), rainstorm.Skip(10), r
 #### Delete an object
 
 ```go
-err := db.DeleteStruct(&user)
+err := db.DeleteStruct(&User{})
 ```
 
 #### Update an object
@@ -252,6 +253,11 @@ err := db.Update(&User{ID: 10, Name: "Jack", Age: 45})
 
 // Update a single field
 err := db.UpdateField(&User{ID: 10}, "Age", 0)
+```
+
+#### Count the objects
+```go
+number, err := db.Count(&User{})
 ```
 
 #### Initialize buckets and indexes before saving an object
