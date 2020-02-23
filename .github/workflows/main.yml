@@ -1,5 +1,9 @@
 name: GoLang
-on: [push]
+on:
+  push:
+    paths-ignore:
+      - '*.md*'
+      - 'LICENSE'
 jobs:
 
   build:
