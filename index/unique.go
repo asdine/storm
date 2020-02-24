@@ -171,13 +171,3 @@ func (idx *UniqueIndex) Prefix(prefix []byte, opts *Options) ([][]byte, error) {
 	}
 	return list, nil
 }
-
-// first returns the first ID of this index
-func (idx *UniqueIndex) first() []byte {
-	c := idx.IndexBucket.Cursor()
-
-	for val, ident := c.First(); val != nil; val, ident = c.Next() {
-		return ident
-	}
-	return nil
-}
