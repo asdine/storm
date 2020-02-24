@@ -32,6 +32,7 @@ func (idx *IDIndex) Add(value []byte, targetID []byte) error {
 }
 
 // Remove a value from the unique index
+// This method is never called for PK index, since the there is no really an indice to be removed
 func (idx *IDIndex) Remove(value []byte) error {
 	return nil
 }
@@ -42,6 +43,7 @@ func (idx *IDIndex) RemoveID(id []byte) error {
 }
 
 // Get the id corresponding to the given value
+// This method is never called for PK index, since the finder goes direct on the bucket to get one register
 func (idx *IDIndex) Get(value []byte) []byte {
 	return idx.IndexBucket.Get(value)
 }
@@ -57,27 +59,9 @@ func (idx *IDIndex) All(value []byte, opts *Options) ([][]byte, error) {
 }
 
 // AllRecords returns all the IDs of this index
+// This method is never called for PK index, since the All method is the preferred one
 func (idx *IDIndex) AllRecords(opts *Options) ([][]byte, error) {
 	var list [][]byte
-
-	c := internal.Cursor{C: idx.IndexBucket.Cursor(), Reverse: opts != nil && opts.Reverse}
-
-	for val, ident := c.First(); val != nil; val, ident = c.Next() {
-		if opts != nil && opts.Skip > 0 {
-			opts.Skip--
-			continue
-		}
-
-		if opts != nil && opts.Limit == 0 {
-			break
-		}
-
-		if opts != nil && opts.Limit > 0 {
-			opts.Limit--
-		}
-
-		list = append(list, ident)
-	}
 	return list, nil
 }
 
