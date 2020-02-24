@@ -10,6 +10,7 @@ In addition to the examples below, see also the [examples in the GoDoc](https://
 ## Table of Contents
 
 - [Getting Started](#getting-started)
+- [Main differences from "storm"](#main-differences-from-"storm")
 - [Import Rainstorm](#import-rainstorm)
 - [Open a database](#open-a-database)
 - [Simple CRUD system](#simple-crud-system)
@@ -50,6 +51,12 @@ In addition to the examples below, see also the [examples in the GoDoc](https://
 ```bash
 go get -u github.com/AndersonBargas/rainstorm
 ```
+
+## Main differences from "storm"
+
+The main differente for now is the primary key indexes. On storm, the PK index (aka ID) is, in fact, a unique index.
+By nature, an ID is already unique, so there's no need to indexing the ID.
+This way, rainstorm uses the Primary Keys as ID so almost every operations over ID index is executed as fast as possible.
 
 ## Import Rainstorm
 
