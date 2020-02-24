@@ -42,3 +42,7 @@ func TestGetSet(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "value", s)
 }
+
+func TestCodecName(t *testing.T) {
+	require.EqualValues(t, Codec.Name(), "protobuf")
+}

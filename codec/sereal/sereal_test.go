@@ -19,3 +19,7 @@ func TestSereal(t *testing.T) {
 	internal.RoundtripTester(t, Codec, &u1, &u2)
 	require.True(t, u2 == u2.Self)
 }
+
+func TestCodecName(t *testing.T) {
+	require.EqualValues(t, Codec.Name(), "sereal")
+}
