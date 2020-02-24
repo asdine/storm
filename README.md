@@ -58,6 +58,10 @@ The main differente for now is the primary key indexes. On storm, the PK index (
 By nature, an ID is already unique, so there's no need to indexing the ID.
 This way, rainstorm uses the Primary Keys as ID so almost every operations over ID index is executed as fast as possible.
 
+Rainstorm emerged from the fork of storm library at version 3.1.0. After renaming the package and their imports to the rainstorm, version 3.2.0 was generated.
+This means that if you want to test the library with the same characteristics that it had at the time of the fork, just use version 3.2.0.
+To take advantage of the performance changes made after the fork, just use version 4 and above.
+
 ## Import Rainstorm
 
 ```go
