@@ -37,11 +37,13 @@ func NewAES(subMarshaller codec.MarshalUnmarshaler, key []byte) (*AES, error) {
 	}, nil
 }
 
+// Name returns a compound of the inner marshaller prefixed by 'aes-'
 func (c *AES) Name() string {
 	// Return a dynamic name, because the marshalling will also fail if the inner marshalling changes.
 	return name + c.subMarshaller.Name()
 }
 
+// Marshal marshals the given data object to an encrypted byte array
 func (c *AES) Marshal(v interface{}) ([]byte, error) {
 	data, err := c.subMarshaller.Marshal(v)
 	if err != nil {
@@ -57,6 +59,7 @@ func (c *AES) Marshal(v interface{}) ([]byte, error) {
 	return c.aesGCM.Seal(nonce, nonce, data, nil), nil
 }
 
+// Unmarshal unmarshals the given encrypted byte array to the given type
 func (c *AES) Unmarshal(data []byte, v interface{}) error {
 	nonceSize := c.aesGCM.NonceSize()
 	decrypted, err := c.aesGCM.Open(nil, data[:nonceSize], data[nonceSize:], nil)
