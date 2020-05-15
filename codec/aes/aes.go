@@ -18,7 +18,7 @@ type AES struct {
 	aesGCM        cipher.AEAD
 }
 
-// NewAES creates a new AES encryption marshaller. It takes a sub marshaller to actually serialize the data and a 16/24/32 bytes private key to
+// NewAES creates a new AES encryption marshaller. It takes a sub marshaller to actually serialize the data and a 16/32 bytes private key to
 // encrypt all data using AES in GCM block mode.
 func NewAES(subMarshaller codec.MarshalUnmarshaler, key []byte) (*AES, error) {
 	aesCipher, err := aes.NewCipher(key)
