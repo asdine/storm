@@ -1,4 +1,4 @@
-package database
+package aes
 
 import (
 	"encoding/base64"
