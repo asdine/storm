@@ -49,7 +49,7 @@ _For extended queries and support for [Badger](https://github.com/dgraph-io/badg
 ## Getting Started
 
 ```bash
-go get -u github.com/asdine/storm
+GO111MODULE=on go get -u github.com/asdine/storm/v3
 ```
 
 ## Import Storm
