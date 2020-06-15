@@ -62,6 +62,10 @@ func (c *AES) Marshal(v interface{}) ([]byte, error) {
 // Unmarshal unmarshals the given encrypted byte array to the given type
 func (c *AES) Unmarshal(data []byte, v interface{}) error {
 	nonceSize := c.aesGCM.NonceSize()
+	if len(data) < nonceSize {
+		return fmt.Errorf("not enough data for aes decryption (%d < %d)", len(data), nonceSize)
+	}
+
 	decrypted, err := c.aesGCM.Open(nil, data[:nonceSize], data[nonceSize:], nil)
 	if err != nil {
 		return fmt.Errorf("error decrypting data: %w", err)
