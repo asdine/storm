@@ -260,9 +260,11 @@ err := db.DeleteStruct(&User{})
 
 ```go
 // Update multiple fields
+// Only works for non zero-value fields (e.g. Name can not be "", Age can not be 0)
 err := db.Update(&User{ID: 10, Name: "Jack", Age: 45})
 
 // Update a single field
+// Also works for zero-value fields (0, false, "", ...)
 err := db.UpdateField(&User{ID: 10}, "Age", 0)
 ```
 
