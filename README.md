@@ -49,7 +49,7 @@ In addition to the examples below, see also the [examples in the GoDoc](https://
 ## Getting Started
 
 ```bash
-go get -u github.com/AndersonBargas/rainstorm
+go get -u github.com/AndersonBargas/rainstorm/v4
 ```
 
 ## Main differences from "storm"
