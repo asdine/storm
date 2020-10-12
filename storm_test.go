@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"io/ioutil"
 	"math"
+	"math/bits"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -15,6 +16,9 @@ import (
 	"github.com/stretchr/testify/require"
 	bolt "go.etcd.io/bbolt"
 )
+
+const maxInt = 1<<(bits.UintSize-1) - 1
+const maxUint = 1<<bits.UintSize - 1
 
 func TestNewStorm(t *testing.T) {
 	db, err := Open("")
@@ -131,8 +135,8 @@ func TestToBytes(t *testing.T) {
 	require.Equal(t, `{"ID":10,"Name":"John"}`, string(b))
 
 	tests := map[interface{}]interface{}{
-		int(-math.MaxInt64):    int64(-math.MaxInt64),
-		int(math.MaxInt64):     int64(math.MaxInt64),
+		int(-maxInt):           int64(-maxInt),
+		int(maxInt):            int64(maxInt),
 		int8(-math.MaxInt8):    int8(-math.MaxInt8),
 		int8(math.MaxInt8):     int8(math.MaxInt8),
 		int16(-math.MaxInt16):  int16(-math.MaxInt16),
@@ -141,7 +145,7 @@ func TestToBytes(t *testing.T) {
 		int32(math.MaxInt32):   int32(math.MaxInt32),
 		int64(-math.MaxInt64):  int64(-math.MaxInt64),
 		int64(math.MaxInt64):   int64(math.MaxInt64),
-		uint(math.MaxUint64):   uint64(math.MaxUint64),
+		uint(maxInt):           uint64(maxInt),
 		uint64(math.MaxUint64): uint64(math.MaxUint64),
 	}
 
