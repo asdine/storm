@@ -1,142 +1,126 @@
 package storm
 
 import (
-	"bytes"
-	"encoding/binary"
-	"time"
-
-	"github.com/asdine/storm/v3/codec"
-	"github.com/asdine/storm/v3/codec/json"
-	bolt "go.etcd.io/bbolt"
+	"github.com/genjidb/genji"
 )
 
-const (
-	dbinfo         = "__storm_db"
-	metadataBucket = "__storm_metadata"
-)
+// DB is the main database handle. It wraps the underlying Genji database and provides
+// useful methods to manipulate data.
+type DB struct {
+	// The root node that points to the root bucket.
+	db *genji.DB
+}
 
-// Defaults to json
-var defaultCodec = json.Codec
-
-// Open opens a database at the given path with optional Storm options.
-func Open(path string, stormOptions ...func(*Options) error) (*DB, error) {
+// Open a database at the given path. If path is a valid file path, it will open a BoltDB database at that path.
+// If path is the string ":memory:", it will open an in-memory database.
+func Open(path string) (*DB, error) {
 	var err error
 
-	var opts Options
-	for _, option := range stormOptions {
-		if err = option(&opts); err != nil {
-			return nil, err
-		}
+	db, err := genji.Open(path)
+	if err != nil {
+		return nil, err
 	}
 
 	s := DB{
-		Bolt: opts.bolt,
-	}
-
-	n := node{
-		s:          &s,
-		codec:      opts.codec,
-		batchMode:  opts.batchMode,
-		rootBucket: opts.rootBucket,
-	}
-
-	if n.codec == nil {
-		n.codec = defaultCodec
-	}
-
-	if opts.boltMode == 0 {
-		opts.boltMode = 0600
-	}
-
-	if opts.boltOptions == nil {
-		opts.boltOptions = &bolt.Options{Timeout: 1 * time.Second}
-	}
-
-	s.Node = &n
-
-	// skip if UseDB option is used
-	if s.Bolt == nil {
-		s.Bolt, err = bolt.Open(path, opts.boltMode, opts.boltOptions)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	err = s.checkVersion()
-	if err != nil {
-		return nil, err
+		db: db,
 	}
 
 	return &s, nil
 }
 
-// DB is the wrapper around BoltDB. It contains an instance of BoltDB and uses it to perform all the
-// needed operations
-type DB struct {
-	// The root node that points to the root bucket.
-	Node
-
-	// Bolt is still easily accessible
-	Bolt *bolt.DB
+// Close the database.
+func (db *DB) Close() error {
+	return db.db.Close()
 }
 
-// Close the database
-func (s *DB) Close() error {
-	return s.Bolt.Close()
-}
-
-func (s *DB) checkVersion() error {
-	var v string
-	err := s.Get(dbinfo, "version", &v)
-	if err != nil && err != ErrNotFound {
-		return err
-	}
-
-	// for now, we only set the current version if it doesn't exist.
-	// v1 and v2 database files are compatible.
-	if v == "" {
-		return s.Set(dbinfo, "version", Version)
-	}
-
-	return nil
-}
-
-// toBytes turns an interface into a slice of bytes
-func toBytes(key interface{}, codec codec.MarshalUnmarshaler) ([]byte, error) {
-	if key == nil {
-		return nil, nil
-	}
-	switch t := key.(type) {
-	case []byte:
-		return t, nil
-	case string:
-		return []byte(t), nil
-	case int:
-		return numbertob(int64(t))
-	case uint:
-		return numbertob(uint64(t))
-	case int8, int16, int32, int64, uint8, uint16, uint32, uint64:
-		return numbertob(t)
-	default:
-		return codec.Marshal(key)
-	}
-}
-
-func numbertob(v interface{}) ([]byte, error) {
-	var buf bytes.Buffer
-	err := binary.Write(&buf, binary.BigEndian, v)
+// Begin a read-only or read/write transaction.
+func (db *DB) Begin(writable bool) (*Tx, error) {
+	tx, err := db.db.Begin(true)
 	if err != nil {
 		return nil, err
 	}
-	return buf.Bytes(), nil
+
+	return &Tx{
+		db: db.db,
+		tx: tx,
+	}, nil
 }
 
-func numberfromb(raw []byte) (int64, error) {
-	r := bytes.NewReader(raw)
-	var to int64
-	err := binary.Read(r, binary.BigEndian, &to)
+// CreateStore creates a store in the underlying engine and returns it.
+func (db *DB) CreateStore(storeName string) (*Store, error) {
+	err := db.db.Update(func(tx *genji.Tx) error {
+		return tx.CreateTable(storeName, nil)
+	})
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
-	return to, nil
+
+	return db.Store(storeName), nil
+}
+
+// GetStore returns a store if it exists.
+func (db *DB) GetStore(storeName string) (*Store, error) {
+	err := db.db.View(func(tx *genji.Tx) error {
+		_, err := tx.GetTable(storeName)
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return db.Store(storeName), nil
+}
+
+// Store returns a store. If the store doesn't exists, calls to the store methods will fail.
+func (db *DB) Store(storeName string) *Store {
+	return &Store{name: storeName, db: db.db}
+}
+
+// Tx represents a database transaction. It provides methods for managing records and stores.
+// Tx is either read-only or read/write. Read-only can be used to read stores and read/write can be used to read, create, delete and modify stores.
+type Tx struct {
+	db *genji.DB
+	tx *genji.Tx
+}
+
+// Rollback the transaction. Can be used safely after commit.
+func (tx *Tx) Rollback() error {
+	return tx.tx.Rollback()
+}
+
+// Commit the transaction. Calling this method on read-only transactions
+// will return an error.
+func (tx *Tx) Commit() error {
+	return tx.tx.Commit()
+}
+
+// CreateStore creates a store in the underlying engine and returns it.
+func (tx *Tx) CreateStore(storeName string) (*Store, error) {
+	err := tx.tx.CreateTable(storeName, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Store{
+		name: storeName,
+	}, nil
+}
+
+// GetStore returns a store if it exists.
+func (tx *Tx) GetStore(storeName string) (*Store, error) {
+	_, err := tx.tx.GetTable(storeName)
+	if err != nil {
+		return nil, err
+	}
+
+	return tx.Store(storeName), nil
+}
+
+// Store returns a store. If the store doesn't exists, calls to the store methods will fail.
+func (tx *Tx) Store(storeName string) *Store {
+	return &Store{
+		name: storeName,
+		db:   tx.db,
+		tx:   tx.tx,
+	}
 }

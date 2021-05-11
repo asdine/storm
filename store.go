@@ -1,425 +1,262 @@
 package storm
 
 import (
-	"bytes"
-	"reflect"
+	"fmt"
+	"strconv"
+	"strings"
 
-	"github.com/asdine/storm/v3/index"
-	"github.com/asdine/storm/v3/q"
-	bolt "go.etcd.io/bbolt"
+	"github.com/genjidb/genji"
+	"github.com/genjidb/genji/document"
 )
 
-// TypeStore stores user defined types in BoltDB.
-type TypeStore interface {
-	Finder
-	// Init creates the indexes and buckets for a given structure
-	Init(data interface{}) error
-
-	// ReIndex rebuilds all the indexes of a bucket
-	ReIndex(data interface{}) error
-
-	// Save a structure
-	Save(data interface{}) error
-
-	// Update a structure
-	Update(data interface{}) error
-
-	// UpdateField updates a single field
-	UpdateField(data interface{}, fieldName string, value interface{}) error
-
-	// Drop a bucket
-	Drop(data interface{}) error
-
-	// DeleteStruct deletes a structure from the associated bucket
-	DeleteStruct(data interface{}) error
+// A Store provides methods to manipulate a single bucket of records.
+type Store struct {
+	name string
+	db   *genji.DB
+	tx   *genji.Tx
 }
 
-// Init creates the indexes and buckets for a given structure
-func (n *node) Init(data interface{}) error {
-	v := reflect.ValueOf(data)
-	cfg, err := extract(&v)
-	if err != nil {
-		return err
-	}
+func (s *Store) viewTx(fn func(tx *genji.Tx) error) (err error) {
+	tx := s.tx
 
-	return n.readWriteTx(func(tx *bolt.Tx) error {
-		return n.init(tx, cfg)
-	})
-}
-
-func (n *node) init(tx *bolt.Tx, cfg *structConfig) error {
-	bucket, err := n.CreateBucketIfNotExists(tx, cfg.Name)
-	if err != nil {
-		return err
-	}
-
-	// save node configuration in the bucket
-	_, err = newMeta(bucket, n)
-	if err != nil {
-		return err
-	}
-
-	for fieldName, fieldCfg := range cfg.Fields {
-		if fieldCfg.Index == "" {
-			continue
-		}
-		switch fieldCfg.Index {
-		case tagUniqueIdx:
-			_, err = index.NewUniqueIndex(bucket, []byte(indexPrefix+fieldName))
-		case tagIdx:
-			_, err = index.NewListIndex(bucket, []byte(indexPrefix+fieldName))
-		default:
-			err = ErrIdxNotFound
-		}
-
+	if tx == nil {
+		tx, err = s.db.Begin(false)
 		if err != nil {
 			return err
 		}
+		defer tx.Rollback()
 	}
 
-	return nil
+	return fn(tx)
 }
 
-func (n *node) ReIndex(data interface{}) error {
-	ref := reflect.ValueOf(data)
+func (s *Store) updateTx(fn func(tx *genji.Tx) error) (err error) {
+	tx := s.tx
 
-	if !ref.IsValid() || ref.Kind() != reflect.Ptr || ref.Elem().Kind() != reflect.Struct {
-		return ErrStructPtrNeeded
-	}
-
-	cfg, err := extract(&ref)
-	if err != nil {
-		return err
-	}
-
-	return n.readWriteTx(func(tx *bolt.Tx) error {
-		return n.reIndex(tx, data, cfg)
-	})
-}
-
-func (n *node) reIndex(tx *bolt.Tx, data interface{}, cfg *structConfig) error {
-	root := n.WithTransaction(tx)
-	nodes := root.From(cfg.Name).PrefixScan(indexPrefix)
-	bucket := root.GetBucket(tx, cfg.Name)
-	if bucket == nil {
-		return ErrNotFound
-	}
-
-	for _, node := range nodes {
-		buckets := node.Bucket()
-		name := buckets[len(buckets)-1]
-		err := bucket.DeleteBucket([]byte(name))
+	if tx == nil {
+		tx, err = s.db.Begin(true)
 		if err != nil {
 			return err
 		}
-	}
-
-	total, err := root.Count(data)
-	if err != nil {
-		return err
-	}
-
-	for i := 0; i < total; i++ {
-		err = root.Select(q.True()).Skip(i).First(data)
-		if err != nil {
-			return err
-		}
-
-		err = root.Update(data)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-// Save a structure
-func (n *node) Save(data interface{}) error {
-	ref := reflect.ValueOf(data)
-
-	if !ref.IsValid() || ref.Kind() != reflect.Ptr || ref.Elem().Kind() != reflect.Struct {
-		return ErrStructPtrNeeded
-	}
-
-	cfg, err := extract(&ref)
-	if err != nil {
-		return err
-	}
-
-	if cfg.ID.IsZero {
-		if !cfg.ID.IsInteger || !cfg.ID.Increment {
-			return ErrZeroID
-		}
-	}
-
-	return n.readWriteTx(func(tx *bolt.Tx) error {
-		return n.save(tx, cfg, data, false)
-	})
-}
-
-func (n *node) save(tx *bolt.Tx, cfg *structConfig, data interface{}, update bool) error {
-	bucket, err := n.CreateBucketIfNotExists(tx, cfg.Name)
-	if err != nil {
-		return err
-	}
-
-	// save node configuration in the bucket
-	meta, err := newMeta(bucket, n)
-	if err != nil {
-		return err
-	}
-
-	if cfg.ID.IsZero {
-		err = meta.increment(cfg.ID)
-		if err != nil {
-			return err
-		}
-	}
-
-	id, err := toBytes(cfg.ID.Value.Interface(), n.codec)
-	if err != nil {
-		return err
-	}
-
-	for fieldName, fieldCfg := range cfg.Fields {
-		if !update && !fieldCfg.IsID && fieldCfg.Increment && fieldCfg.IsInteger && fieldCfg.IsZero {
-			err = meta.increment(fieldCfg)
+		defer func() {
 			if err != nil {
-				return err
+				tx.Rollback()
+			} else {
+				err = tx.Commit()
 			}
-		}
-
-		if fieldCfg.Index == "" {
-			continue
-		}
-
-		idx, err := getIndex(bucket, fieldCfg.Index, fieldName)
-		if err != nil {
-			return err
-		}
-
-		if update && fieldCfg.IsZero && !fieldCfg.ForceUpdate {
-			continue
-		}
-
-		if fieldCfg.IsZero {
-			err = idx.RemoveID(id)
-			if err != nil {
-				return err
-			}
-			continue
-		}
-
-		value, err := toBytes(fieldCfg.Value.Interface(), n.codec)
-		if err != nil {
-			return err
-		}
-
-		var found bool
-		idsSaved, err := idx.All(value, nil)
-		if err != nil {
-			return err
-		}
-		for _, idSaved := range idsSaved {
-			if bytes.Compare(idSaved, id) == 0 {
-				found = true
-				break
-			}
-		}
-
-		if found {
-			continue
-		}
-
-		err = idx.RemoveID(id)
-		if err != nil {
-			return err
-		}
-
-		err = idx.Add(value, id)
-		if err != nil {
-			if err == index.ErrAlreadyExists {
-				return ErrAlreadyExists
-			}
-			return err
-		}
+		}()
 	}
 
-	raw, err := n.codec.Marshal(data)
-	if err != nil {
-		return err
-	}
-
-	return bucket.Put(id, raw)
+	return fn(tx)
 }
 
-// Update a structure
-func (n *node) Update(data interface{}) error {
-	return n.update(data, func(ref *reflect.Value, current *reflect.Value, cfg *structConfig) error {
-		numfield := ref.NumField()
-		for i := 0; i < numfield; i++ {
-			f := ref.Field(i)
-			if ref.Type().Field(i).PkgPath != "" {
-				continue
-			}
-			zero := reflect.Zero(f.Type()).Interface()
-			actual := f.Interface()
-			if !reflect.DeepEqual(actual, zero) {
-				cf := current.Field(i)
-				cf.Set(f)
-				idxInfo, ok := cfg.Fields[ref.Type().Field(i).Name]
-				if ok {
-					idxInfo.Value = &cf
-				}
-			}
+// Insert data into the store. Data can be one of the following:
+// - struct or struct pointer
+// - map or map pointer with string key and any other type as value
+// - byte slice with valid json object
+// If no primary key was specified upon store creation, it will automatically
+// generate a docid and return it, otherwise it returns the encoded primary key.
+func (s *Store) Insert(data interface{}) ([]byte, error) {
+	param := data
+	if jsonBytes, ok := data.([]byte); ok {
+		param = document.NewFromJSON(jsonBytes)
+	}
+
+	var pk []byte
+	err := s.updateTx(func(tx *genji.Tx) error {
+		res, err := tx.Query(fmt.Sprintf("INSERT INTO %s VALUES ? RETURNING pk()", s.name), param)
+		if err != nil {
+			return err
 		}
-		return nil
+		defer res.Close()
+
+		return res.Iterate(func(d document.Document) error {
+			return document.Scan(d, &pk)
+		})
+	})
+	return pk, err
+}
+
+// All selects all documents and scans them into dest. dest must be a pointer
+// to a valid slice or array.
+//
+// It dest is a slice pointer and its capacity is too low, a new slice will be allocated.
+// Otherwise, its length is set to 0 so that its content is overwritten.
+//
+// If dest is an array pointer, its capacity must be bigger than the length of a, otherwise an error is
+// returned.
+func (s *Store) All(dest interface{}) error {
+	return s.Query().Find(dest)
+}
+
+// Query creates a query builder linked to the current store.
+func (s *Store) Query() *Query {
+	return &Query{store: s}
+}
+
+// Query is a DSL used to build SQL queries to run against Genji.
+type Query struct {
+	store        *Store
+	whereClauses []string
+	orderBy      string
+	limit        int
+	offset       int
+	params       []interface{}
+}
+
+func (q *Query) buildClauses() string {
+	var b strings.Builder
+
+	if len(q.whereClauses) > 0 {
+		b.WriteString(" WHERE ")
+		for i, clause := range q.whereClauses {
+			if i > 0 {
+				b.WriteString(" AND ")
+			}
+			b.WriteString(clause)
+		}
+	}
+
+	if q.orderBy != "" {
+		b.WriteString(" ORDER BY ")
+		b.WriteString(q.orderBy)
+	}
+
+	if q.limit != 0 {
+		b.WriteString(" LIMIT ")
+		b.WriteString(strconv.Itoa(q.limit))
+	}
+
+	if q.offset != 0 {
+		b.WriteString(" OFFSET ")
+		b.WriteString(strconv.Itoa(q.offset))
+	}
+
+	return b.String()
+}
+
+// First runs a query and scans the first result.
+// The result is scanned into dest which must be either a struct pointer, a map or a map pointer.
+func (q *Query) First(dest interface{}) error {
+	query := "SELECT * FROM " + q.store.name + q.buildClauses()
+
+	return q.store.viewTx(func(tx *genji.Tx) error {
+		d, err := tx.QueryDocument(query, q.params...)
+		if err != nil {
+			return err
+		}
+
+		return document.ScanDocument(d, dest)
 	})
 }
 
-// UpdateField updates a single field
-func (n *node) UpdateField(data interface{}, fieldName string, value interface{}) error {
-	return n.update(data, func(ref *reflect.Value, current *reflect.Value, cfg *structConfig) error {
-		f := current.FieldByName(fieldName)
-		if !f.IsValid() {
-			return ErrNotFound
+// Find runs a query and scans all the results into dest. dest must be a pointer
+// to a valid slice or array.
+//
+// It dest is a slice pointer and its capacity is too low, a new slice will be allocated.
+// Otherwise, its length is set to 0 so that its content is overwritten.
+//
+// If dest is an array pointer, its capacity must be bigger than the length of a, otherwise an error is
+// returned.
+func (q *Query) Find(dest interface{}) error {
+	query := "SELECT * FROM " + q.store.name + q.buildClauses()
+
+	return q.store.viewTx(func(tx *genji.Tx) error {
+		res, err := tx.Query(query, q.params...)
+		if err != nil {
+			return err
 		}
-		tf, _ := current.Type().FieldByName(fieldName)
-		if tf.PkgPath != "" {
-			return ErrNotFound
-		}
-		v := reflect.ValueOf(value)
-		if v.Kind() != f.Kind() {
-			return ErrIncompatibleValue
-		}
-		f.Set(v)
-		idxInfo, ok := cfg.Fields[fieldName]
-		if ok {
-			idxInfo.Value = &f
-			idxInfo.IsZero = isZero(idxInfo.Value)
-			idxInfo.ForceUpdate = true
-		}
-		return nil
+		defer res.Close()
+
+		return document.ScanIterator(res.Iterator, dest)
 	})
 }
 
-func (n *node) update(data interface{}, fn func(*reflect.Value, *reflect.Value, *structConfig) error) error {
-	ref := reflect.ValueOf(data)
-	if !ref.IsValid() || ref.Kind() != reflect.Ptr || ref.Elem().Kind() != reflect.Struct {
-		return ErrStructPtrNeeded
-	}
-
-	cfg, err := extract(&ref)
-	if err != nil {
-		return err
-	}
-
-	if cfg.ID.IsZero {
-		return ErrNoID
-	}
-
-	current := reflect.New(reflect.Indirect(ref).Type())
-
-	return n.readWriteTx(func(tx *bolt.Tx) error {
-		err = n.WithTransaction(tx).One(cfg.ID.Name, cfg.ID.Value.Interface(), current.Interface())
-		if err != nil {
-			return err
-		}
-
-		ref := reflect.ValueOf(data).Elem()
-		cref := current.Elem()
-		err = fn(&ref, &cref, cfg)
-		if err != nil {
-			return err
-		}
-
-		return n.save(tx, cfg, current.Interface(), true)
-	})
+// Offset skips n documents.
+// SQL: OFFSET n
+func (q *Query) Offset(n int) *Query {
+	q.offset = n
+	return q
 }
 
-// Drop a bucket
-func (n *node) Drop(data interface{}) error {
-	var bucketName string
-
-	v := reflect.ValueOf(data)
-	if v.Kind() != reflect.String {
-		info, err := extract(&v)
-		if err != nil {
-			return err
-		}
-
-		bucketName = info.Name
-	} else {
-		bucketName = v.Interface().(string)
-	}
-
-	return n.readWriteTx(func(tx *bolt.Tx) error {
-		return n.drop(tx, bucketName)
-	})
+// Limit the number of documents returned by the query.
+// SQL: LIMIT n
+func (q *Query) Limit(n int) *Query {
+	q.limit = n
+	return q
 }
 
-func (n *node) drop(tx *bolt.Tx, bucketName string) error {
-	bucket := n.GetBucket(tx)
-	if bucket == nil {
-		return tx.DeleteBucket([]byte(bucketName))
-	}
-
-	return bucket.DeleteBucket([]byte(bucketName))
+// OrderBy returns the documents ordered by the given expression.
+// To control the order direction, append ASC or DESC.
+// SQL: ORDER BY expr
+func (q *Query) OrderBy(expr string) *Query {
+	q.orderBy = expr
+	return q
 }
 
-// DeleteStruct deletes a structure from the associated bucket
-func (n *node) DeleteStruct(data interface{}) error {
-	ref := reflect.ValueOf(data)
-
-	if !ref.IsValid() || ref.Kind() != reflect.Ptr || ref.Elem().Kind() != reflect.Struct {
-		return ErrStructPtrNeeded
-	}
-
-	cfg, err := extract(&ref)
-	if err != nil {
-		return err
-	}
-
-	id, err := toBytes(cfg.ID.Value.Interface(), n.codec)
-	if err != nil {
-		return err
-	}
-
-	return n.readWriteTx(func(tx *bolt.Tx) error {
-		return n.deleteStruct(tx, cfg, id)
-	})
+// Where filters out documents that don't match the predicate.
+func (q *Query) Where(expr, operator string, v interface{}) *Query {
+	q.params = append(q.params, v)
+	q.whereClauses = append(q.whereClauses, fmt.Sprintf("%s %s $%d", expr, operator, len(q.params)))
+	return q
 }
 
-func (n *node) deleteStruct(tx *bolt.Tx, cfg *structConfig, id []byte) error {
-	bucket := n.GetBucket(tx, cfg.Name)
-	if bucket == nil {
-		return ErrNotFound
-	}
+// Eq adds a WHERE clause with the operator '='.
+func (q *Query) Eq(expr string, v interface{}) *Query {
+	return q.Where(expr, "=", v)
+}
 
-	for fieldName, fieldCfg := range cfg.Fields {
-		if fieldCfg.Index == "" {
-			continue
-		}
+// Neq adds a WHERE clause with the operator '!='.
+func (q *Query) Neq(expr string, v interface{}) *Query {
+	return q.Where(expr, "!=", v)
+}
 
-		idx, err := getIndex(bucket, fieldCfg.Index, fieldName)
-		if err != nil {
-			return err
-		}
+// Gt adds a WHERE clause with the operator '>'.
+func (q *Query) Gt(expr string, v interface{}) *Query {
+	return q.Where(expr, ">", v)
+}
 
-		err = idx.RemoveID(id)
-		if err != nil {
-			if err == index.ErrNotFound {
-				return ErrNotFound
-			}
-			return err
-		}
-	}
+// Gte adds a WHERE clause with the operator '>='.
+func (q *Query) Gte(expr string, v interface{}) *Query {
+	return q.Where(expr, ">=", v)
+}
 
-	raw := bucket.Get(id)
-	if raw == nil {
-		return ErrNotFound
-	}
+// Lt adds a WHERE clause with the operator '<'.
+func (q *Query) Lt(expr string, v interface{}) *Query {
+	return q.Where(expr, "<", v)
+}
 
-	return bucket.Delete(id)
+// Lte adds a WHERE clause with the operator '<='.
+func (q *Query) Lte(expr string, v interface{}) *Query {
+	return q.Where(expr, "<=", v)
+}
+
+// In adds a WHERE clause with the operator 'IN'.
+func (q *Query) In(expr string, v ...interface{}) *Query {
+	return q.Where(expr, "IN", v)
+}
+
+// NotIn adds a WHERE clause with the operator 'NOT IN'.
+func (q *Query) NotIn(expr string, v ...interface{}) *Query {
+	return q.Where(expr, "NOT IN", v)
+}
+
+// NotIn adds a WHERE clause with the operator 'LIKE'.
+func (q *Query) Like(expr string, v interface{}) *Query {
+	return q.Where(expr, "LIKE", v)
+}
+
+// NotIn adds a WHERE clause with the operator 'NOT LIKE'.
+func (q *Query) NotLike(expr string, v interface{}) *Query {
+	return q.Where(expr, "NOT LIKE", v)
+}
+
+// NotIn adds a WHERE clause with the operator 'IS'.
+func (q *Query) Is(expr string, v interface{}) *Query {
+	return q.Where(expr, "IS", v)
+}
+
+// NotIn adds a WHERE clause with the operator 'IS NOT'.
+func (q *Query) IsNot(expr string, v interface{}) *Query {
+	return q.Where(expr, "IS NOT", v)
 }

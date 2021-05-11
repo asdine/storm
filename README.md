@@ -10,7 +10,7 @@ In addition to the examples below, see also the [examples in the GoDoc](https://
 ## Getting Started
 
 ```bash
-GO111MODULE=on go get -u github.com/asdine/storm/v4
+go get -u github.com/asdine/storm/v4
 ```
 
 ## Import Storm
@@ -25,11 +25,8 @@ Quick way of opening a database:
 
 ```go
 db, err := storm.Open("my.db")
-
 defer db.Close()
 ```
-
-`Open` can receive multiple options to customize the way it behaves. See [Options](#options) below.
 
 ## Storing data
 
@@ -91,7 +88,7 @@ id, err := users.Insert(&user)
 
 That's it.
 
-`Insert` serializes the record, check for constraints, updates indexes and stores the record in the selected store.
+`Insert` serializes the record, checks for constraints, updates indexes and stores the record in the selected store.
 
 ### Creating indexes
 
@@ -134,55 +131,59 @@ Storm provides a simple but powerful DSL to run queries. Each query must end wit
 ```go
 users := db.Store("user")
 
+q := users.Query()
+
 // Fetching the first record
 var user User
-err = users.First(&user)
+err = q.First(&user)
 
 // Fetching records
 var users []User
-err = users.Find(&users)
+err = q.Find(&users)
 
 // Deleting records
-err = users.Delete()
+err = q.Delete()
 
 // Updating records
-err = users.Update("age", 10, "address.zipcode", "Paris")
+err = q.Update("age", 10, "address.zipcode", "Paris")
 ```
 
 These methods can be combined with clauses to filter records:
 
 ```go
 // Skip records
-users.Offset(10)
+q.Offset(10)
 
 // Limit the number of records
-users.Limit(10)
+q.Limit(10)
 
 // Order records by a certain field
-users.OrderBy("age")
-users.OrderBy("age", "desc")
+q.OrderBy("age")
+q.OrderBy("age", "desc")
 
 // Filter by predicate
-users.Where("age", ">", 18)
-users.Eq("address.city", "Paris")
-users.Gt("age", 21)
-users.Gte("age", 21)
-users.Lt("age", 21)
-users.Lte("age", 21)
+q.Where("age", ">", 18)
+q.Eq("address.city", "Paris")
+q.Neq("address.city", "Paris")
+q.Gt("age", 21)
+q.Gte("age", 21)
+q.Lt("age", 21)
+q.Lte("age", 21)
 ```
 
 Example:
 
 ```go
 var u User
-err = db.Store("user").Eq("address.city", "Paris").Limit(10).Offset(2).OrderBy("age").First(&user)
+q := db.Store("user").Query()
+err = q.Eq("address.city", "Paris").Limit(10).Offset(2).OrderBy("age").First(&user)
 
 q := db.Store("user").Eq("address.city", "Paris").Limit(10).Offset(2).OrderBy("age")
 
 var users []*User
 err = q.Find(&users)
-err = q.Delete()
 err = q.Update("age", 10, "address.zipcode", "Paris")
+err = q.Delete()
 ```
 
 For more information, and to see all of the supported features, checkout the [Go doc](https://pkg.go.dev/github.com/asdine/storm).
@@ -234,61 +235,6 @@ if err != nil {
 }
 
 return tx.Commit()
-```
-
-### Options
-
-Storm options are functions that can be passed when constructing you Storm instance. You can pass it any number of options.
-
-#### BoltOptions
-
-By default, Storm opens a database with the mode `0600` and a timeout of one second.
-You can change this behavior by using `BoltOptions`
-
-```go
-db, err := storm.Open("my.db", storm.BoltOptions(0600, &bolt.Options{Timeout: 1 * time.Second}))
-```
-
-#### Use existing Bolt connection
-
-You can use an existing connection and pass it to Storm
-
-```go
-bDB, _ := bolt.Open(filepath.Join(dir, "bolt.db"), 0600, &bolt.Options{Timeout: 10 * time.Second})
-db := storm.Open("my.db", storm.UseDB(bDB))
-```
-
-#### Batch mode
-
-Batch mode can be enabled to speed up concurrent writes (see [Batch read-write transactions](https://github.com/coreos/bbolt#batch-read-write-transactions))
-
-```go
-db := storm.Open("my.db", storm.Batch())
-```
-
-## BoltDB
-
-BoltDB is still easily accessible and can be used as usual
-
-```go
-db.Bolt().View(func(tx *bolt.Tx) error {
-  bucket := tx.Bucket([]byte("my bucket"))
-  val := bucket.Get([]byte("any id"))
-  fmt.Println(string(val))
-  return nil
-})
-```
-
-A transaction can be also be passed to Storm
-
-```go
-db.Bolt.Update(func(tx *bolt.Tx) error {
-  ...
-  dbx := db.WithTransaction(tx)
-  err = dbx.Save(&user)
-  ...
-  return nil
-})
 ```
 
 ## License

@@ -1,9 +1,0 @@
-syntax = "proto3";
-
-package protobuf;
-
-message SimpleUser {
-    uint64 id = 1;
-    string name = 2;
-    int32 age = 3;
-}
