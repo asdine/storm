@@ -241,22 +241,22 @@ func (q *Query) NotIn(expr string, v ...interface{}) *Query {
 	return q.Where(expr, "NOT IN", v)
 }
 
-// NotIn adds a WHERE clause with the operator 'LIKE'.
+// Like adds a WHERE clause with the operator 'LIKE'.
 func (q *Query) Like(expr string, v interface{}) *Query {
 	return q.Where(expr, "LIKE", v)
 }
 
-// NotIn adds a WHERE clause with the operator 'NOT LIKE'.
+// NotLike adds a WHERE clause with the operator 'NOT LIKE'.
 func (q *Query) NotLike(expr string, v interface{}) *Query {
 	return q.Where(expr, "NOT LIKE", v)
 }
 
-// NotIn adds a WHERE clause with the operator 'IS'.
+// Is adds a WHERE clause with the operator 'IS'.
 func (q *Query) Is(expr string, v interface{}) *Query {
 	return q.Where(expr, "IS", v)
 }
 
-// NotIn adds a WHERE clause with the operator 'IS NOT'.
+// IsNot adds a WHERE clause with the operator 'IS NOT'.
 func (q *Query) IsNot(expr string, v interface{}) *Query {
 	return q.Where(expr, "IS NOT", v)
 }
