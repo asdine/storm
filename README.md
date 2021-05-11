@@ -1,9 +1,9 @@
 # Storm
 
 [![Build Status](https://travis-ci.org/asdine/storm.svg)](https://travis-ci.org/asdine/storm)
-[![GoDoc](https://godoc.org/github.com/asdine/storm?status.svg)](https://godoc.org/github.com/asdine/storm)
+[![GoDoc](https://pkg.go.dev/badge/github.com/asdine/storm)](https://https://pkg.go.dev/github.com/asdine/storm)
 
-Storm is a simple and powerful toolkit for [BoltDB](https://github.com/etcd-io/bbolt) and [Badger](https://github.com/dgraph-io/badger). Basically, Storm provides indexes, a wide range of methods to store and fetch data, support for SQL, and much more. To do so, it relies on [Genji](https://github.com/genjidb/genji), a powerful embedded, document-oriented, SQL database.
+Storm is a simple and powerful toolkit for [BoltDB](https://github.com/etcd-io/bbolt). Basically, Storm provides indexes, a wide range of methods to store and fetch data, support for SQL, and much more. To do so, it relies on [Genji](https://github.com/genjidb/genji), a powerful embedded, document-oriented, SQL database.
 
 In addition to the examples below, see also the [examples in the GoDoc](https://godoc.org/github.com/asdine/storm#pkg-examples).
 
@@ -30,7 +30,7 @@ defer db.Close()
 
 ## Storing data
 
-### Creating and creating a store
+### Creating a store
 
 A store holds records in the underlying storage. To create one, use the `CreateStore` method:
 
@@ -52,9 +52,10 @@ To quickly get a store and chain a call to a method, use `Store`. If the store d
 id, err = db.Store("user").Insert(...)
 ```
 
-### Storing data
+### Inserting data
 
-Storm supports pretty much any structure and data type. Example:
+Storm supports pretty much any data structure shaped like a document, like a struct or a map.
+Example:
 
 ```go
 type User struct {
@@ -68,11 +69,7 @@ type User struct {
 		ZipCode string
 	}
 }
-```
 
-### Inserting data
-
-```go
 user := User{
   Name: "John",
   Age: 21,
@@ -145,7 +142,7 @@ err = q.Find(&users)
 err = q.Delete()
 
 // Updating records
-err = q.Update("age", 10, "address.zipcode", "Paris")
+err = q.Update("age", 10, "address.zipcode", "69001")
 ```
 
 These methods can be combined with clauses to filter records:
