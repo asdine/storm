@@ -74,7 +74,7 @@ func TestInsert(t *testing.T) {
 		id, err := s.Insert(f)
 		require.NoError(t, err)
 		require.Equal(t, id, 1)
-		id, err = s.Insert(&f)
+		id, err = s.Insert(f)
 		require.NoError(t, err)
 		require.Equal(t, id, 2)
 	})
