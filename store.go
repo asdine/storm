@@ -55,24 +55,33 @@ func (s *Store) updateTx(fn func(tx *genji.Tx) error) (err error) {
 // - map or map pointer with string key and any other type as value
 // - byte slice with valid json object
 // If no primary key was specified upon store creation, it will automatically
-// generate a docid and return it, otherwise it returns the encoded primary key.
-func (s *Store) Insert(data interface{}) ([]byte, error) {
+// generate a docid.
+// If the primary key is an integer, it returns it, otherwise it returns 0.
+func (s *Store) Insert(data interface{}) (pk int, err error) {
 	param := data
 	if jsonBytes, ok := data.([]byte); ok {
 		param = document.NewFromJSON(jsonBytes)
 	}
 
-	var pk []byte
-	err := s.updateTx(func(tx *genji.Tx) error {
-		res, err := tx.Query(fmt.Sprintf("INSERT INTO %s VALUES ? RETURNING pk()", s.name), param)
+	err = s.updateTx(func(tx *genji.Tx) error {
+		d, err := tx.QueryDocument(fmt.Sprintf("INSERT INTO %s VALUES ? RETURNING pk()", s.name), param)
 		if err != nil {
 			return err
 		}
-		defer res.Close()
 
-		return res.Iterate(func(d document.Document) error {
-			return document.Scan(d, &pk)
-		})
+		f, err := d.GetByField("pk()")
+		if err != nil {
+			return err
+		}
+		if f.Type.IsNumber() {
+			f, err = f.CastAsInteger()
+			if err != nil {
+				return err
+			}
+			pk = int(f.V.(int64))
+		}
+
+		return nil
 	})
 	return pk, err
 }

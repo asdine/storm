@@ -35,7 +35,7 @@ func (db *DB) Close() error {
 
 // Begin a read-only or read/write transaction.
 func (db *DB) Begin(writable bool) (*Tx, error) {
-	tx, err := db.db.Begin(true)
+	tx, err := db.db.Begin(writable)
 	if err != nil {
 		return nil, err
 	}
