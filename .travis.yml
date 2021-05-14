@@ -1,13 +1,10 @@
 language: go
 
-before_install:
-  - go get github.com/stretchr/testify
-
-env: GO111MODULE=on
+env:
+  - GO111MODULE=on
 
 go:
-  - "1.13.x"
-  - "1.14.x"
+  - "1.16.x"
   - tip
 
 matrix:
@@ -16,4 +13,7 @@ matrix:
 
 script:
   - go mod vendor
-  - go test -mod vendor -race -v ./...
+  - go test -mod vendor -race -cover -coverprofile=coverage.txt -covermode=atomic -timeout=2m ./...
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
