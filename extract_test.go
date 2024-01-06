@@ -1,4 +1,4 @@
-package storm
+package rainstorm
 
 import (
 	"reflect"
@@ -44,8 +44,9 @@ func TestExtractUniqueTags(t *testing.T) {
 	require.NotNil(t, infos.ID)
 	require.False(t, infos.ID.IsZero)
 	require.Equal(t, "ClassicUnique", infos.Name)
+	require.Len(t, allByType(infos, "id"), 1)
 	require.Len(t, allByType(infos, "index"), 0)
-	require.Len(t, allByType(infos, "unique"), 5)
+	require.Len(t, allByType(infos, "unique"), 4)
 }
 
 func TestExtractIndexTags(t *testing.T) {
@@ -58,7 +59,8 @@ func TestExtractIndexTags(t *testing.T) {
 	require.False(t, infos.ID.IsZero)
 	require.Equal(t, "ClassicIndex", infos.Name)
 	require.Len(t, allByType(infos, "index"), 5)
-	require.Len(t, allByType(infos, "unique"), 1)
+	require.Len(t, allByType(infos, "unique"), 0)
+	require.Len(t, allByType(infos, "id"), 1)
 }
 
 func TestExtractInlineWithIndex(t *testing.T) {
@@ -70,16 +72,17 @@ func TestExtractInlineWithIndex(t *testing.T) {
 	require.NotNil(t, infos.ID)
 	require.Equal(t, "ClassicInline", infos.Name)
 	require.Len(t, allByType(infos, "index"), 3)
-	require.Len(t, allByType(infos, "unique"), 3)
+	require.Len(t, allByType(infos, "unique"), 2)
+	require.Len(t, allByType(infos, "id"), 1)
 }
 
 func TestExtractMultipleTags(t *testing.T) {
 	type User struct {
-		ID              uint64 `storm:"id,increment"`
-		Age             uint16 `storm:"index,increment"`
-		unexportedField int32  `storm:"index,increment"`
-		X               uint32 `storm:"unique,increment=100"`
-		Y               int8   `storm:"index,increment=-100"`
+		ID              uint64 `rainstorm:"id,increment"`
+		Age             uint16 `rainstorm:"index,increment"`
+		unexportedField int32  `rainstorm:"index,increment"`
+		X               uint32 `rainstorm:"unique,increment=100"`
+		Y               int8   `rainstorm:"index,increment=-100"`
 	}
 
 	s := User{}
@@ -90,7 +93,8 @@ func TestExtractMultipleTags(t *testing.T) {
 	require.NotNil(t, infos.ID)
 	require.Equal(t, "User", infos.Name)
 	require.Len(t, allByType(infos, "index"), 2)
-	require.Len(t, allByType(infos, "unique"), 2)
+	require.Len(t, allByType(infos, "unique"), 1)
+	require.Len(t, allByType(infos, "id"), 1)
 
 	require.True(t, infos.Fields["Age"].Increment)
 	require.Equal(t, int64(1), infos.Fields["Age"].IncrementStart)
@@ -117,7 +121,7 @@ func TestExtractMultipleTags(t *testing.T) {
 	require.NotNil(t, infos.Fields["Y"].Value)
 
 	type NoInt struct {
-		ID uint64 `storm:"id,increment=hello"`
+		ID uint64 `rainstorm:"id,increment=hello"`
 	}
 
 	var n NoInt
@@ -126,7 +130,7 @@ func TestExtractMultipleTags(t *testing.T) {
 	require.Error(t, err)
 
 	type BadSuffix struct {
-		ID uint64 `storm:"id,incrementag=100"`
+		ID uint64 `rainstorm:"id,incrementag=100"`
 	}
 
 	var b BadSuffix

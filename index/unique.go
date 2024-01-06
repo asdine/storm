@@ -3,7 +3,7 @@ package index
 import (
 	"bytes"
 
-	"github.com/asdine/storm/v3/internal"
+	"github.com/AndersonBargas/rainstorm/v4/internal"
 	bolt "go.etcd.io/bbolt"
 )
 
@@ -170,14 +170,4 @@ func (idx *UniqueIndex) Prefix(prefix []byte, opts *Options) ([][]byte, error) {
 		list = append(list, ident)
 	}
 	return list, nil
-}
-
-// first returns the first ID of this index
-func (idx *UniqueIndex) first() []byte {
-	c := idx.IndexBucket.Cursor()
-
-	for val, ident := c.First(); val != nil; val, ident = c.Next() {
-		return ident
-	}
-	return nil
 }

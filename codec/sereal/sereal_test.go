@@ -3,7 +3,7 @@ package sereal
 import (
 	"testing"
 
-	"github.com/asdine/storm/v3/codec/internal"
+	"github.com/AndersonBargas/rainstorm/v4/codec/internal"
 	"github.com/stretchr/testify/require"
 )
 
@@ -18,4 +18,8 @@ func TestSereal(t *testing.T) {
 	u2 := &SerealUser{}
 	internal.RoundtripTester(t, Codec, &u1, &u2)
 	require.True(t, u2 == u2.Self)
+}
+
+func TestCodecName(t *testing.T) {
+	require.EqualValues(t, Codec.Name(), "sereal")
 }

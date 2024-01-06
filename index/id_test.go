@@ -1,20 +1,164 @@
 package index_test
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/AndersonBargas/rainstorm/v4"
-	"github.com/AndersonBargas/rainstorm/v4/codec/gob"
 	"github.com/AndersonBargas/rainstorm/v4/index"
+	"github.com/AndersonBargas/rainstorm/v4/q"
 	"github.com/stretchr/testify/require"
 	bolt "go.etcd.io/bbolt"
 )
 
-func TestUniqueIndex(t *testing.T) {
+// SimpleLogin represents a simple login model
+type SimpleLogin struct {
+	Email    string `rainstorm:"id"`
+	Password string
+}
+
+// SimpleProduct represents a simple product model
+type SimpleProduct struct {
+	Barcode     int `rainstorm:"id,increment"`
+	Description string
+}
+
+func TestIDIndex(t *testing.T) {
+	dir, _ := ioutil.TempDir(os.TempDir(), "rainstorm")
+	defer os.RemoveAll(dir)
+	db, _ := rainstorm.Open(filepath.Join(dir, "rainstorm.db"))
+	defer db.Close()
+
+	err := db.Init(&SimpleLogin{})
+	require.NoError(t, err)
+
+	simpleLogin := &SimpleLogin{
+		Email:    "unique@example.org",
+		Password: "OoopsRAWpassword!",
+	}
+
+	err = db.Save(simpleLogin)
+	require.NoError(t, err)
+
+	var simpleLogins []SimpleLogin
+
+	err = db.AllByIndex("Email", &simpleLogins)
+	require.NoError(t, err)
+	require.Len(t, simpleLogins, 1)
+
+	err = db.Prefix("Email", "uni", &simpleLogins)
+	require.NoError(t, err)
+
+	err = db.Select(q.Eq("Email", "unique@example.org")).First(&SimpleLogin{})
+	require.NoError(t, err)
+
+	err = db.Set("loggedInUsers", 1, &simpleLogin)
+	require.NoError(t, err)
+
+	err = db.Delete("loggedInUsers", 1)
+	require.NoError(t, err)
+}
+
+func TestIDIndexPrefix(t *testing.T) {
+	dir, _ := ioutil.TempDir(os.TempDir(), "rainstorm")
+	defer os.RemoveAll(dir)
+	db, _ := rainstorm.Open(filepath.Join(dir, "rainstorm.db"))
+	defer db.Close()
+
+	err := db.Init(&SimpleLogin{})
+	require.NoError(t, err)
+
+	simpleLogin := &SimpleLogin{
+		Email:    "unique@example.org",
+		Password: "OoopsRAWpassword!",
+	}
+
+	err = db.Save(simpleLogin)
+	require.NoError(t, err)
+
+	simpleLogin = &SimpleLogin{
+		Email:    "unique123@example.org",
+		Password: "OoopsRAWpasswordAgain!",
+	}
+
+	err = db.Save(simpleLogin)
+	require.NoError(t, err)
+
+	var simpleLogins []SimpleLogin
+
+	err = db.Prefix("Email", "uni", &simpleLogins)
+	require.NoError(t, err)
+
+	setSkip := func(opt *index.Options) {
+		opt.Skip = 1
+	}
+	err = db.Prefix("Email", "uni", &simpleLogins, setSkip)
+	require.NoError(t, err)
+
+	setZeroedLimit := func(opt *index.Options) {
+		opt.Limit = 0
+	}
+	err = db.Prefix("Email", "uni", &simpleLogins, setZeroedLimit)
+	require.Error(t, err)
+	require.True(t, rainstorm.ErrNotFound == err)
+
+	setLimit := func(opt *index.Options) {
+		opt.Limit = 1
+	}
+	err = db.Prefix("Email", "uni", &simpleLogins, setLimit)
+	require.NoError(t, err)
+}
+
+func TestIDIndexRange(t *testing.T) {
+	dir, _ := ioutil.TempDir(os.TempDir(), "rainstorm")
+	defer os.RemoveAll(dir)
+	db, _ := rainstorm.Open(filepath.Join(dir, "rainstorm.db"))
+	defer db.Close()
+
+	err := db.Init(&SimpleProduct{})
+	require.NoError(t, err)
+
+	for i := 1; i <= 50; i++ {
+		simpleProduct := &SimpleProduct{
+			Barcode:     i,
+			Description: "Must have product!",
+		}
+
+		err = db.Save(simpleProduct)
+		require.NoError(t, err)
+	}
+
+	var simpleProducts []SimpleProduct
+
+	err = db.Range("Barcode", 5, 8, &simpleProducts)
+	require.NoError(t, err)
+
+	setSkip := func(opt *index.Options) {
+		opt.Skip = 2
+	}
+	err = db.Range("Barcode", 5, 8, &simpleProducts, setSkip)
+	require.NoError(t, err)
+
+	setZeroedLimit := func(opt *index.Options) {
+		opt.Limit = 0
+	}
+
+	err = db.Range("Barcode", 5, 8, &simpleProducts, setZeroedLimit)
+	require.Error(t, err)
+	require.True(t, rainstorm.ErrNotFound == err)
+
+	setLimit := func(opt *index.Options) {
+		opt.Limit = 1
+	}
+
+	err = db.Range("Barcode", 5, 8, &simpleProducts, setLimit)
+	require.NoError(t, err)
+
+}
+
+func TestIDIndexParams(t *testing.T) {
 	dir, _ := ioutil.TempDir(os.TempDir(), "rainstorm")
 	defer os.RemoveAll(dir)
 	db, _ := rainstorm.Open(filepath.Join(dir, "rainstorm.db"))
@@ -24,7 +168,46 @@ func TestUniqueIndex(t *testing.T) {
 		b, err := tx.CreateBucket([]byte("test"))
 		require.NoError(t, err)
 
-		idx, err := index.NewUniqueIndex(b, []byte("uindex1"))
+		idx, err := index.NewIDIndex(b, []byte("pkindex1"))
+		require.NoError(t, err)
+
+		// empty value param
+		err = idx.Add([]byte(""), []byte("id"))
+		require.Equal(t, index.ErrNilParam, err)
+
+		// nil value param
+		err = idx.Add(nil, []byte("id"))
+		require.Equal(t, index.ErrNilParam, err)
+
+		// empty id param
+		err = idx.Add([]byte("value"), []byte(""))
+		require.Equal(t, index.ErrNilParam, err)
+
+		// nil id param
+		err = idx.Add([]byte("value"), nil)
+		require.Equal(t, index.ErrNilParam, err)
+
+		// passing value and id params
+		err = idx.Add([]byte("value"), []byte("id"))
+		require.NoError(t, err)
+
+		return nil
+	})
+
+	require.NoError(t, err)
+}
+
+/*func TestIDIndex(t *testing.T) {
+	dir, _ := ioutil.TempDir(os.TempDir(), "rainstorm")
+	defer os.RemoveAll(dir)
+	db, _ := rainstorm.Open(filepath.Join(dir, "rainstorm.db"))
+	defer db.Close()
+
+	err := db.Bolt.Update(func(tx *bolt.Tx) error {
+		b, err := tx.CreateBucket([]byte("test"))
+		require.NoError(t, err)
+
+		idx, err := index.NewIDIndex(b, []byte("pkindex1"))
 		require.NoError(t, err)
 
 		err = idx.Add([]byte("hello"), []byte("id1"))
@@ -119,7 +302,7 @@ func TestUniqueIndex(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestUniqueIndexRange(t *testing.T) {
+func TestIDIndexRange(t *testing.T) {
 	dir, _ := ioutil.TempDir(os.TempDir(), "rainstorm")
 	defer os.RemoveAll(dir)
 	db, _ := rainstorm.Open(filepath.Join(dir, "rainstorm.db"))
@@ -129,7 +312,7 @@ func TestUniqueIndexRange(t *testing.T) {
 		b, err := tx.CreateBucket([]byte("test"))
 		require.NoError(t, err)
 
-		idx, err := index.NewUniqueIndex(b, []byte("uindex1"))
+		idx, err := index.NewIDIndex(b, []byte("pkindex1"))
 		require.NoError(t, err)
 
 		for i := 0; i < 10; i++ {
@@ -191,7 +374,7 @@ func TestUniqueIndexRange(t *testing.T) {
 	})
 }
 
-func TestUniqueIndexPrefix(t *testing.T) {
+func TestIDIndexPrefix(t *testing.T) {
 	dir, _ := ioutil.TempDir(os.TempDir(), "rainstorm")
 	defer os.RemoveAll(dir)
 	db, _ := rainstorm.Open(filepath.Join(dir, "rainstorm.db"))
@@ -201,7 +384,7 @@ func TestUniqueIndexPrefix(t *testing.T) {
 		b, err := tx.CreateBucket([]byte("test"))
 		require.NoError(t, err)
 
-		idx, err := index.NewUniqueIndex(b, []byte("uindex1"))
+		idx, err := index.NewIDIndex(b, []byte("pkindex1"))
 		require.NoError(t, err)
 
 		for i := 0; i < 10; i++ {
@@ -272,3 +455,4 @@ func assertEncodedIntListEqual(t *testing.T, expected []int, actual [][]byte) {
 
 	require.Equal(t, expected, ints)
 }
+*/

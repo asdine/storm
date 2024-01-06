@@ -1,11 +1,12 @@
-package storm
+package rainstorm
 
 import (
 	"reflect"
 	"sort"
 	"time"
-	"github.com/asdine/storm/v3/index"
-	"github.com/asdine/storm/v3/q"
+
+	"github.com/AndersonBargas/rainstorm/v4/index"
+	"github.com/AndersonBargas/rainstorm/v4/q"
 	bolt "go.etcd.io/bbolt"
 )
 
@@ -147,9 +148,8 @@ func (s *sorter) compareValue(left reflect.Value, right reflect.Value) int {
 				if lok && rok {
 					if lt.Before(rt) {
 						return -1
-					} else {
-						return 1
 					}
+					return 1
 				}
 			}
 		}

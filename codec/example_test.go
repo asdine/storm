@@ -3,22 +3,22 @@ package codec_test
 import (
 	"fmt"
 
-	"github.com/asdine/storm/v3"
-	"github.com/asdine/storm/v3/codec/gob"
-	"github.com/asdine/storm/v3/codec/json"
-	"github.com/asdine/storm/v3/codec/msgpack"
-	"github.com/asdine/storm/v3/codec/protobuf"
-	"github.com/asdine/storm/v3/codec/sereal"
+	"github.com/AndersonBargas/rainstorm/v4"
+	"github.com/AndersonBargas/rainstorm/v4/codec/gob"
+	"github.com/AndersonBargas/rainstorm/v4/codec/json"
+	"github.com/AndersonBargas/rainstorm/v4/codec/msgpack"
+	"github.com/AndersonBargas/rainstorm/v4/codec/protobuf"
+	"github.com/AndersonBargas/rainstorm/v4/codec/sereal"
 )
 
 func Example() {
-	// The examples below show how to set up all the codecs shipped with Storm.
+	// The examples below show how to set up all the codecs shipped with Rainstorm.
 	// Proper error handling left out to make it simple.
-	var gobDb, _ = storm.Open("gob.db", storm.Codec(gob.Codec))
-	var jsonDb, _ = storm.Open("json.db", storm.Codec(json.Codec))
-	var msgpackDb, _ = storm.Open("msgpack.db", storm.Codec(msgpack.Codec))
-	var serealDb, _ = storm.Open("sereal.db", storm.Codec(sereal.Codec))
-	var protobufDb, _ = storm.Open("protobuf.db", storm.Codec(protobuf.Codec))
+	var gobDb, _ = rainstorm.Open("gob.db", rainstorm.Codec(gob.Codec))
+	var jsonDb, _ = rainstorm.Open("json.db", rainstorm.Codec(json.Codec))
+	var msgpackDb, _ = rainstorm.Open("msgpack.db", rainstorm.Codec(msgpack.Codec))
+	var serealDb, _ = rainstorm.Open("sereal.db", rainstorm.Codec(sereal.Codec))
+	var protobufDb, _ = rainstorm.Open("protobuf.db", rainstorm.Codec(protobuf.Codec))
 
 	fmt.Printf("%T\n", gobDb.Codec())
 	fmt.Printf("%T\n", jsonDb.Codec())

@@ -1,11 +1,11 @@
-package storm
+package rainstorm
 
 import (
 	"bytes"
 	"reflect"
 
-	"github.com/asdine/storm/v3/index"
-	"github.com/asdine/storm/v3/q"
+	"github.com/AndersonBargas/rainstorm/v4/index"
+	"github.com/AndersonBargas/rainstorm/v4/q"
 	bolt "go.etcd.io/bbolt"
 )
 
@@ -64,6 +64,8 @@ func (n *node) init(tx *bolt.Tx, cfg *structConfig) error {
 			continue
 		}
 		switch fieldCfg.Index {
+		case tagID:
+			_, err = index.NewIDIndex(bucket, []byte(indexPrefix+fieldName))
 		case tagUniqueIdx:
 			_, err = index.NewUniqueIndex(bucket, []byte(indexPrefix+fieldName))
 		case tagIdx:
@@ -222,7 +224,7 @@ func (n *node) save(tx *bolt.Tx, cfg *structConfig, data interface{}, update boo
 			return err
 		}
 		for _, idSaved := range idsSaved {
-			if bytes.Compare(idSaved, id) == 0 {
+			if bytes.Equal(idSaved, id) {
 				found = true
 				break
 			}

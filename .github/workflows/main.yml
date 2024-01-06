@@ -1,0 +1,32 @@
+name: GoLang
+on:
+  push:
+    paths-ignore:
+      - '*.md*'
+      - 'LICENSE'
+jobs:
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Set up Go 1.13
+      uses: actions/setup-go@v1
+      with:
+        go-version: 1.13
+      id: go
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v1
+
+    - name: Code coverage report
+      run: |
+        go test ./... -coverprofile=coverage.out
+        go tool cover -html=coverage.out -o coverage.html
+    
+    - name: Code coverage artifacts
+      uses: actions/upload-artifact@v1
+      with:
+        name: Code coverage report
+        path: ./coverage.html

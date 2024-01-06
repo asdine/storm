@@ -1,4 +1,4 @@
-package storm
+package rainstorm
 
 import (
 	"fmt"
@@ -6,18 +6,18 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/asdine/storm/v3/index"
+	"github.com/AndersonBargas/rainstorm/v4/index"
 	bolt "go.etcd.io/bbolt"
 )
 
-// Storm tags
+// Rainstorm tags
 const (
 	tagID        = "id"
 	tagIdx       = "index"
 	tagUniqueIdx = "unique"
 	tagInline    = "inline"
 	tagIncrement = "increment"
-	indexPrefix  = "__storm_index_"
+	indexPrefix  = "__rainstorm_index_"
 )
 
 type fieldConfig struct {
@@ -99,7 +99,7 @@ func extractField(value *reflect.Value, field *reflect.StructField, m *structCon
 	var f *fieldConfig
 	var err error
 
-	tag := field.Tag.Get("storm")
+	tag := field.Tag.Get("rainstorm")
 	if tag != "" {
 		f = &fieldConfig{
 			Name:           field.Name,
@@ -113,9 +113,9 @@ func extractField(value *reflect.Value, field *reflect.StructField, m *structCon
 
 		for _, tag := range tags {
 			switch tag {
-			case "id":
+			case tagID:
 				f.IsID = true
-				f.Index = tagUniqueIdx
+				fallthrough
 			case tagUniqueIdx, tagIdx:
 				f.Index = tag
 			case tagInline:
@@ -164,7 +164,7 @@ func extractField(value *reflect.Value, field *reflect.StructField, m *structCon
 	if m.ID == nil && field.Name == "ID" {
 		if f == nil {
 			f = &fieldConfig{
-				Index:          tagUniqueIdx,
+				Index:          tagID,
 				Name:           field.Name,
 				IsZero:         isZero(value),
 				IsInteger:      isInteger(value),
@@ -203,6 +203,8 @@ func getIndex(bucket *bolt.Bucket, idxKind string, fieldName string) (index.Inde
 	var err error
 
 	switch idxKind {
+	case tagID:
+		idx, err = index.NewIDIndex(bucket, []byte(indexPrefix+fieldName))
 	case tagUniqueIdx:
 		idx, err = index.NewUniqueIndex(bucket, []byte(indexPrefix+fieldName))
 	case tagIdx:

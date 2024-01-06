@@ -93,6 +93,65 @@ func TestCmp(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, ok)
 
+	q = GtF("Age", "Age")
+	ok, err = q.Match(&a)
+	require.NoError(t, err)
+	require.False(t, ok)
+	ok, err = q.Match(&b)
+	require.NoError(t, err)
+	require.False(t, ok)
+
+	q = GteF("Age", "Age")
+	ok, err = q.Match(&a)
+	require.NoError(t, err)
+	require.True(t, ok)
+	ok, err = q.Match(&b)
+	require.NoError(t, err)
+	require.True(t, ok)
+
+	q = Lt("Age", 15)
+	ok, err = q.Match(&a)
+	require.NoError(t, err)
+	require.True(t, ok)
+	ok, err = q.Match(&b)
+	require.NoError(t, err)
+	require.False(t, ok)
+	ok, err = q.Match(&b)
+	require.NoError(t, err)
+	require.False(t, ok)
+
+	q = LtF("Age", "Age")
+	ok, err = q.Match(&a)
+	require.NoError(t, err)
+	require.False(t, ok)
+	ok, err = q.Match(&b)
+	require.NoError(t, err)
+	require.False(t, ok)
+
+	q = LteF("Age", "Age")
+	ok, err = q.Match(&a)
+	require.NoError(t, err)
+	require.True(t, ok)
+	ok, err = q.Match(&b)
+	require.NoError(t, err)
+	require.True(t, ok)
+
+	q = Gte("Age", 15)
+	ok, err = q.Match(&a)
+	require.NoError(t, err)
+	require.False(t, ok)
+	ok, err = q.Match(&b)
+	require.NoError(t, err)
+	require.True(t, ok)
+
+	q = Lte("Age", 15)
+	ok, err = q.Match(&a)
+	require.NoError(t, err)
+	require.True(t, ok)
+	ok, err = q.Match(&b)
+	require.NoError(t, err)
+	require.False(t, ok)
+
 	// Unknown field
 	q = Gt("Unknown", 15)
 	ok, err = q.Match(&a)
@@ -104,6 +163,14 @@ func TestCmp(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, ok)
 	ok, err = q.Match(&b)
+	require.NoError(t, err)
+	require.True(t, ok)
+}
+
+func TestTrueMatcher(t *testing.T) {
+	trueMatcher := True()
+
+	ok, err := trueMatcher.Match("")
 	require.NoError(t, err)
 	require.True(t, ok)
 }

@@ -1,6 +1,6 @@
 // +build !go1.8
 
-package storm
+package rainstorm
 
 import "reflect"
 

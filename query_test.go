@@ -1,16 +1,16 @@
-package storm
+package rainstorm
 
 import (
 	"fmt"
 	"testing"
 
-	"github.com/asdine/storm/v3/codec/json"
-	"github.com/asdine/storm/v3/q"
+	"github.com/AndersonBargas/rainstorm/v4/codec/json"
+	"github.com/AndersonBargas/rainstorm/v4/q"
 	"github.com/stretchr/testify/require"
 )
 
 type Score struct {
-	ID    int `storm:"increment"`
+	ID    int `rainstorm:"increment"`
 	Value int
 }
 
@@ -206,7 +206,7 @@ func TestSelectFindOrderBy(t *testing.T) {
 	defer cleanup()
 
 	type T struct {
-		ID  int `storm:"increment"`
+		ID  int `rainstorm:"increment"`
 		Str string
 		Int int
 		Rnd int
@@ -357,7 +357,7 @@ func TestSelectFirstOrderBy(t *testing.T) {
 	defer cleanup()
 
 	type T struct {
-		ID  int `storm:"increment"`
+		ID  int `rainstorm:"increment"`
 		Str string
 		Int int
 	}

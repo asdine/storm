@@ -1,4 +1,4 @@
-package storm
+package rainstorm
 
 import (
 	"fmt"
@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	bolt "go.etcd.io/bbolt"
 	"github.com/stretchr/testify/require"
+	bolt "go.etcd.io/bbolt"
 )
 
 func TestFind(t *testing.T) {
@@ -114,9 +114,9 @@ func TestFindNil(t *testing.T) {
 	defer cleanup()
 
 	type User struct {
-		ID        int        `storm:"increment"`
-		CreatedAt *time.Time `storm:"index"`
-		DeletedAt *time.Time `storm:"unique"`
+		ID        int        `rainstorm:"increment"`
+		CreatedAt *time.Time `rainstorm:"index"`
+		DeletedAt *time.Time `rainstorm:"unique"`
 	}
 
 	t1 := time.Now()
@@ -154,8 +154,8 @@ func TestFindIntIndex(t *testing.T) {
 	defer cleanup()
 
 	type Score struct {
-		ID    int    `storm:"increment"`
-		Score uint64 `storm:"index"`
+		ID    int    `rainstorm:"increment"`
+		Score uint64 `rainstorm:"index"`
 	}
 
 	for i := 0; i < 10; i++ {
@@ -491,16 +491,16 @@ func TestOne(t *testing.T) {
 }
 
 func TestOneNotWritable(t *testing.T) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "storm")
+	dir, _ := ioutil.TempDir(os.TempDir(), "rainstorm")
 	defer os.RemoveAll(dir)
-	db, _ := Open(filepath.Join(dir, "storm.db"))
+	db, _ := Open(filepath.Join(dir, "rainstorm.db"))
 
 	err := db.Save(&User{ID: 10, Name: "John"})
 	require.NoError(t, err)
 
 	db.Close()
 
-	db, _ = Open(filepath.Join(dir, "storm.db"), BoltOptions(0660, &bolt.Options{
+	db, _ = Open(filepath.Join(dir, "rainstorm.db"), BoltOptions(0660, &bolt.Options{
 		ReadOnly: true,
 	}))
 	defer db.Close()
