@@ -5,8 +5,8 @@ import (
 	"encoding/binary"
 	"time"
 
-	"github.com/AndersonBargas/rainstorm/v4/codec"
-	"github.com/AndersonBargas/rainstorm/v4/codec/json"
+	"github.com/AndersonBargas/rainstorm/v5/codec"
+	"github.com/AndersonBargas/rainstorm/v5/codec/json"
 	bolt "go.etcd.io/bbolt"
 )
 

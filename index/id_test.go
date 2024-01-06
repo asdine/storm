@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/AndersonBargas/rainstorm/v4"
-	"github.com/AndersonBargas/rainstorm/v4/index"
-	"github.com/AndersonBargas/rainstorm/v4/q"
+	"github.com/AndersonBargas/rainstorm/v5"
+	"github.com/AndersonBargas/rainstorm/v5/index"
+	"github.com/AndersonBargas/rainstorm/v5/q"
 	"github.com/stretchr/testify/require"
 	bolt "go.etcd.io/bbolt"
 )

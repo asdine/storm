@@ -6,8 +6,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/AndersonBargas/rainstorm/v4/codec/internal"
-	"github.com/AndersonBargas/rainstorm/v4/codec/json"
+	"github.com/AndersonBargas/rainstorm/v5/codec/internal"
+	"github.com/AndersonBargas/rainstorm/v5/codec/json"
 )
 
 var testKey, _ = base64.StdEncoding.DecodeString("xkBTXc1wn0C/aL31u9SA7g==")

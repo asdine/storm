@@ -3,7 +3,7 @@ package index
 import (
 	"bytes"
 
-	"github.com/AndersonBargas/rainstorm/v4/internal"
+	"github.com/AndersonBargas/rainstorm/v5/internal"
 	bolt "go.etcd.io/bbolt"
 )
 

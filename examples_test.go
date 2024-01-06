@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AndersonBargas/rainstorm/v4"
-	"github.com/AndersonBargas/rainstorm/v4/codec/gob"
+	"github.com/AndersonBargas/rainstorm/v5"
+	"github.com/AndersonBargas/rainstorm/v5/codec/gob"
 	bolt "go.etcd.io/bbolt"
 )
 

@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/AndersonBargas/rainstorm/v4"
-	"github.com/AndersonBargas/rainstorm/v4/codec/internal"
+	"github.com/AndersonBargas/rainstorm/v5"
+	"github.com/AndersonBargas/rainstorm/v5/codec/internal"
 	"github.com/stretchr/testify/require"
 )
 

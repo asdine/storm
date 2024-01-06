@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AndersonBargas/rainstorm/v4/codec/gob"
-	"github.com/AndersonBargas/rainstorm/v4/codec/json"
-	"github.com/AndersonBargas/rainstorm/v4/q"
+	"github.com/AndersonBargas/rainstorm/v5/codec/gob"
+	"github.com/AndersonBargas/rainstorm/v5/codec/json"
+	"github.com/AndersonBargas/rainstorm/v5/q"
 	"github.com/stretchr/testify/require"
 	bolt "go.etcd.io/bbolt"
 )

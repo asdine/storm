@@ -5,8 +5,8 @@ import (
 	"sort"
 	"time"
 
-	"github.com/AndersonBargas/rainstorm/v4/index"
-	"github.com/AndersonBargas/rainstorm/v4/q"
+	"github.com/AndersonBargas/rainstorm/v5/index"
+	"github.com/AndersonBargas/rainstorm/v5/q"
 	bolt "go.etcd.io/bbolt"
 )
 

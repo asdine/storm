@@ -1,6 +1,6 @@
 # Rainstorm
 
-[![GoDoc](https://godoc.org/github.com/AndersonBargas/rainstorm?status.svg)](https://pkg.go.dev/github.com/AndersonBargas/rainstorm/v4?tab=doc) [![Go Report Card](https://goreportcard.com/badge/github.com/AndersonBargas/rainstorm)](https://goreportcard.com/report/github.com/AndersonBargas/rainstorm) ![GoLang](https://github.com/AndersonBargas/rainstorm/workflows/GoLang/badge.svg)
+[![GoDoc](https://godoc.org/github.com/AndersonBargas/rainstorm?status.svg)](https://pkg.go.dev/github.com/AndersonBargas/rainstorm/v5?tab=doc) [![Go Report Card](https://goreportcard.com/badge/github.com/AndersonBargas/rainstorm)](https://goreportcard.com/report/github.com/AndersonBargas/rainstorm) ![GoLang](https://github.com/AndersonBargas/rainstorm/workflows/GoLang/badge.svg)
 
 Rainstorm is a simple and powerful toolkit for [BoltDB](https://github.com/coreos/bbolt), forked from the great [Storm](https://github.com/asdine/storm).
 Basically, Rainstorm provides indexes, a wide range of methods to store and fetch data, an advanced query system, and much more.
@@ -49,7 +49,7 @@ In addition to the examples below, see also the [examples in the GoDoc](https://
 ## Getting Started
 
 ```bash
-GO111MODULE=on go get -u github.com/AndersonBargas/rainstorm/v4
+GO111MODULE=on go get -u github.com/AndersonBargas/rainstorm/v5
 ```
 
 ## Main differences from "storm"
@@ -65,7 +65,7 @@ To take advantage of the performance changes made after the fork, just use versi
 ## Import Rainstorm
 
 ```go
-import "github.com/AndersonBargas/rainstorm/v4"
+import "github.com/AndersonBargas/rainstorm/v5"
 ```
 
 ## Open a database
@@ -487,12 +487,12 @@ These can be used by importing the relevant package and use that codec to config
 
 ```go
 import (
-  "github.com/AndersonBargas/rainstorm/v4"
-  "github.com/AndersonBargas/rainstorm/v4/codec/gob"
-  "github.com/AndersonBargas/rainstorm/v4/codec/json"
-  "github.com/AndersonBargas/rainstorm/v4/codec/sereal"
-  "github.com/AndersonBargas/rainstorm/v4/codec/protobuf"
-  "github.com/AndersonBargas/rainstorm/v4/codec/msgpack"
+  "github.com/AndersonBargas/rainstorm/v5"
+  "github.com/AndersonBargas/rainstorm/v5/codec/gob"
+  "github.com/AndersonBargas/rainstorm/v5/codec/json"
+  "github.com/AndersonBargas/rainstorm/v5/codec/sereal"
+  "github.com/AndersonBargas/rainstorm/v5/codec/protobuf"
+  "github.com/AndersonBargas/rainstorm/v5/codec/msgpack"
 )
 
 var gobDb, _ = rainstorm.Open("gob.db", rainstorm.Codec(gob.Codec))

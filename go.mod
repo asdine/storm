@@ -1,4 +1,4 @@
-module github.com/AndersonBargas/rainstorm/v4
+module github.com/AndersonBargas/rainstorm/v5
 
 require (
 	github.com/DataDog/zstd v1.4.1 // indirect
