@@ -8,7 +8,6 @@ import (
 
 	"os"
 
-	"io/ioutil"
 	"path/filepath"
 	"strings"
 
@@ -46,7 +45,7 @@ type User struct {
 }
 
 func prepareDB() (string, *rainstorm.DB) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "rainstorm")
+	dir, _ := os.MkdirTemp(os.TempDir(), "rainstorm")
 	db, _ := rainstorm.Open(filepath.Join(dir, "rainstorm.db"))
 
 	for i, name := range []string{"John", "Norm", "Donald", "Eric", "Dilbert"} {

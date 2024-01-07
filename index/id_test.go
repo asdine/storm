@@ -1,7 +1,6 @@
 package index_test
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -26,7 +25,7 @@ type SimpleProduct struct {
 }
 
 func TestIDIndex(t *testing.T) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "rainstorm")
+	dir, _ := os.MkdirTemp(os.TempDir(), "rainstorm")
 	defer os.RemoveAll(dir)
 	db, _ := rainstorm.Open(filepath.Join(dir, "rainstorm.db"))
 	defer db.Close()
@@ -62,7 +61,7 @@ func TestIDIndex(t *testing.T) {
 }
 
 func TestIDIndexPrefix(t *testing.T) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "rainstorm")
+	dir, _ := os.MkdirTemp(os.TempDir(), "rainstorm")
 	defer os.RemoveAll(dir)
 	db, _ := rainstorm.Open(filepath.Join(dir, "rainstorm.db"))
 	defer db.Close()
@@ -112,7 +111,7 @@ func TestIDIndexPrefix(t *testing.T) {
 }
 
 func TestIDIndexRange(t *testing.T) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "rainstorm")
+	dir, _ := os.MkdirTemp(os.TempDir(), "rainstorm")
 	defer os.RemoveAll(dir)
 	db, _ := rainstorm.Open(filepath.Join(dir, "rainstorm.db"))
 	defer db.Close()
@@ -159,7 +158,7 @@ func TestIDIndexRange(t *testing.T) {
 }
 
 func TestIDIndexParams(t *testing.T) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "rainstorm")
+	dir, _ := os.MkdirTemp(os.TempDir(), "rainstorm")
 	defer os.RemoveAll(dir)
 	db, _ := rainstorm.Open(filepath.Join(dir, "rainstorm.db"))
 	defer db.Close()
@@ -198,7 +197,7 @@ func TestIDIndexParams(t *testing.T) {
 }
 
 /*func TestIDIndex(t *testing.T) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "rainstorm")
+	dir, _ := os.MkdirTemp(os.TempDir(), "rainstorm")
 	defer os.RemoveAll(dir)
 	db, _ := rainstorm.Open(filepath.Join(dir, "rainstorm.db"))
 	defer db.Close()
@@ -303,7 +302,7 @@ func TestIDIndexParams(t *testing.T) {
 }
 
 func TestIDIndexRange(t *testing.T) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "rainstorm")
+	dir, _ := os.MkdirTemp(os.TempDir(), "rainstorm")
 	defer os.RemoveAll(dir)
 	db, _ := rainstorm.Open(filepath.Join(dir, "rainstorm.db"))
 	defer db.Close()
@@ -375,7 +374,7 @@ func TestIDIndexRange(t *testing.T) {
 }
 
 func TestIDIndexPrefix(t *testing.T) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "rainstorm")
+	dir, _ := os.MkdirTemp(os.TempDir(), "rainstorm")
 	defer os.RemoveAll(dir)
 	db, _ := rainstorm.Open(filepath.Join(dir, "rainstorm.db"))
 	defer db.Close()

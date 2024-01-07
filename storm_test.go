@@ -3,7 +3,6 @@ package rainstorm
 import (
 	"bytes"
 	"encoding/binary"
-	"io/ioutil"
 	"math"
 	"math/bits"
 	"os"
@@ -26,7 +25,7 @@ func TestNewStorm(t *testing.T) {
 	require.Error(t, err)
 	require.Nil(t, db)
 
-	dir, err := ioutil.TempDir(os.TempDir(), "rainstorm")
+	dir, err := os.MkdirTemp(os.TempDir(), "rainstorm")
 	require.NoError(t, err)
 	defer os.RemoveAll(dir)
 
@@ -47,7 +46,7 @@ func TestNewStorm(t *testing.T) {
 }
 
 func TestNewRainstormWithRainstormOptions(t *testing.T) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "rainstorm")
+	dir, _ := os.MkdirTemp(os.TempDir(), "rainstorm")
 	defer os.RemoveAll(dir)
 
 	dc := new(dummyCodec)
@@ -63,7 +62,7 @@ func TestNewRainstormWithRainstormOptions(t *testing.T) {
 }
 
 func TestNewRainstormWithBatch(t *testing.T) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "rainstorm")
+	dir, _ := os.MkdirTemp(os.TempDir(), "rainstorm")
 	defer os.RemoveAll(dir)
 
 	db1, _ := Open(filepath.Join(dir, "rainstorm1.db"), Batch())
@@ -83,7 +82,7 @@ func TestNewRainstormWithBatch(t *testing.T) {
 }
 
 func TestBoltDB(t *testing.T) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "rainstorm")
+	dir, _ := os.MkdirTemp(os.TempDir(), "rainstorm")
 	defer os.RemoveAll(dir)
 	bDB, err := bolt.Open(filepath.Join(dir, "bolt.db"), 0600, &bolt.Options{Timeout: 10 * time.Second})
 	require.NoError(t, err)
@@ -163,7 +162,7 @@ func TestToBytes(t *testing.T) {
 }
 
 func createDB(t errorHandler, opts ...func(*Options) error) (*DB, func()) {
-	dir, err := ioutil.TempDir(os.TempDir(), "rainstorm")
+	dir, err := os.MkdirTemp(os.TempDir(), "rainstorm")
 	if err != nil {
 		t.Error(err)
 	}

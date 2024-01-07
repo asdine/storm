@@ -2,7 +2,6 @@ package rainstorm
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -491,7 +490,7 @@ func TestOne(t *testing.T) {
 }
 
 func TestOneNotWritable(t *testing.T) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "rainstorm")
+	dir, _ := os.MkdirTemp(os.TempDir(), "rainstorm")
 	defer os.RemoveAll(dir)
 	db, _ := Open(filepath.Join(dir, "rainstorm.db"))
 

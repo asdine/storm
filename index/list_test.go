@@ -3,7 +3,6 @@ package index_test
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -16,7 +15,7 @@ import (
 )
 
 func TestListIndex(t *testing.T) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "rainstorm")
+	dir, _ := os.MkdirTemp(os.TempDir(), "rainstorm")
 	defer os.RemoveAll(dir)
 	db, _ := rainstorm.Open(filepath.Join(dir, "rainstorm.db"))
 	defer db.Close()
@@ -165,7 +164,7 @@ func TestListIndex(t *testing.T) {
 }
 
 func TestListIndexReverse(t *testing.T) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "rainstorm")
+	dir, _ := os.MkdirTemp(os.TempDir(), "rainstorm")
 	defer os.RemoveAll(dir)
 	db, _ := rainstorm.Open(filepath.Join(dir, "rainstorm.db"))
 	defer db.Close()
@@ -210,7 +209,7 @@ func TestListIndexReverse(t *testing.T) {
 }
 
 func TestListIndexAddRemoveID(t *testing.T) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "rainstorm")
+	dir, _ := os.MkdirTemp(os.TempDir(), "rainstorm")
 	defer os.RemoveAll(dir)
 	db, _ := rainstorm.Open(filepath.Join(dir, "rainstorm.db"))
 	defer db.Close()
@@ -254,7 +253,7 @@ func TestListIndexAddRemoveID(t *testing.T) {
 }
 
 func TestListIndexAllRecords(t *testing.T) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "rainstorm")
+	dir, _ := os.MkdirTemp(os.TempDir(), "rainstorm")
 	defer os.RemoveAll(dir)
 	db, _ := rainstorm.Open(filepath.Join(dir, "rainstorm.db"))
 	defer db.Close()
@@ -333,7 +332,7 @@ func TestListIndexAllRecords(t *testing.T) {
 }
 
 func TestListIndexRange(t *testing.T) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "rainstorm")
+	dir, _ := os.MkdirTemp(os.TempDir(), "rainstorm")
 	defer os.RemoveAll(dir)
 	db, _ := rainstorm.Open(filepath.Join(dir, "rainstorm.db"))
 	defer db.Close()
@@ -429,7 +428,7 @@ func TestListIndexRange(t *testing.T) {
 }
 
 func TestListIndexPrefix(t *testing.T) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "rainstorm")
+	dir, _ := os.MkdirTemp(os.TempDir(), "rainstorm")
 	defer os.RemoveAll(dir)
 	db, _ := rainstorm.Open(filepath.Join(dir, "rainstorm.db"))
 	defer db.Close()

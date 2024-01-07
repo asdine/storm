@@ -2,7 +2,6 @@ package index_test
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -15,7 +14,7 @@ import (
 )
 
 func TestUniqueIndex(t *testing.T) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "rainstorm")
+	dir, _ := os.MkdirTemp(os.TempDir(), "rainstorm")
 	defer os.RemoveAll(dir)
 	db, _ := rainstorm.Open(filepath.Join(dir, "rainstorm.db"))
 	defer db.Close()
@@ -120,7 +119,7 @@ func TestUniqueIndex(t *testing.T) {
 }
 
 func TestUniqueIndexRange(t *testing.T) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "rainstorm")
+	dir, _ := os.MkdirTemp(os.TempDir(), "rainstorm")
 	defer os.RemoveAll(dir)
 	db, _ := rainstorm.Open(filepath.Join(dir, "rainstorm.db"))
 	defer db.Close()
@@ -192,7 +191,7 @@ func TestUniqueIndexRange(t *testing.T) {
 }
 
 func TestUniqueIndexPrefix(t *testing.T) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "rainstorm")
+	dir, _ := os.MkdirTemp(os.TempDir(), "rainstorm")
 	defer os.RemoveAll(dir)
 	db, _ := rainstorm.Open(filepath.Join(dir, "rainstorm.db"))
 	defer db.Close()

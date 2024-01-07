@@ -2,7 +2,6 @@ package rainstorm_test
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -15,7 +14,7 @@ import (
 )
 
 func ExampleDB_Save() {
-	dir, _ := ioutil.TempDir(os.TempDir(), "rainstorm")
+	dir, _ := os.MkdirTemp(os.TempDir(), "rainstorm")
 	defer os.RemoveAll(dir)
 
 	type User struct {
@@ -195,7 +194,7 @@ func ExampleSkip() {
 }
 
 func ExampleUseDB() {
-	dir, _ := ioutil.TempDir(os.TempDir(), "rainstorm")
+	dir, _ := os.MkdirTemp(os.TempDir(), "rainstorm")
 	defer os.RemoveAll(dir)
 
 	bDB, err := bolt.Open(filepath.Join(dir, "bolt.db"), 0600, &bolt.Options{Timeout: 10 * time.Second})
@@ -516,7 +515,7 @@ type Note struct {
 }
 
 func prepareDB() (string, *rainstorm.DB) {
-	dir, _ := ioutil.TempDir(os.TempDir(), "rainstorm")
+	dir, _ := os.MkdirTemp(os.TempDir(), "rainstorm")
 	db, _ := rainstorm.Open(filepath.Join(dir, "rainstorm.db"))
 
 	for i, name := range []string{"John", "Eric", "Dilbert"} {
