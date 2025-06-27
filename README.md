@@ -1,3 +1,34 @@
+
+<div align="right">
+  <details>
+    <summary >🌐 Language</summary>
+    <div>
+      <div align="right">
+        <p><a href="https://openaitx.github.io/view.html?user=asdine&project=storm&lang=en">English</a></p>
+        <p><a href="https://openaitx.github.io/view.html?user=asdine&project=storm&lang=zh-CN">简体中文</a></p>
+        <p><a href="https://openaitx.github.io/view.html?user=asdine&project=storm&lang=zh-TW">繁體中文</a></p>
+        <p><a href="https://openaitx.github.io/view.html?user=asdine&project=storm&lang=ja">日本語</a></p>
+        <p><a href="https://openaitx.github.io/view.html?user=asdine&project=storm&lang=ko">한국어</a></p>
+        <p><a href="https://openaitx.github.io/view.html?user=asdine&project=storm&lang=hi">हिन्दी</a></p>
+        <p><a href="https://openaitx.github.io/view.html?user=asdine&project=storm&lang=th">ไทย</a></p>
+        <p><a href="https://openaitx.github.io/view.html?user=asdine&project=storm&lang=fr">Français</a></p>
+        <p><a href="https://openaitx.github.io/view.html?user=asdine&project=storm&lang=de">Deutsch</a></p>
+        <p><a href="https://openaitx.github.io/view.html?user=asdine&project=storm&lang=es">Español</a></p>
+        <p><a href="https://openaitx.github.io/view.html?user=asdine&project=storm&lang=it">Itapano</a></p>
+        <p><a href="https://openaitx.github.io/view.html?user=asdine&project=storm&lang=ru">Русский</a></p>
+        <p><a href="https://openaitx.github.io/view.html?user=asdine&project=storm&lang=pt">Português</a></p>
+        <p><a href="https://openaitx.github.io/view.html?user=asdine&project=storm&lang=nl">Nederlands</a></p>
+        <p><a href="https://openaitx.github.io/view.html?user=asdine&project=storm&lang=pl">Polski</a></p>
+        <p><a href="https://openaitx.github.io/view.html?user=asdine&project=storm&lang=ar">العربية</a></p>
+        <p><a href="https://openaitx.github.io/view.html?user=asdine&project=storm&lang=fa">فارسی</a></p>
+        <p><a href="https://openaitx.github.io/view.html?user=asdine&project=storm&lang=tr">Türkçe</a></p>
+        <p><a href="https://openaitx.github.io/view.html?user=asdine&project=storm&lang=vi">Tiếng Việt</a></p>
+        <p><a href="https://openaitx.github.io/view.html?user=asdine&project=storm&lang=id">Bahasa Indonesia</a></p>
+      </div>
+    </div>
+  </details>
+</div>
+
 # Storm
 
 [![Build Status](https://travis-ci.org/asdine/storm.svg)](https://travis-ci.org/asdine/storm)
